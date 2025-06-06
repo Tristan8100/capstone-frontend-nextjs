@@ -1,3 +1,5 @@
+'use client'
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,18 +13,25 @@ import {
   StepperSeparator,
   StepperTrigger,
 } from "@/components/ui/stepper"
-import { Link } from "react-router-dom"
-
+import Link from "next/link"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
 
-    const steps = [1, 2]
+    const steps = [1, 2, 3]
   const id = useId()
   const [isVisible, setIsVisible] = useState<boolean>(false)
 
   const toggleVisibility = () => setIsVisible((prevState) => !prevState)
+
+  const [otp, setOtp] = useState<string>("")
+  const [email, setEmail] = useState<string>("")
 
 
   const [currentStep, setCurrentStep] = useState(1)
@@ -149,6 +158,33 @@ export function RegisterForm({
             </Button>
           </>)}
 
+          {currentStep === 3 && (
+            <>
+              <div className="flex flex-col gap-3 text-center">
+                <Label htmlFor="otp">Enter Verification Code</Label>
+                <p className="text-sm text-muted-foreground">
+                  A 6-digit code has been sent to **{email}**.
+                </p>
+                {/* Using Shadcn's InputOTP components */}
+                <div className="flex items-center justify-center">
+                <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+                </div>
+                <Button variant="link" className="mt-2" onClick={() => console.log("Resend OTP logic here")}>
+                  Resend Code
+                </Button>
+              </div>
+            </>
+            )}
+
         <div className="mx-auto max-w-xl space-y-8 text-center">
             <div className="flex justify-center space-x-4">
                 <Button
@@ -172,7 +208,7 @@ export function RegisterForm({
     </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
-        <Link to="/login" className="underline underline-offset-4">
+        <Link href="/login" className="underline underline-offset-4">
           Sign in
         </Link>
       </div>

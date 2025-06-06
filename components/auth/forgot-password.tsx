@@ -1,16 +1,12 @@
-import AuthTemplate from "./auth-template"
-import { ForgotPasswordForm } from "../forgot-password-form"
+import { ForgotPasswordForm } from "@/components/forgot-password";
+import AuthTemplate from "@/components/auth/auth-template";
 
-
-function ForgotPassword() {
-
+export default function ForgotPasswordPage() {
   return (
     <>
-      <AuthTemplate>
+    <AuthTemplate>
         <ForgotPasswordForm />
-      </AuthTemplate>
+    </AuthTemplate>
     </>
-  )
+  );
 }
-
-export default ForgotPassword
