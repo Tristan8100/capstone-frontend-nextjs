@@ -36,7 +36,7 @@ export default function AnnouncementComponent() {
   const [newReply, setNewReply] = useState("")
 
   const images = [
-    "/placeholder.svg?height=400&width=600",
+    "/static/TSBA Logo.png",
     "/placeholder.svg?height=400&width=600",
     "/placeholder.svg?height=400&width=600",
     "/placeholder.svg?height=400&width=600",
@@ -102,7 +102,7 @@ export default function AnnouncementComponent() {
   }
 
   return (
-    <Card className="w-full lg:w-[1000px] w-[90%] md:w-[700px] mx-auto">
+    <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[1000px] max-w-screen-xl mx-auto">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -132,39 +132,44 @@ export default function AnnouncementComponent() {
       </CardHeader>
 
       <CardContent className="px-0 pb-3">
-        <div className="px-6 pb-4">
-          <h2 className="text-lg font-semibold mb-2">🎉 Exciting Product Launch Announcement!</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            We're thrilled to announce the launch of our revolutionary new product line! After months of development and
-            testing, we're finally ready to share something truly special with our community. These images showcase just
-            a glimpse of what's to come. Stay tuned for more details and get ready to experience innovation like never
-            before!
-            <span className="text-primary font-medium"> #Innovation #ProductLaunch #Exciting</span>
-          </p>
-        </div>
+        {/* Flex container: defaults to column on small screens, becomes row on medium and up */}
+        <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 px-6 pb-4">
+          {/* Text Section */}
+          <div className="flex-1 w-full md:w-auto min-w-0"> {/* flex-1 allows it to grow, min-w-0 prevents overflow issues */}
+            <h2 className="text-lg font-semibold mb-2">🎉 Exciting Product Launch Announcement!</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              We're thrilled to announce the launch of our revolutionary new product line! After months of development and
+              testing, we're finally ready to share something truly special with our community. These images showcase just
+              a glimpse of what's to come. Stay tuned for more details and get ready to experience innovation like never
+              before!
+              <span className="text-primary font-medium"> #Innovation #ProductLaunch #Exciting</span>
+            </p>
+          </div>
 
-        <Carousel className="w-full">
-          <CarouselContent>
-            {images.map((src, index) => (
-              <CarouselItem key={index}>
-                <div className="relative">
-                  <Image
-                    src={src || "/placeholder.svg"}
-                    alt={`Announcement image ${index + 1}`}
-                    width={600}
-                    height={400}
-                    className="w-full h-80 object-cover"
-                  />
-                  <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                    {index + 1} / {images.length}
+          {/* Carousel Section */}
+          <Carousel className="flex-1 w-full lg:w-auto min-w-0"> {/* flex-1 allows it to grow, min-w-0 prevents overflow issues */}
+            <CarouselContent>
+              {images.map((src, index) => (
+                <CarouselItem key={index}>
+                  <div className="relative">
+                    <Image
+                      src={src || "/placeholder.svg"}
+                      alt={`Announcement image ${index + 1}`}
+                      width={600}
+                      height={400}
+                      className="w-full h-96 object-cover"
+                    />
+                    <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                      {index + 1} / {images.length}
+                    </div>
                   </div>
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-4" />
-          <CarouselNext className="right-4" />
-        </Carousel>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-4" />
+            <CarouselNext className="right-4" />
+          </Carousel>
+        </div>
       </CardContent>
 
       <CardFooter className="flex flex-col space-y-3 pt-0">
