@@ -42,12 +42,12 @@ import Link from "next/link"
 const homeNavigation = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/alumni/dashboard",
     icon: BarChart3,
   },
   {
     title: "Announcements",
-    url: "/announcements",
+    url: "/alumni/announcement",
     icon: Megaphone,
   },
   {
@@ -60,7 +60,7 @@ const homeNavigation = [
 const communityNavigation = [
   {
     title: "Community Feed",
-    url: "/community",
+    url: "/alumni/feed",
     icon: Users,
   },
   {
@@ -70,7 +70,7 @@ const communityNavigation = [
   },
   {
     title: "My Posts",
-    url: "/community/my-posts",
+    url: "/alumni/my-posts",
     icon: FileText,
   },
 ]
@@ -78,12 +78,12 @@ const communityNavigation = [
 const generalNavigation = [
   {
     title: "Settings",
-    url: "/settings",
+    url: "/alumni/settings",
     icon: Settings,
   },
   {
     title: "Help & Support",
-    url: "/help",
+    url: "/alumni/help",
     icon: HelpCircle,
   },
 ]
@@ -120,10 +120,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {homeNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
