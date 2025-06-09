@@ -52,7 +52,7 @@ const homeNavigation = [
   },
   {
     title: "Surveys",
-    url: "/surveys",
+    url: "/alumni/surveys",
     icon: ClipboardList,
   },
 ]

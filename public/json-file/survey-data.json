@@ -1,0 +1,79 @@
+{
+  "id": "customer-satisfaction-2024",
+  "title": "Customer Satisfaction Survey",
+  "description": "Help us improve our services by sharing your feedback. This survey will take approximately 5 minutes to complete.",
+  "createdAt": "2024-01-15",
+  "status": "active",
+  "questions": [
+    {
+      "id": 1,
+      "type": "text",
+      "question": "What is your full name?",
+      "required": true,
+      "placeholder": "Enter your full name"
+    },
+    {
+      "id": 2,
+      "type": "email",
+      "question": "What is your email address?",
+      "required": true,
+      "placeholder": "Enter your email address"
+    },
+    {
+      "id": 3,
+      "type": "radio",
+      "question": "How satisfied are you with our service?",
+      "required": true,
+      "options": ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
+    },
+    {
+      "id": 4,
+      "type": "checkbox",
+      "question": "Which features do you use most? (Select all that apply)",
+      "required": false,
+      "options": ["Customer Support", "Online Portal", "Mobile App", "Email Notifications", "Reporting Tools"]
+    },
+    {
+      "id": 5,
+      "type": "select",
+      "question": "How did you hear about us?",
+      "required": true,
+      "options": ["Social Media", "Search Engine", "Friend/Family", "Advertisement", "Other"]
+    },
+    {
+      "id": 6,
+      "type": "rating",
+      "question": "Rate your overall experience (1-5 stars)",
+      "required": true,
+      "maxRating": 5
+    },
+    {
+      "id": 7,
+      "type": "textarea",
+      "question": "Please share any additional feedback or suggestions",
+      "required": false,
+      "placeholder": "Your feedback helps us improve..."
+    },
+    {
+      "id": 8,
+      "type": "radio",
+      "question": "Would you recommend our service to others?",
+      "required": true,
+      "options": ["Definitely", "Probably", "Not sure", "Probably not", "Definitely not"]
+    },
+    {
+      "id": 9,
+      "type": "select",
+      "question": "What is your age group?",
+      "required": false,
+      "options": ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"]
+    },
+    {
+      "id": 10,
+      "type": "checkbox",
+      "question": "Which communication channels do you prefer? (Select all that apply)",
+      "required": false,
+      "options": ["Email", "Phone", "SMS", "Live Chat", "Social Media"]
+    }
+  ]
+}
