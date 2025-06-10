@@ -195,13 +195,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 sideOffset={4}
               >
                 <DropdownMenuItem>
+                  <Link href={"/alumni/id"} className="flex items-center w-full gap-2">
                   <User className="size-4" />
-                  Alumni ID: ALU-2024-001
+                  Alumni ID
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
+                  <Link href={"/alumni/settings"} className="flex items-center w-full gap-2">
                   <Settings className="size-4" />
                   Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-red-600">
