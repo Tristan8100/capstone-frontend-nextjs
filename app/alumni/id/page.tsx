@@ -1,21 +1,11 @@
-import AnnouncementComponent from "@/components/announcement-components"
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { ModeToggle } from "@/components/mode-toggle"
-import AlumniIDCard from "@/components/alumni-id"
+
+import AlumniIDCard from "@/components/alumni-id";
+import AlumniLayout from "@/components/layout/alumni-layout"
+
 
 
 export default function Page() {
-    const alumniData = {
+  const alumniData = {
     alumniName: "Maria Clara Reyes",
     studentId: "UPLB-2018-54321",
     institutionName: "University of the Philippines Los Baños",
@@ -24,34 +14,9 @@ export default function Page() {
     qrCodeUrl: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UPLB-MARIA-CLARA-2018"
   };
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Alumni Portal</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Dashboard</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-          <div className="ml-auto mr-4">
-            <ModeToggle />
-          </div>
-        </header>
-
-        <main className="flex-1 space-y-6 p-6">
-          <AlumniIDCard {...alumniData} />
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+    <AlumniLayout currentPage="Community Feed">
+      <h2 className="text-xl font-semibold">Latest Post</h2>
+      <AlumniIDCard {...alumniData} />
+    </AlumniLayout>
   )
 }
