@@ -52,5 +52,9 @@
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "brace-expansion": "4.0.1"
   }
+
 }
