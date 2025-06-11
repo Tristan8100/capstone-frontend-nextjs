@@ -65,7 +65,7 @@ const communityNavigation = [
   },
   {
     title: "Create Post",
-    url: "/community/create",
+    url: "/alumni/create-post",
     icon: MessageSquarePlus,
   },
   {
