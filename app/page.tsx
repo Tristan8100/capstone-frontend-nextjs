@@ -16,7 +16,7 @@ function Home() {
 
   return (
     <>
-
+      <HeroHeader />
       <HeroSection/>
       <Features/>
       <InViewImagesGrid/>

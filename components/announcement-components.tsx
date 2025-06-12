@@ -102,7 +102,7 @@ export default function AnnouncementComponent() {
   }
 
   return (
-    <Card className="max-w-4xl mx-auto p-6 space-y-6">
+    <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
