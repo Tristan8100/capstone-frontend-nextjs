@@ -13,6 +13,14 @@ import {
   LogOut,
   GraduationCap,
   Import,
+  List,
+  Plus,
+  FileSpreadsheet,
+  BookUser,
+  Filter,
+  BookOpen,
+  Mail,
+  MessageSquare,
 } from "lucide-react"
 
 import {
@@ -38,53 +46,82 @@ import {
 
 import Link from "next/link"
 
-// Navigation data
-const homeNavigation = [
+// New Navigation data
+const surveyNavigation = [
   {
-    title: "Dashboard",
-    url: "/alumni/dashboard",
-    icon: BarChart3,
-  },
-  {
-    title: "Announcements",
-    url: "/alumni/announcement",
-    icon: Megaphone,
-  },
-  {
-    title: "Surveys",
-    url: "/alumni/surveys",
+    title: "View Surveys",
+    url: "/admin/surveys",
     icon: ClipboardList,
+  },
+  {
+    title: "Create Survey",
+    url: "/admin/surveys/create",
+    icon: Plus,
   },
 ]
 
-const communityNavigation = [
+const alumniNavigation = [
   {
-    title: "Community Feed",
-    url: "/alumni/feed",
-    icon: Users,
+    title: "Alumni List",
+    url: "/admin/alumni",
+    icon: List,
   },
   {
-    title: "Create Post",
-    url: "/alumni/create-post",
-    icon: MessageSquarePlus,
+    title: "Add Alumni",
+    url: "/admin/alumni/add",
+    icon: Plus,
   },
   {
-    title: "My Posts",
-    url: "/alumni/my-posts",
-    icon: FileText,
+    title: "Import Alumni",
+    url: "/admin/alumni/import",
+    icon: FileSpreadsheet,
+  },
+]
+
+const accountsNavigation = [
+  {
+    title: "Manage Accounts",
+    url: "/admin/accounts",
+    icon: BookUser,
   },
 ]
 
 const generalNavigation = [
   {
-    title: "Settings",
-    url: "/alumni/settings",
-    icon: Settings,
+    title: "Courses & Institutes",
+    url: "/admin/general/courses",
+    icon: BookOpen,
+  },
+]
+
+const announcementNavigation = [
+  {
+    title: "Create Announcement",
+    url: "/admin/announcements/create",
+    icon: Megaphone,
   },
   {
-    title: "Help & Support",
-    url: "/alumni/help",
-    icon: HelpCircle,
+    title: "View Announcements",
+    url: "/admin/announcements",
+    icon: Mail,
+  },
+]
+
+const communityNavigation = [
+  {
+    title: "View Posts",
+    url: "/admin/community/posts",
+    icon: Users,
+  },
+  {
+    title: "Pending Posts",
+    url: "/admin/community/pending",
+    icon: Filter,
+  },
+  {
+    title: "Chat",
+    url: "/admin/community/chat",
+    icon: MessageSquare,
   },
 ]
 
@@ -101,7 +138,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Alumni Portal</span>
-                  <span className="text-xs">SystemName</span>
+                  <span className="text-xs">Admin Panel</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -110,14 +147,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Home Section */}
+        {/* Survey Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>
-            Home
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Survey</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {homeNavigation.map((item) => (
+              {surveyNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>
@@ -131,12 +166,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Community Section */}
+        {/* Alumni Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>Community</SidebarGroupLabel>
+          <SidebarGroupLabel>Alumni</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {communityNavigation.map((item) => (
+              {alumniNavigation.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}>
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Accounts Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Accounts</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {accountsNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>
@@ -168,6 +222,44 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Announcement Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Announcement</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {announcementNavigation.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}>
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Community Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Community</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {communityNavigation.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link href={item.url}>
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
@@ -184,7 +276,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-semibold">Account</span>
-                    <span className="text-xs text-sidebar-foreground/70">ALU-2024-001</span>
+                    <span className="text-xs text-sidebar-foreground/70">ADMIN-001</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -195,16 +287,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 sideOffset={4}
               >
                 <DropdownMenuItem>
-                  <Link href={"/alumni/id"} className="flex items-center w-full gap-2">
-                  <User className="size-4" />
-                  Alumni ID
+                  <Link href={"/admin/account"} className="flex items-center w-full gap-2">
+                    <User className="size-4" />
+                    Admin Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Link href={"/alumni/settings"} className="flex items-center w-full gap-2">
-                  <Settings className="size-4" />
-                  Settings
+                  <Link href={"/admin/settings"} className="flex items-center w-full gap-2">
+                    <Settings className="size-4" />
+                    Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
