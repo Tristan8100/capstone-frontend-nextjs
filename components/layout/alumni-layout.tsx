@@ -11,6 +11,8 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { ModeToggle } from "@/components/mode-toggle"
+import { Search } from "lucide-react"
+import { SearchAlumni } from "../search-alumni"
 
 
 export default function AlumniLayout({children, currentPage}: {children: React.ReactNode, currentPage: string}) {
@@ -29,12 +31,13 @@ export default function AlumniLayout({children, currentPage}: {children: React.R
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{currentPage}</BreadcrumbPage>
+                    <BreadcrumbPage className="sm:text-sm md:text-md">{currentPage}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto mr-4">
+          <div className="ml-auto mr-4 flex gap-2">
+            <SearchAlumni />
             <ModeToggle />
           </div>
         </header>

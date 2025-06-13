@@ -1,5 +1,5 @@
 import AlumniLayout from "@/components/layout/alumni-layout"
-import PostComponents from "@/components/posts-components"
+import PostComponents from "@/components/alumni-components/posts-components"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader } from "@/components/ui/card"
 import { DialogFooter, DialogHeader } from "@/components/ui/dialog"
@@ -38,7 +38,7 @@ export default function Page() {
       </div>
       <Dialog>
         <DialogTrigger asChild>
-          <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto rounded-lg shadow-sm border-border/50 hover:border-primary/30 transition-colors group">
+          <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl h-[200px] mx-auto rounded-lg shadow-sm border-border/50 hover:border-primary/30 transition-colors group">
             <div className="flex items-center justify-center p-4">
               <div className="flex items-center w-full max-w-4xl px-4"> {/* Even wider */}
                 <Avatar className="mr-4">
@@ -50,12 +50,12 @@ export default function Page() {
                   </div>
               </div>
             </div>
-            <div className="flex justify-between mt-4 pt-3 border-t border-border/50">
+            <div className="flex justify-between pt-3 border-t border-border/50">
               <Button variant="ghost" className="flex-1">
                 <ImageIcon className="mr-2 h-4 w-4" /> Photo
               </Button>
               <Button variant="ghost" className="flex-1">
-                <CalendarIcon className="mr-2 h-4 w-4" /> Event
+                <CalendarIcon className="mr-2 h-4 w-4" /> Content
               </Button>
             </div>
           </Card>

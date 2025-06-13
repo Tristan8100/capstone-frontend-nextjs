@@ -1,6 +1,6 @@
 
 import AlumniLayout from "@/components/layout/alumni-layout"
-import PostComponents from "@/components/posts-components"
+import PostComponents from "@/components/alumni-components/posts-components"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 import { TransitionPanel } from '@/components/ui/transition-panel'
 
