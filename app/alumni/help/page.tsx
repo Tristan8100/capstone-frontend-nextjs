@@ -1,4 +1,4 @@
-import ChatUI from "@/components/alumni-chat"
+import ChatUI from "@/components/alumni-components/alumni-chat"
 import AlumniLayout from "@/components/layout/alumni-layout"
 
 

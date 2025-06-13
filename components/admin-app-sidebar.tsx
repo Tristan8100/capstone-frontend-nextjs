@@ -67,18 +67,10 @@ const alumniNavigation = [
     icon: List,
   },
   {
-    title: "Add Alumni",
-    url: "/admin/alumni/add",
-    icon: Plus,
-  },
-  {
     title: "Import Alumni",
     url: "/admin/alumni/import",
     icon: FileSpreadsheet,
   },
-]
-
-const accountsNavigation = [
   {
     title: "Manage Accounts",
     url: "/admin/accounts",
@@ -172,25 +164,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupContent>
             <SidebarMenu>
               {alumniNavigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Accounts Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Accounts</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {accountsNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>

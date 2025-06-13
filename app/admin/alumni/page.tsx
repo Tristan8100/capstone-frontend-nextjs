@@ -1,4 +1,5 @@
 import { AlumniTable } from "@/components/admin-components/alumni-list"
+import { ExcelUploadModal } from "@/components/admin-components/upload-alumni"
 import UserProfilePage from "@/components/alumni-profile"
 import AnnouncementComponent from "@/components/announcement-components"
 import AdminLayout from "@/components/layout/admin-layout"
@@ -15,9 +16,7 @@ export default function Page() {
                 <h1 className="text-2xl font-bold">Alumni List</h1>
                 <p className="text-muted-foreground">Manage and Upload new Alumni List</p>
             </div>
-            <Button variant="outline" size="sm" className="mb-2">
-                Import
-            </Button>
+            <ExcelUploadModal/>
       </div>
         <Separator/>
         <AlumniTable />
