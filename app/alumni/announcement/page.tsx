@@ -1,4 +1,4 @@
-import AnnouncementComponent from "@/components/announcement-components"
+import AnnouncementComponent from "@/components/alumni-components/announcement-components"
 import AlumniLayout from "@/components/layout/alumni-layout"
 
 

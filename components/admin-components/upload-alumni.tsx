@@ -62,7 +62,7 @@ export function ExcelUploadModal() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Upload Excel</Button>
+        <Button>Upload Excel</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

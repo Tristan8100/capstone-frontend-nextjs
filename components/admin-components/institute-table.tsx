@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { AddInstitute } from "./add-institute";
 
 const instituteData = [
   { id: "1", name: "Massachusetts Institute of Technology", location: "Cambridge, MA", established: "1861" },
@@ -53,7 +54,8 @@ export function InstitutesTable() {
   return (
     <div className="w-full p-4">
       {/* Search and Filter Controls */}
-      <div className="flex gap-4 mb-4">
+      <AddInstitute />
+      <div className="flex gap-4 mb-4 mt-4">
         <Input
           placeholder="Search institutes..."
           value={searchTerm}

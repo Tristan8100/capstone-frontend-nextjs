@@ -47,16 +47,16 @@ import {
 import Link from "next/link"
 
 // New Navigation data
-const surveyNavigation = [
+const dashboardNavigation = [
+  {
+    title: "Dashboard",
+    url: "/admin/dashboard",
+    icon: Home,
+  },
   {
     title: "View Surveys",
     url: "/admin/surveys",
     icon: ClipboardList,
-  },
-  {
-    title: "Create Survey",
-    url: "/admin/surveys/create",
-    icon: Plus,
   },
 ]
 
@@ -79,20 +79,13 @@ const generalNavigation = [
     url: "/admin/general",
     icon: BookOpen,
   },
-]
-
-const announcementNavigation = [
   {
-    title: "Create Announcement",
-    url: "/admin/announcements/create",
-    icon: Megaphone,
-  },
-  {
-    title: "View Announcements",
+    title: "Announcements",
     url: "/admin/announcements",
     icon: Mail,
   },
 ]
+
 
 const communityNavigation = [
   {
@@ -134,12 +127,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Survey Section */}
+        {/* Dashboard Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>Survey</SidebarGroupLabel>
+          <SidebarGroupLabel>Home</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {surveyNavigation.map((item) => (
+              {dashboardNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>
@@ -178,25 +171,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupContent>
             <SidebarMenu>
               {generalNavigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Announcement Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Announcement</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {announcementNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>

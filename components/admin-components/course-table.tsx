@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { AddCourse } from "./add-course";
 
 const data = [
   { id: "1", course: "Computer Science", institute: "MIT" },
@@ -58,7 +59,8 @@ export function CoursesTable() {
   return (
     <div className="w-full p-4">
       {/* Search and Filter Controls */}
-      <div className="flex gap-4 mb-4">
+      <AddCourse />
+      <div className="flex gap-4 mb-4 mt-4">
         <Input
           placeholder="Search courses..."
           value={searchTerm}

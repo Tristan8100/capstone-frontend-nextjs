@@ -1,7 +1,8 @@
+import { AddInstitute } from "@/components/admin-components/add-institute"
 import { CoursesTable } from "@/components/admin-components/course-table"
 import { InstitutesTable } from "@/components/admin-components/institute-table"
 import UserProfilePage from "@/components/alumni-profile"
-import AnnouncementComponent from "@/components/announcement-components"
+import AnnouncementComponent from "@/components/alumni-components/announcement-components"
 import AdminLayout from "@/components/layout/admin-layout"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import {

@@ -1,4 +1,4 @@
-import AnnouncementComponent from "@/components/announcement-components"
+import AnnouncementComponent from "@/components/alumni-components/announcement-components"
 import { AppSidebar } from "@/components/admin-app-sidebar"
 import {
   Breadcrumb,

@@ -1,7 +1,7 @@
 import { AccountTable } from "@/components/admin-components/account-list"
 import { ExcelUploadModal } from "@/components/admin-components/upload-alumni"
 import UserProfilePage from "@/components/alumni-profile"
-import AnnouncementComponent from "@/components/announcement-components"
+import AnnouncementComponent from "@/components/alumni-components/announcement-components"
 import AdminLayout from "@/components/layout/admin-layout"
 import SurveysList from "@/components/surveys-list"
 import { Button } from "@/components/ui/button"
