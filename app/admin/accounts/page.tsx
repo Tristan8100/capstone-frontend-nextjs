@@ -16,7 +16,6 @@ export default function Page() {
                 <h1 className="text-2xl font-bold">Alumni Accounts</h1>
                 <p className="text-muted-foreground">Manage Accounts</p>
             </div>
-            <ExcelUploadModal/>
       </div>
         <Separator/>
         <AccountTable />

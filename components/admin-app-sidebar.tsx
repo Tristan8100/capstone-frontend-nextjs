@@ -67,11 +67,6 @@ const alumniNavigation = [
     icon: List,
   },
   {
-    title: "Import Alumni",
-    url: "/admin/alumni/import",
-    icon: FileSpreadsheet,
-  },
-  {
     title: "Manage Accounts",
     url: "/admin/accounts",
     icon: BookUser,
@@ -81,7 +76,7 @@ const alumniNavigation = [
 const generalNavigation = [
   {
     title: "Courses & Institutes",
-    url: "/admin/general/courses",
+    url: "/admin/general",
     icon: BookOpen,
   },
 ]
