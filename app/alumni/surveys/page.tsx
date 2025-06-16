@@ -1,10 +1,8 @@
 import SurveysList from "@/components/surveys-list"
-import SurveyForm from "@/components/survey-form"
-import AlumniLayout from "@/components/layout/alumni-layout"
 
 export default function Page() {
   return (
-    <AlumniLayout currentPage="Surveys">
+    <>
       {/* Main Content Grid */}
           <div className="flex justify-center">
             {/* Left Column - Main Content */}
@@ -16,6 +14,6 @@ export default function Page() {
               </div>
             </div>
           </div>
-    </AlumniLayout>
+    </>
   )
 }

@@ -1,6 +1,5 @@
 
 import AlumniIDCard from "@/components/alumni-id";
-import AlumniLayout from "@/components/layout/alumni-layout"
 
 
 
@@ -14,9 +13,9 @@ export default function Page() {
     qrCodeUrl: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UPLB-MARIA-CLARA-2018"
   };
   return (
-    <AlumniLayout currentPage="Community Feed">
+    <>
       <h2 className="text-xl font-semibold">Latest Post</h2>
       <AlumniIDCard {...alumniData} />
-    </AlumniLayout>
+    </>
   )
 }

@@ -1,13 +1,11 @@
-
-import AlumniLayout from "@/components/layout/alumni-layout"
 import PostComponents from "@/components/alumni-components/posts-components"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
-import { TransitionPanel } from '@/components/ui/transition-panel'
+
 
 
 export default function Page() {
   return (
-    <AlumniLayout currentPage="Community Feed">
+    <>
       <div className="flex justify-center w-full">
                 <Tabs defaultValue="published" className="w-full max-w-4xl">
                 <TabsList className="grid w-full grid-cols-3 rounded-lg shadow-md bg-muted mb-6">
@@ -61,6 +59,6 @@ export default function Page() {
                 </TabsContent>
                 </Tabs>
             </div>
-    </AlumniLayout>
+    </>
   )
 }

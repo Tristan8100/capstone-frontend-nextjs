@@ -1,5 +1,4 @@
 'use client'
-import AlumniLayout from "@/components/layout/alumni-layout";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useRef, useState } from "react"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
@@ -22,7 +21,7 @@ export default function Page() {
   }
 
   return (
-    <AlumniLayout currentPage="Create Post">
+    <>
       <div className="flex flex-col space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Create a New Post</h1>
         <p className="text-muted-foreground">Share your thoughts, photos, and updates with the alumni community.</p>
@@ -94,6 +93,6 @@ export default function Page() {
         </CardFooter>
         </Card>
 
-     </AlumniLayout>
+     </>
   )
 }
