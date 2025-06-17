@@ -90,17 +90,17 @@ const generalNavigation = [
 const communityNavigation = [
   {
     title: "View Posts",
-    url: "/admin/community/posts",
+    url: "/admin/community-posts",
     icon: Users,
   },
   {
     title: "Pending Posts",
-    url: "/admin/community/pending",
+    url: "/admin/community-pending",
     icon: Filter,
   },
   {
     title: "Chat",
-    url: "/admin/community/chat",
+    url: "/admin/community-chat",
     icon: MessageSquare,
   },
 ]

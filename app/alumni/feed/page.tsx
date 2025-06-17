@@ -1,24 +1,7 @@
 
 import PostComponents from "@/components/alumni-components/posts-components"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader } from "@/components/ui/card"
-import { DialogFooter, DialogHeader } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-  DialogPortal,
-  DialogOverlay,
-} from "@radix-ui/react-dialog"
 import { Separator } from "@radix-ui/react-dropdown-menu"
-import { Label } from "@/components/ui/label"
-import { CalendarIcon, ImageIcon, UserRound, VideoIcon } from "lucide-react"
-import PostCreator from "@/components/create-post"
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar"
 import CreatePost from "@/components/alumni-components/create-post"
 
 export default function Page() {
