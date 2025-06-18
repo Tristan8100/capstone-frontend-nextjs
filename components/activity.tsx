@@ -198,8 +198,8 @@ export default function AlumniActivityComponent() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground italic">
-              "The alumni network has been instrumental in my career growth. The connections and mentorship
-              opportunities are invaluable."
+              The alumni network has been instrumental in my career growth. The connections and mentorship
+              opportunities are invaluable.
             </p>
           </div>
         </CardContent>

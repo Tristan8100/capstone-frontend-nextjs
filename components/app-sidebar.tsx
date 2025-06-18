@@ -1,6 +1,5 @@
 import type * as React from "react"
 import {
-  Home,
   BarChart3,
   Megaphone,
   ClipboardList,
@@ -12,7 +11,6 @@ import {
   User,
   LogOut,
   GraduationCap,
-  Import,
 } from "lucide-react"
 
 import {

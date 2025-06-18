@@ -2,7 +2,6 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import PostComponents from "./alumni-components/posts-components"
 
 export default function UserProfilePage() {
   // You can use `params.id` if using dynamic route like [id].tsx

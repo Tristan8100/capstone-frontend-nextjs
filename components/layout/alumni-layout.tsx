@@ -1,4 +1,3 @@
-import AnnouncementComponent from "@/components/alumni-components/announcement-components"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -11,7 +10,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { ModeToggle } from "@/components/mode-toggle"
-import { Search } from "lucide-react"
 import { SearchAlumni } from "../search-alumni"
 
 

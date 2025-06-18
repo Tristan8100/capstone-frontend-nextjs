@@ -22,6 +22,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
+import Image from 'next/image';
 
 export function UserSettings() {
   const { setTheme, theme } = useTheme();
@@ -94,10 +95,12 @@ export function UserSettings() {
               <Label htmlFor="profile-photo">Profile Photo</Label>
               {/* Changed items-start to items-center to center the photo elements */}
               <div className="flex flex-col items-center gap-4">
-                <img
+                <Image
                   src={profilePhoto || "https://placehold.co/100x100/aabbcc/ffffff?text=PP"}
                   alt="Profile Photo"
-                  className="w-24 h-24 rounded-full object-cover border border-gray-200"
+                  width={96}
+                  height={96}
+                  className="rounded-full object-cover border border-gray-200"
                   onError={(e) => { e.currentTarget.src = "https://placehold.co/100x100/aabbcc/ffffff?text=Error"; }}
                 />
                 <Input

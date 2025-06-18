@@ -1,10 +1,11 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
+import { CardContent, CardFooter } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ImagePlus, Send, X } from "lucide-react"
+import Image from "next/image"
 
 export default function PostCreator() {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -36,10 +37,12 @@ export default function PostCreator() {
                 key={index}
                 className="relative flex-shrink-0 w-24 h-24 rounded-md overflow-hidden bg-muted"
               >
-                <img
+                <Image
                   src={src}
                   alt={`preview-${index}`}
                   className="w-full h-full object-cover"
+                  width={96}
+                  height={96}
                 />
                 <button
                   type="button"

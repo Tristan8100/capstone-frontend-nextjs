@@ -4,7 +4,7 @@ import { AlertCircleIcon, ImageIcon, UploadIcon, XIcon } from "lucide-react"
 
 import { useFileUpload } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
-
+import Image from "next/image"
 export default function Component() {
   const maxSizeMB = 2
   const maxSize = maxSizeMB * 1024 * 1024 // 2MB default
@@ -25,7 +25,6 @@ export default function Component() {
     maxSize,
   })
   const previewUrl = files[0]?.preview || null
-  const fileName = files[0]?.file.name || null
 
   return (
     <div className="flex flex-col gap-2">
@@ -46,10 +45,12 @@ export default function Component() {
           />
           {previewUrl ? (
             <div className="absolute inset-0 flex items-center justify-center p-4">
-              <img
+              <Image
                 src={previewUrl}
                 alt={files[0]?.file?.name || "Uploaded image"}
                 className="mx-auto max-h-full rounded object-contain"
+                layout="fill"
+                objectFit="contain"
               />
             </div>
           ) : (

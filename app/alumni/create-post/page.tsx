@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ImagePlus, Send, X } from "lucide-react"
+import Image from "next/image";
 export default function Page() {
     const fileInputRef = useRef<HTMLInputElement>(null)
   const [previews, setPreviews] = useState<string[]>([])
@@ -47,10 +48,11 @@ export default function Page() {
                     key={index}
                     className="relative w-full aspect-square rounded overflow-hidden bg-muted"
                 >
-                    <img
-                    src={src}
-                    alt={`preview-${index}`}
-                    className="w-full h-full object-cover"
+                    <Image
+                      src={src}
+                      alt={`preview-${index}`}
+                      fill
+                      className="object-cover"
                     />
                     <button
                     type="button"

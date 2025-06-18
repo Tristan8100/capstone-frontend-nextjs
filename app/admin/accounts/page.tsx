@@ -1,9 +1,4 @@
 import { AccountTable } from "@/components/admin-components/account-list"
-import { ExcelUploadModal } from "@/components/admin-components/upload-alumni"
-import UserProfilePage from "@/components/alumni-profile"
-import AnnouncementComponent from "@/components/alumni-components/announcement-components"
-import SurveysList from "@/components/surveys-list"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 
 export default function Page() {

@@ -192,7 +192,7 @@ export default function AnnouncementComponent() {
           <DialogHeader>
             <DialogTitle>Edit Announcement</DialogTitle>
             <DialogDescription>
-              Make changes to your announcement here. Click save when you're done.
+              Make changes to your announcement here. Click save when you&apos;re done.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -236,9 +236,9 @@ export default function AnnouncementComponent() {
           <div className="flex-1 w-full md:w-auto min-w-0">
             <h2 className="text-lg font-semibold mb-2">🎉 Exciting Product Launch Announcement!</h2>
             <p className="text-muted-foreground leading-relaxed">
-              We're thrilled to announce the launch of our revolutionary new product line! After months of development and
-              testing, we're finally ready to share something truly special with our community. These images showcase just
-              a glimpse of what's to come. Stay tuned for more details and get ready to experience innovation like never
+              Were thrilled to announce the launch of our revolutionary new product line! After months of development and
+              testing, were finally ready to share something truly special with our community. These images showcase just
+              a glimpse of whats to come. Stay tuned for more details and get ready to experience innovation like never
               before!
               <span className="text-primary font-medium"> #Innovation #ProductLaunch #Exciting</span>
             </p>

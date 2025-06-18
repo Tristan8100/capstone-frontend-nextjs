@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import Image from 'next/image';
 
 // Define the props interface for type safety
 interface AlumniIDCardProps {
@@ -36,10 +37,13 @@ const AlumniIDCard: React.FC<AlumniIDCardProps> = ({
           {/* Institution Logo */}
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-4 overflow-hidden shadow-md">
             {/* IMPORTANT: Replace with your actual logo path */}
-            <img
+            <Image
               src="/static/TSBA Logo.png" // <---- Update this path!
-              alt={`Logo`}
+              alt="Logo"
+              width={48}
+              height={48}
               className="w-full h-full object-contain"
+              priority
             />
           </div>
           {/* Institution Name and Alumni ID Title */}
@@ -72,9 +76,11 @@ const AlumniIDCard: React.FC<AlumniIDCardProps> = ({
         {/* Right Section: QR Code */}
         <div className="flex-none flex items-center justify-center w-[160px]">
           {qrCodeUrl ? (
-            <img
+            <Image
               src={qrCodeUrl}
               alt="QR Code"
+              width={144}
+              height={144}
               className="w-36 h-36 object-contain border border-gray-300/50 p-1 rounded-lg shadow-sm"
             />
           ) : (

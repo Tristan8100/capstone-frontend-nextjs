@@ -18,7 +18,7 @@ export default function CreatePost() {
                   <AvatarFallback>U</AvatarFallback>
                 </Avatar>
                   <div className="flex-1 px-6 py-4 rounded-full bg-muted text-muted-foreground cursor-text hover:bg-muted/80 transition-colors duration-200 hover:ring-1 hover:ring-primary text-base">
-                    What's on your mind?
+                    What&#39;s on your mind?
                   </div>
               </div>
             </div>

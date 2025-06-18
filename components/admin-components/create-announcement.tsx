@@ -1,9 +1,8 @@
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
+
 import { Dialog, DialogTrigger, DialogPortal, DialogOverlay, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
-import { ImageIcon, CalendarIcon } from "lucide-react";
 import PostCreator from "../create-post";
 import { Button } from "../ui/button";
-import { Card, CardHeader } from "../ui/card";
+import { CardHeader } from "../ui/card";
 import { DialogHeader } from "../ui/dialog";
 
 export default function CreateAnnouncement() {

@@ -1,17 +1,15 @@
-import { Button } from '@/components/ui/button'
-import { ChevronRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import Image from "next/image"
 
 export default function ContentSection() {
     return (
         <section className="py-16 md:py-32" id='about'>
             <div className="mx-auto max-w-5xl space-y-8 px-6 md:space-y-12">
-                <img
+                <Image
                     className="rounded-(--radius) grayscale"
-                    src="static/alumni2.jpg"
+                    src="/static/alumni2.jpg"
                     alt="team image"
-                    height=""
-                    width=""
+                    height={400}
+                    width={600}
                     loading="lazy"
                 />
 

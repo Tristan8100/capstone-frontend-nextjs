@@ -52,11 +52,19 @@ const mockAlumni = [
   },
 ]
 
+type Alumni = {
+  id: string
+  firstName: string
+  lastName: string
+  course: string
+  status: string
+}
+
 export function AlumniTable() {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage] = useState(1)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedAlumni, setSelectedAlumni] = useState<any>(null)
+  const [selectedAlumni, setSelectedAlumni] = useState<Alumni | null>(null)
   const itemsPerPage = 5
 
   // Filter alumni based on search term only
@@ -72,7 +80,7 @@ export function AlumniTable() {
   const currentItems = filteredAlumni.slice(0, itemsPerPage)
   const totalPages = Math.ceil(filteredAlumni.length / itemsPerPage)
 
-  const handleRowClick = (alumni: any) => {
+  const handleRowClick = (alumni: Alumni) => {
     setSelectedAlumni(alumni)
     setIsDialogOpen(true)
   }

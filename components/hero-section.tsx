@@ -1,10 +1,11 @@
 import React from 'react'
 import  Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Mail, Menu, SendHorizonal, X } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { InfiniteSlider } from '@/components/ui/infinite-slider'
 import { ProgressiveBlur } from '@/components/ui/progressive-blur'
 import { TextEffect } from './ui/text-effect'
+import Image from 'next/image'
 
 export default function HeroSection() {
     return (
@@ -53,14 +54,14 @@ export default function HeroSection() {
                         <div className="absolute inset-0 -mx-4 rounded-3xl p-3 lg:col-span-3">
                             <div className="relative">
                                 <div className="bg-radial-[at_65%_25%] to-background z-1 -inset-17 absolute from-transparent to-40%"></div>
-                                <img
+                                <Image
                                     className="hidden dark:block"
                                     src="/static/alumni.jpg"
                                     alt="app illustration"
                                     width={2796}
                                     height={2008}
                                 />
-                                <img
+                                <Image
                                     className="dark:hidden"
                                     src="/static/alumni.jpg"
                                     alt="app illustration"
@@ -84,72 +85,79 @@ export default function HeroSection() {
                                     speed={40}
                                     gap={112}>
                                     <div className="flex">
-                                        <img
+                                        <Image
                                             className="mx-auto h-[50px] w-fit dark:invert"
                                             src="/static/TSBA Logo.png"
                                             alt="Alumni"
-                                            height="28"
-                                            width="auto"
+                                            height={50}
+                                            width={50}
+                                            style={{ width: 'auto', height: '50px' }}
                                         />
                                     </div>
 
                                     <div className="flex">
-                                        <img
+                                        <Image
                                             className="mx-auto h-[50px] w-fit dark:invert"
                                             src="/static/informationtechnology.png"
                                             alt="IT"
-                                            height="28"
-                                            width="auto"
+                                            height={50}
+                                            width={50}
+                                            style={{ width: 'auto', height: '50px' }}
                                         />
                                     </div>
 
                                     <div className="flex">
-                                        <img
+                                        <Image
                                             className="mx-auto h-[50px] w-fit dark:invert"
                                             src="/static/shs.png"
                                             alt="shs"
-                                            height="28"
-                                            width="auto"
+                                            height={50}
+                                            width={50}
+                                            style={{ width: 'auto', height: '50px' }}
                                         />
                                     </div>
 
                                     <div className="flex">
-                                        <img
+                                        <Image
                                             className="mx-auto h-[50px] w-fit dark:invert"
                                             src="/static/artsandsciences.png"
                                             alt="arts and sciences"
-                                            height="28"
-                                            width="auto"
+                                            height={50}
+                                            width={50}
+                                            style={{ width: 'auto', height: '50px' }}
                                         />
                                     </div>
 
                                     <div className="flex">
-                                        <img
+                                        <Image
                                             className="mx-auto h-[50px] w-fit dark:invert"
                                             src="/static/businessandaccountancy.png"
                                             alt="business and accountancy"
-                                            height="28"
-                                            width="auto"
+                                            height={50}
+                                            width={50}
+                                            style={{ width: 'auto', height: '50px' }}
                                         />
                                     </div>
 
                                     <div className="flex">
-                                        <img
+                                        <Image
                                             className="mx-auto h-[50px] w-fit dark:invert"
                                             src="/static/education.png"
                                             alt="education"
-                                            height="28"
-                                            width="auto"
+                                            height={50}
+                                            width={50}
+                                            style={{ width: 'auto', height: '50px' }}
                                         />
                                     </div>
 
                                     <div className="flex">
-                                        <img
+                                        <Image
                                             className="mx-auto h-[50px] w-fit dark:invert"
                                             src="/static/hmtm.png"
                                             alt="hmtm"
-                                            height="28"
-                                            width="auto"
+                                            height={50}
+                                            width={50}
+                                            style={{ width: 'auto', height: '50px' }}
                                         />
                                     </div>
 

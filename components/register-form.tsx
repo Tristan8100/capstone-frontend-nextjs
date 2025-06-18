@@ -31,7 +31,7 @@ export function RegisterForm({
   const toggleVisibility = () => setIsVisible((prevState) => !prevState)
 
   const [otp, setOtp] = useState<string>("")
-  const [email, setEmail] = useState<string>("")
+  const [email] = useState<string>("")
 
 
   const [currentStep, setCurrentStep] = useState(1)

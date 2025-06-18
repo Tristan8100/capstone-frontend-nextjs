@@ -21,14 +21,6 @@ interface Comment {
   replies?: Comment[]
 }
 
-interface Reply {
-  id: string
-  author: string
-  avatar: string
-  content: string
-  timestamp: string
-}
-
 export default function PostComponents() {
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
@@ -138,9 +130,9 @@ export default function PostComponents() {
           <div className="flex-1 w-full md:w-auto min-w-0"> {/* flex-1 allows it to grow, min-w-0 prevents overflow issues */}
             <h2 className="text-lg font-semibold mb-2">🎉 Exciting Product Launch Announcement!</h2>
             <p className="text-muted-foreground leading-relaxed">
-              We're thrilled to announce the launch of our revolutionary new product line! After months of development and
-              testing, we're finally ready to share something truly special with our community. These images showcase just
-              a glimpse of what's to come. Stay tuned for more details and get ready to experience innovation like never
+              Were thrilled to announce the launch of our revolutionary new product line! After months of development and
+              testing, were finally ready to share something truly special with our community. These images showcase just
+              a glimpse of whats to come. Stay tuned for more details and get ready to experience innovation like never
               before!
               <span className="text-primary font-medium"> #Innovation #ProductLaunch #Exciting</span>
             </p>

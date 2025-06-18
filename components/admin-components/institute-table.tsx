@@ -167,6 +167,9 @@ export function InstitutesTable() {
           No institutes found
         </div>
       )}
+      {selectedInstitute && (
+        <div>{selectedInstitute.name}</div>
+      )}
     </div>
   );
 }

@@ -1,11 +1,8 @@
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { TrendingUp, Clock, Filter, Search, Users, MessageSquare, Heart, Share2, Plus } from "lucide-react"
+import { TrendingUp, Clock, Filter, Search, Users, MessageSquare, Heart} from "lucide-react"
 import PostComponents from "@/components/alumni-components/posts-components"
 
 export default function Page() {

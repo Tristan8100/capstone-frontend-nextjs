@@ -1,7 +1,6 @@
-import { GalleryVerticalEnd } from "lucide-react"
 
-import { LoginForm } from "@/components/login-form"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function AuthTemplate({children}: {children?: React.ReactNode}) {
   return (
@@ -10,7 +9,7 @@ export default function AuthTemplate({children}: {children?: React.ReactNode}) {
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
             <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-              <img src="static/TSBA Logo.png" alt="" />
+              <Image src="/static/TSBA Logo.png" alt="" width={24} height={24} />
             </div>
             BTECHLINK
           </Link>
@@ -22,10 +21,12 @@ export default function AuthTemplate({children}: {children?: React.ReactNode}) {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
-        <img
-          src="static/alumni5.jpg"
+        <Image
+          src="/static/alumni5.jpg"
           alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.5] brightness-[0.7]"
+          layout="fill"
+          objectFit="cover"
+          className="absolute inset-0 w-full h-full dark:brightness-[0.5] brightness-[0.7]"
         />
       </div>
     </div>

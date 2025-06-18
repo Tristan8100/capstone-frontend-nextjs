@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { ModeToggle } from './mode-toggle'
-
+import Image from 'next/image'
 
 const menuItems = [
     { name: 'Features', href: '#features' },
@@ -38,7 +38,7 @@ export const HeroHeader = () => {
                                 href="/"
                                 aria-label="home"
                                 className="flex items-center space-x-2">
-                                <img className='w-10' src="static/TSBA Logo.png" alt="" />
+                                <Image className='w-10' src="/static/TSBA Logo.png" alt="" width={40} height={40} />
                                 <div>BTECHLINK</div>
                             </Link>
 
