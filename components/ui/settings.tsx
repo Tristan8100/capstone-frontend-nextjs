@@ -96,12 +96,11 @@ export function UserSettings() {
               {/* Changed items-start to items-center to center the photo elements */}
               <div className="flex flex-col items-center gap-4">
                 <Image
-                  src={profilePhoto || "https://placehold.co/100x100/aabbcc/ffffff?text=PP"}
+                  src={profilePhoto || "/static/user.png"}
                   alt="Profile Photo"
                   width={96}
                   height={96}
                   className="rounded-full object-cover border border-gray-200"
-                  onError={(e) => { e.currentTarget.src = "https://placehold.co/100x100/aabbcc/ffffff?text=Error"; }}
                 />
                 <Input
                   id="profile-photo"
