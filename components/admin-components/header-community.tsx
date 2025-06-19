@@ -1,13 +1,13 @@
 import { Users, MessageSquare, Heart } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Separator } from "../ui/separator";
-export default function HeaderCommunity(){
+export default function HeaderCommunity({currentPage} : {currentPage: string}) {
     return (
         <>
             {/* Header Section */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
-                <h1 className="text-3xl font-bold tracking-tight">Community Posts</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{currentPage}</h1>
                 <p className="text-muted-foreground">Connect with fellow alumni and share your experiences</p>
               </div>
             </div>
