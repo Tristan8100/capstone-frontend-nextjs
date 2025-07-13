@@ -14,19 +14,29 @@ import {
   StepperTrigger,
 } from "@/components/ui/stepper"
 import Link from "next/link"
+import { api } from "@/lib/api"
+import { useRouter } from "next/navigation"
 
-// Import Shadcn's input-otp components
+import { toast } from "sonner"
+
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 
+interface Response {
+  message: string;
+  token: string; // Optional token for password reset
+  error: string; // Optional error message
+  email: string; // Optional email for verification
+}
 
 export function ForgotPasswordForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const router = useRouter();
   const steps = [1, 2, 3]; // Three steps for forgot password
   const id = useId(); // For password visibility toggle
   const [isVisible, setIsVisible] = useState<boolean>(false);
@@ -34,6 +44,8 @@ export function ForgotPasswordForm({
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   // State to hold form data for each step
   const [email, setEmail] = useState('');
@@ -43,41 +55,73 @@ export function ForgotPasswordForm({
 
   const handleNextStep = async () => {
     setIsLoading(true);
-    let success = true; // Assume success for now
+    setError(null);
 
-    if (currentStep === 1) {
-      // Step 1: Enter Email
-      // In a real app: Send API request to trigger OTP email
-      console.log("Sending OTP to:", email);
-      // Example: const response = await fetch('/api/send-otp', { method: 'POST', body: JSON.stringify({ email }) });
-      // if (!response.ok) success = false;
-    } else if (currentStep === 2) {
-      // Step 2: Verify OTP
-      // In a real app: Send API request to verify OTP
-      console.log("Verifying OTP:", otp);
-      // Example: const response = await fetch('/api/verify-otp', { method: 'POST', body: JSON.stringify({ email, otp }) });
-      // if (!response.ok) success = false;
-    } else if (currentStep === 3) {
-      // Step 3: Reset Password
-      // In a real app: Send API request to reset password
-      console.log("Attempting to reset password for", email, "to", newPassword);
-      if (newPassword !== confirmPassword) {
-        alert("Passwords do not match!"); // Basic client-side validation
-        success = false;
+    try {
+      if (currentStep === 1) {
+        // Step 1: Enter Email
+        const response = await api.post<Response>('/api/forgot-password', { email });
+        if (response.data.message === 'OTP sent to your email.') {
+          setCurrentStep(2);
+        } else {
+          setError('Failed to send OTP. Please try again.');
+        }
+      } else if (currentStep === 2) {
+        // Step 2: Verify OTP
+        const response = await api.post<Response>('/api/forgot-password-token', { 
+          email, 
+          otp 
+        });
+        if (response.data.message === 'OTP verified successfully.') {
+          setToken(response.data.token);
+          setCurrentStep(3);
+        } else {
+          setError('Invalid OTP. Please try again.');
+        }
+      } else if (currentStep === 3) {
+        // Step 3: Reset Password
+        if (newPassword !== confirmPassword) {
+          throw new Error("Passwords do not match!");
+        }
+        
+        const response = await api.post<Response>('/api/reset-password', { 
+          email,
+          password: newPassword,
+          password_confirmation: confirmPassword,
+          token
+        });
+        
+        if (response.data.message === 'Password reset successfully.') {
+          toast.success('Password reset successfully!');
+          router.push('/login?reset=success');
+        } else {
+          setError('Failed to reset password. Please try again.');
+        }
       }
-      // Example: const response = await fetch('/api/reset-password', { method: 'POST', body: JSON.stringify({ email, newPassword }) });
-      // if (!response.ok) success = false;
-    }
-
-    setTimeout(() => { // Simulate API call delay
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'An error occurred');
+    } finally {
       setIsLoading(false);
-      if (success) {
-        setCurrentStep((prev) => prev + 1);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.post<Response>('/api/forgot-password', { email });
+      if (response.data.message === 'OTP sent to your email.') {
+        // Show success message
+        setError('OTP resent successfully!');
       } else {
-        // Handle error, e.g., display a message to the user
-        alert("An error occurred. Please try again.");
+        setError('Failed to resend OTP. Please try again.');
       }
-    }, 1500); // Simulate network latency
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to resend OTP');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isNextButtonDisabled = () => {
@@ -90,7 +134,14 @@ export function ForgotPasswordForm({
   };
 
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form 
+      className={cn("flex flex-col gap-6", className)} 
+      {...props}
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleNextStep();
+      }}
+    >
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Forgot Password</h1>
         <Stepper value={currentStep} onValueChange={setCurrentStep}>
@@ -109,6 +160,12 @@ export function ForgotPasswordForm({
           ))}
         </Stepper>
       </div>
+
+      {error && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className="grid gap-6">
         {/* Step 1: Enter Email */}
@@ -134,22 +191,27 @@ export function ForgotPasswordForm({
           <div className="flex flex-col gap-3 text-center">
             <Label htmlFor="otp">Enter Verification Code</Label>
             <p className="text-sm text-muted-foreground">
-              A 6-digit code has been sent to **{email}**.
+              A 6-digit code has been sent to <strong>{email}</strong>.
             </p>
             {/* Using Shadcn's InputOTP components */}
             <div className="flex items-center justify-center">
-            <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)}>
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-                <InputOTPSlot index={5} />
-              </InputOTPGroup>
-            </InputOTP>
+              <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)}>
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
             </div>
-            <Button variant="link" className="mt-2" onClick={() => console.log("Resend OTP logic here")}>
+            <Button 
+              variant="link" 
+              className="mt-2" 
+              onClick={handleResendOtp}
+              disabled={isLoading}
+            >
               Resend Code
             </Button>
           </div>
@@ -169,6 +231,7 @@ export function ForgotPasswordForm({
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
+                  minLength={8}
                 />
                 <button
                   className="text-muted-foreground/80 hover:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md transition-[color,box-shadow] outline-none focus:z-10 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -198,6 +261,7 @@ export function ForgotPasswordForm({
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
+                  minLength={8}
                 />
                 <button
                   className="text-muted-foreground/80 hover:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md transition-[color,box-shadow] outline-none focus:z-10 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -226,16 +290,22 @@ export function ForgotPasswordForm({
               className="w-32"
               onClick={() => setCurrentStep((prev) => prev - 1)}
               disabled={currentStep === 1 || isLoading}
+              type="button"
             >
               Prev step
             </Button>
             <Button
-              variant="outline"
               className="w-32"
-              onClick={handleNextStep}
               disabled={isNextButtonDisabled()}
+              type="submit"
             >
-              {currentStep < steps.length ? "Next step" : "Reset Password"}
+              {isLoading ? (
+                <span className="animate-pulse">Processing...</span>
+              ) : currentStep < steps.length ? (
+                "Next step"
+              ) : (
+                "Reset Password"
+              )}
             </Button>
           </div>
         </div>

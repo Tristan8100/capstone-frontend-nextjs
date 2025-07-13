@@ -94,6 +94,38 @@ export function RegisterForm({
     }
 
     fetchCourses()
+
+    const checkEmailVerification = () => {
+      // Only run on client side
+      if (typeof window === 'undefined') return;
+
+      try {
+        // Get email from URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const email = params.get('email');
+
+        if (email) {
+          // Basic email validation
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            console.error('Invalid email format in URL');
+            return;
+          }
+
+          setVerificationEmail(email);
+          setCurrentStep(3); // Jump to OTP verification step
+          setOtpResendTimer(60); // Start resend timer
+          toast.info('Please verify your email to continue');
+
+          // Clean up the URL without reloading
+          params.delete('email');
+          window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+        }
+      } catch (error) {
+        console.error('Error checking email verification:', error);
+      }
+    };
+
+    checkEmailVerification();
   }, [])
 
   // OTP resend timer

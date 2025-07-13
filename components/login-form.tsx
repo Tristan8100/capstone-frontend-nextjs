@@ -50,22 +50,34 @@ export function LoginForm({
     setError('');
 
     try {
-      // First try alumni
-      const alumniResponse = await api.post<LoginResponse>('/api/login', {
+      // First try alumni login
+      const response = await api.post<LoginResponse>('/api/login', {
         email,
         password
       });
 
-      const alumniData = alumniResponse.data;
+      const data = response.data;
 
-      if (alumniData.status === 'success') {
-        login(alumniData.user_info, alumniData.token);
-        api.defaults.headers.common['Authorization'] = `Bearer ${alumniData.token}`;
-        toast.success(alumniData.message || 'Login successful!');
+      if (data.status === 'success') {
+        login(data.user_info, data.token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+        toast.success(data.message || 'Login successful!');
         router.push('/alumni/dashboard');
         return;
       }
-    } catch (alumniError: any) {
+    } catch (error: any) {
+      if (error.response?.status === 401 && error.response?.data?.message === 'Email not verified') {
+        // If email not verified, send OTP and redirect to register
+        try {
+          const otpResponse = await api.post('/api/send-otp', { email });
+          toast.success('Please verify your email first');
+          router.push(`/register?email=${encodeURIComponent(email)}`);
+        } catch (otpError) {
+          toast.error('Failed to send verification code');
+        }
+        return;
+      }
+
       // If alumni login fails, try admin login
       try {
         const adminResponse = await api.post<LoginResponse>('/api/admin-login', {
@@ -76,7 +88,6 @@ export function LoginForm({
         const adminData = adminResponse.data;
 
         if (adminData.status === 'success') {
-          // For admin, course and qr_code_path will be null idk if that works
           login(adminData.user_info, adminData.token);
           api.defaults.headers.common['Authorization'] = `Bearer ${adminData.token}`;
           toast.success(adminData.message || 'Admin login successful!');
@@ -84,10 +95,9 @@ export function LoginForm({
           return;
         }
       } catch (adminError: any) {
-        // If both logins fail, show error
         setError(
           adminError.response?.data?.message || 
-          alumniError.response?.data?.message || 
+          error.response?.data?.message || 
           'Invalid credentials'
         );
       }
@@ -100,6 +110,12 @@ export function LoginForm({
     <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} {...props}>
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Login to your account</h1>
+        <p className="text-sm text-muted-foreground">
+          Don't have an account?{' '}
+          <Link href="/register" className="underline underline-offset-4">
+            Register here
+          </Link>
+        </p>
       </div>
       <div className="grid gap-6">
         <div className="grid gap-3">
