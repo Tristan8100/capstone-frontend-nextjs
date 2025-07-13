@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import AlumniLayout from "@/components/layout/alumni-layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 type User = {
   id: number;
@@ -19,7 +19,6 @@ export default function AlumniLayoutComponent({ children }: { children: React.Re
   const pathname = usePathname();
   const router = useRouter();
   const { user, setUser, logout } = useAuth();
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -42,8 +41,6 @@ export default function AlumniLayoutComponent({ children }: { children: React.Re
         localStorage.removeItem("token");
         setUser(null);
         router.push("/login");
-      } finally {
-        setIsReady(true);
       }
     };
 
@@ -54,8 +51,6 @@ export default function AlumniLayoutComponent({ children }: { children: React.Re
   useEffect(() => {
     console.log("User state updated:", user);
   }, [user]);
-
-  if (!isReady) return <div>Loading...</div>; // Better loading state
 
   if (!user) {
     // This will trigger if verification fails

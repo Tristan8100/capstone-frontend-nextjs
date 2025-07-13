@@ -71,7 +71,7 @@ export default function Page() {
               </div>
             </div>
             <div className="p-4">
-              <PostComponents />
+              <PostComponents /> {/* change this ahhh */}
             </div>
           </div>
         </TabsContent>

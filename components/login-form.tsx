@@ -11,6 +11,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+
 interface User {
   id: number;
   name: string;
@@ -37,6 +38,7 @@ export function LoginForm({
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string>('')
   const { login } = useAuth()
   const router = useRouter()
 
@@ -45,23 +47,50 @@ export function LoginForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
-      const response = await api.post<LoginResponse>('/api/login', {
+      // First try alumni
+      const alumniResponse = await api.post<LoginResponse>('/api/login', {
         email,
         password
       });
 
-      const data = response.data;
+      const alumniData = alumniResponse.data;
 
-      if (data.status === 'success') {
-        login(data.user_info, data.token);
-        api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-        toast.success(data.message || 'Login successful!');
+      if (alumniData.status === 'success') {
+        login(alumniData.user_info, alumniData.token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${alumniData.token}`;
+        toast.success(alumniData.message || 'Login successful!');
         router.push('/alumni/dashboard');
+        return;
       }
-    } catch (error: any) {
-      // Error handling remains the same
+    } catch (alumniError: any) {
+      // If alumni login fails, try admin login
+      try {
+        const adminResponse = await api.post<LoginResponse>('/api/admin-login', {
+          email,
+          password
+        });
+
+        const adminData = adminResponse.data;
+
+        if (adminData.status === 'success') {
+          // For admin, course and qr_code_path will be null idk if that works
+          login(adminData.user_info, adminData.token);
+          api.defaults.headers.common['Authorization'] = `Bearer ${adminData.token}`;
+          toast.success(adminData.message || 'Admin login successful!');
+          router.push('/admin/dashboard');
+          return;
+        }
+      } catch (adminError: any) {
+        // If both logins fail, show error
+        setError(
+          adminError.response?.data?.message || 
+          alumniError.response?.data?.message || 
+          'Invalid credentials'
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +98,6 @@ export function LoginForm({
 
   return (
     <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} {...props}>
-      {/* Rest of your form JSX remains exactly the same */}
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Login to your account</h1>
       </div>
@@ -121,12 +149,16 @@ export function LoginForm({
                 )}
               </button>
             </div>
+            {error && (
+              <p className="text-red-500 text-sm mt-2">
+                {error}
+              </p>
+            )}
           </div>
         </div>
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? 'Logging in...' : 'Login'}
         </Button>
-        {/* Rest of your form JSX remains exactly the same */}
       </div>
     </form>
   )
