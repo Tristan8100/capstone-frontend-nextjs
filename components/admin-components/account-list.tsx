@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react" // Add useCallback
 import Link from "next/link"
 import { Eye } from "lucide-react"
 
@@ -9,113 +9,156 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// Mock data for demonstration
-const mockAlumni = [
-  {
-    id: "ST001",
-    firstName: "John",
-    lastName: "Doe",
-    course: "Computer Science",
-    institute: "College of Engineering",
-  },
-  {
-    id: "ST002",
-    firstName: "Jane",
-    lastName: "Smith",
-    course: "Information Technology",
-    institute: "College of Engineering",
-  },
-  {
-    id: "ST003",
-    firstName: "Michael",
-    lastName: "Johnson",
-    course: "Business Administration",
-    institute: "College of Business",
-  },
-  {
-    id: "ST004",
-    firstName: "Emily",
-    lastName: "Williams",
-    course: "Marketing",
-    institute: "College of Business",
-  },
-  {
-    id: "ST005",
-    firstName: "David",
-    lastName: "Brown",
-    course: "Electrical Engineering",
-    institute: "College of Engineering",
-  },
-  {
-    id: "ST006",
-    firstName: "Sarah",
-    lastName: "Miller",
-    course: "Psychology",
-    institute: "College of Arts and Sciences",
-  },
-  {
-    id: "ST007",
-    firstName: "Robert",
-    lastName: "Wilson",
-    course: "Biology",
-    institute: "College of Arts and Sciences",
-  },
-]
+// Import your API instances
+import { api2 } from "@/lib/api" // Assuming lib/api.ts is correct path
 
-// Get unique institutes from mock data
-const institutes = [...new Set(mockAlumni.map((alumni) => alumni.institute))]
 
-// Get courses by institute
-const getCoursesByInstitute = (institute: string | null) => {
-  if (!institute) return [...new Set(mockAlumni.map((alumni) => alumni.course))]
-  return [...new Set(mockAlumni.filter((alumni) => alumni.institute === institute).map((alumni) => alumni.course))]
+interface Alumni {
+  id: string;
+  firstName: string;
+  lastName: string;
+  course: string;
+  institute: string;
+  data: any;
+  total: number;
+  current_page: number;
+  last_page: number;
+}
+
+// Define types for Institutes and Courses
+interface Institute {
+  id: string;
+  name: string;
+}
+
+interface Course {
+  id: string;
+  name: string;
+  institute_id: string; // Add this if you use it for filtering courses
 }
 
 export function AccountTable() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedInstitute, setSelectedInstitute] = useState<string | null>(null)
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(5)
+  const [alumni, setAlumni] = useState<Alumni[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Available courses based on selected institute
-  const availableCourses = getCoursesByInstitute(selectedInstitute)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedInstituteId, setSelectedInstituteId] = useState<string | null>(null); // Use ID for API calls
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null); // Use ID for API calls
 
-  // Filter alumni based on search term, institute, and course
-  const filteredAlumni = mockAlumni.filter((alumni) => {
-    const matchesSearch =
-      alumni.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alumni.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alumni.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Fixed items per page as per your mock setup
+  const [totalItems, setTotalItems] = useState(0); // Total items from API for pagination
+  const [lastPage, setLastPage] = useState(1); // Last page from API
 
-    const matchesInstitute = !selectedInstitute || alumni.institute === selectedInstitute
-    const matchesCourse = !selectedCourse || alumni.course === selectedCourse
+  const [institutes, setInstitutes] = useState<Institute[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
 
-    return matchesSearch && matchesInstitute && matchesCourse
-  })
 
-  // Handle institute change
+
+  // 1. Fetch Institutes
+  useEffect(() => {
+    const fetchInstitutes = async () => {
+      try {
+        const response = await api2.get<Institute[]>('/api/institutes'); // Using 'api' assuming it's public
+        setInstitutes(response.data);
+      } catch (err) {
+        console.error("Error fetching institutes:", err);
+        setError("Failed to load institutes.");
+      }
+    };
+    fetchInstitutes();
+  }, []);
+
+  // 2. Fetch Courses based on selected institute
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setCourses([]); // Clear courses when institute changes
+      if (selectedInstituteId) {
+        try {
+          const response = await api2.get<Course[]>(`/api/courses?institute_id=${selectedInstituteId}`); // Using 'api'
+          setCourses(response.data);
+        } catch (err) {
+          console.error("Error fetching courses:", err);
+          setError("Failed to load courses.");
+        }
+      } else {
+        // If no institute is selected, fetch all courses or reset.
+        // For simplicity matching your mock, we'll fetch all if no institute is selected initially
+        // You might want to handle this differently, e.g., fetch all if 'all institutes' is chosen.
+        try {
+            const response = await api2.get<Course[]>(`/api/courses`); // Fetch all courses if no specific institute is chosen
+            setCourses(response.data);
+        } catch (err) {
+            console.error("Error fetching all courses:", err);
+            setError("Failed to load all courses.");
+        }
+      }
+    };
+    fetchCourses();
+  }, [selectedInstituteId]);
+
+
+  // 3. Fetch Alumni data
+  const fetchAlumni = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        search: searchTerm,
+        institute: selectedInstituteId ? institutes.find(inst => inst.id === selectedInstituteId)?.name : null, // Send name to backend
+        course: selectedCourseId ? courses.find(c => c.id === selectedCourseId)?.name : null, // Send name to backend
+      };
+
+      // Filter out null/empty params to avoid sending unnecessary query strings
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([_, value]) => value !== null && value !== "")
+      );
+
+      const response = await api2.get<Alumni>('/api/alumni', { params: filteredParams }); // Using 'api2' for authenticated calls
+      setAlumni(response.data.data); // Backend returns { data: [...], current_page: ... }
+      setTotalItems(response.data.total);
+      setLastPage(response.data.last_page);
+      setCurrentPage(response.data.current_page); // Sync with backend's current page
+    } catch (err: any) {
+      console.error("Error fetching alumni:", err.response?.data || err);
+      setError(err.response?.data?.message || "Failed to load alumni data.");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, itemsPerPage, searchTerm, selectedInstituteId, selectedCourseId, institutes, courses]); // Dependencies for useCallback
+
+  useEffect(() => {
+    fetchAlumni();
+  }, [fetchAlumni]); // Re-fetch alumni whenever fetchAlumni function reference changes (due to its dependencies)
+
+  // Handlers
   const handleInstituteChange = (value: string) => {
-    setSelectedInstitute(value === "all" ? null : value)
-    setSelectedCourse(null) // Reset course when institute changes
-  }
+    setSelectedInstituteId(value === "all" ? null : value);
+    setSelectedCourseId(null); // Reset course when institute changes
+    setCurrentPage(1); // Reset to first page on filter change
+  };
 
-  // Add a handleCourseChange function:
   const handleCourseChange = (value: string) => {
-    setSelectedCourse(value === "all" ? null : value)
-  }
+    setSelectedCourseId(value === "all" ? null : value);
+    setCurrentPage(1); // Reset to first page on filter change
+  };
 
-  // Calculate pagination
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = filteredAlumni.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredAlumni.length / itemsPerPage)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page on search change
+  };
 
-  // Add this pagination handler function:
   const handlePageChange = (pageNumber: number) => {
-    console.log(`Navigating to page ${pageNumber}`)
-    setCurrentPage(pageNumber)
-  }
+    setCurrentPage(pageNumber);
+  };
+
+  // Derived state for the UI to display selected names
+  const selectedInstituteName = institutes.find(inst => inst.id === selectedInstituteId)?.name || "Select Institute";
+  const selectedCourseName = courses.find(c => c.id === selectedCourseId)?.name || "Select Course";
+
 
   return (
     <div className="space-y-4">
@@ -124,20 +167,20 @@ export function AccountTable() {
           <Input
             placeholder="Search by name or student ID..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             className="max-w-sm"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Select onValueChange={handleInstituteChange} value={selectedInstitute || ""}>
+          <Select onValueChange={handleInstituteChange} value={selectedInstituteId || "all"}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select Institute" />
+              <SelectValue placeholder={selectedInstituteName} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Institutes</SelectItem>
               {institutes.map((institute) => (
-                <SelectItem key={institute} value={institute}>
-                  {institute}
+                <SelectItem key={institute.id} value={institute.id}>
+                  {institute.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -145,17 +188,17 @@ export function AccountTable() {
 
           <Select
             onValueChange={handleCourseChange}
-            value={selectedCourse || ""}
-            disabled={availableCourses.length === 0}
+            value={selectedCourseId || "all"}
+            disabled={courses.length === 0 && !selectedCourseId} // Disable if no courses or no course explicitly selected
           >
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select Course" />
+              <SelectValue placeholder={selectedCourseName} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Courses</SelectItem>
-              {availableCourses.map((course) => (
-                <SelectItem key={course} value={course}>
-                  {course}
+              {courses.map((course) => (
+                <SelectItem key={course.id} value={course.id}>
+                  {course.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -176,16 +219,28 @@ export function AccountTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentItems.length > 0 ? (
-              currentItems.map((alumni) => (
-                <TableRow key={alumni.id}>
-                  <TableCell className="font-medium">{alumni.id}</TableCell>
-                  <TableCell>{alumni.firstName}</TableCell>
-                  <TableCell>{alumni.lastName}</TableCell>
-                  <TableCell>{alumni.course}</TableCell>
-                  <TableCell>{alumni.institute}</TableCell>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  Loading alumni...
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-red-500">
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : alumni.length > 0 ? (
+              alumni.map((alumnus) => (
+                <TableRow key={alumnus.id}>
+                  <TableCell className="font-medium">{alumnus.id}</TableCell>
+                  <TableCell>{alumnus.firstName}</TableCell>
+                  <TableCell>{alumnus.lastName}</TableCell>
+                  <TableCell>{alumnus.course}</TableCell>
+                  <TableCell>{alumnus.institute}</TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/alumni/${alumni.id}`}>
+                    <Link href={`/alumni/${alumnus.id}`}>
                       <Button variant="ghost" size="icon">
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">View alumni details</span>
@@ -204,24 +259,23 @@ export function AccountTable() {
           </TableBody>
         </Table>
       </div>
+
       <div className="flex items-center justify-center space-x-2 py-4">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            console.log("Previous page")
-            if (currentPage > 1) handlePageChange(currentPage - 1)
-          }}
-          disabled={currentPage === 1}
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1 || loading}
         >
           Previous
         </Button>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        {Array.from({ length: lastPage }, (_, i) => i + 1).map((page) => (
           <Button
             key={page}
             variant={currentPage === page ? "default" : "outline"}
             size="sm"
             onClick={() => handlePageChange(page)}
+            disabled={loading}
           >
             {page}
           </Button>
@@ -229,15 +283,12 @@ export function AccountTable() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            console.log("Next page")
-            if (currentPage < totalPages) handlePageChange(currentPage + 1)
-          }}
-          disabled={currentPage === totalPages}
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === lastPage || loading}
         >
           Next
         </Button>
       </div>
     </div>
-  )
+  );
 }

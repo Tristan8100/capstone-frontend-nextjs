@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { api2 } from "@/lib/api";
 
 export function ExcelUploadModal() {
   const [file, setFile] = useState<File | null>(null);
@@ -17,7 +19,7 @@ export function ExcelUploadModal() {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+    if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
     }
   };
@@ -26,7 +28,7 @@ export function ExcelUploadModal() {
     e.preventDefault();
     
     if (!file) {
-      alert("Please select a file first!");
+      toast.error("Please select a file first!");
       return;
     }
 
@@ -34,26 +36,27 @@ export function ExcelUploadModal() {
     
     try {
       const formData = new FormData();
-      formData.append("excel_file", file); // Match this key with your Laravel expectation
-      
-      const response = await fetch("/api/upload-excel", {
-        method: "POST",
-        body: formData,
-        // headers will be set automatically for FormData
+      formData.append("file", file); // DON'T FORGET TO MATCH ON LARAVEL REQUEST!!!
+
+      const response = await api2.post("/api/alumni-list/import", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const result = await response.json();
-      console.log("Upload success:", result);
-      alert("File uploaded successfully!");
+      toast.success("Alumni imported successfully!");
       setIsOpen(false);
       setFile(null);
-    } catch (error) {
+      
+      // Optional: Refresh alumni list after import
+      window.location.reload();
+      
+    } catch (error: any) {
       console.error("Upload error:", error);
-      alert("Error uploading file. Please try again.");
+      toast.error(
+        error.response?.data?.message || 
+        "Error importing file. Please check the format and try again."
+      );
     } finally {
       setIsUploading(false);
     }
@@ -62,22 +65,26 @@ export function ExcelUploadModal() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>Upload Excel</Button>
+        <Button>Import Excel/CSV</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Upload Excel File</DialogTitle>
+          <DialogTitle>Import Alumni Data</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="excel-file">Excel File</Label>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="file">Excel/CSV File</Label>
             <Input 
-              id="excel-file" 
+              id="file" 
               type="file" 
               accept=".xlsx, .xls, .csv"
               onChange={handleFileChange}
               required
+              disabled={isUploading}
             />
+            <p className="text-sm text-muted-foreground">
+              Supported formats: .xlsx, .xls, .csv
+            </p>
           </div>
           <div className="flex justify-end gap-2">
             <Button 
@@ -88,8 +95,8 @@ export function ExcelUploadModal() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isUploading}>
-              {isUploading ? "Uploading..." : "Upload"}
+            <Button type="submit" disabled={!file || isUploading}>
+              {isUploading ? "Importing..." : "Import"}
             </Button>
           </div>
         </form>
