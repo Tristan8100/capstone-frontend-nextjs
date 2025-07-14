@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Settings2, Sparkles, IdCard } from 'lucide-react'
+import { IdCard, Megaphone, MessageSquareText } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 export default function Features() {
@@ -7,58 +7,57 @@ export default function Features() {
         <section className="bg-zinc-50 py-16 md:py-32 dark:bg-transparent" id='features'>
             <div className="@container mx-auto max-w-5xl px-6">
                 <div className="text-center">
-                    <h2 className="text-balance text-4xl font-semibold lg:text-5xl">Built to cover your needs</h2>
-                    <p className="mt-4">Libero sapiente aliquam quibusdam aspernatur, praesentium iusto repellendus.</p>
+                    <h2 className="text-balance text-4xl font-semibold lg:text-5xl">
+                        All-in-One Platform for Alumni Engagement
+                    </h2>
+                    <p className="mt-4 text-muted-foreground">
+                        Everything you need to stay connected—smart tools, real-time updates, and a growing community of graduates.
+                    </p>
                 </div>
                 <div className="@min-4xl:max-w-full @min-4xl:grid-cols-3 mx-auto mt-8 grid max-w-sm gap-6 *:text-center md:mt-16">
+                    
+                    {/* Alumni ID */}
                     <Card className="group shadow-zinc-950/5">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <IdCard
-                                    className="size-6"
-                                    aria-hidden
-                                />
+                                <IdCard className="size-6" aria-hidden />
                             </CardDecorator>
-
-                            <h3 className="mt-6 font-medium">Customizable</h3>
+                            <h3 className="mt-6 font-medium">Alumni ID System</h3>
                         </CardHeader>
-
                         <CardContent>
-                            <p className="text-sm">Extensive customization options, allowing you to tailor every aspect to meet your specific needs.</p>
+                            <p className="text-sm">
+                                Each verified alumni gets a unique ID—your digital pass to connect, update records, and access exclusive features.
+                            </p>
                         </CardContent>
                     </Card>
 
+                    {/* Announcements & Surveys */}
                     <Card className="group shadow-zinc-950/5">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <Settings2
-                                    className="size-6"
-                                    aria-hidden
-                                />
+                                <Megaphone className="size-6" aria-hidden />
                             </CardDecorator>
-
-                            <h3 className="mt-6 font-medium">You have full control</h3>
+                            <h3 className="mt-6 font-medium">Stay Informed</h3>
                         </CardHeader>
-
                         <CardContent>
-                            <p className="mt-3 text-sm">From design elements to functionality, you have complete control to create a unique and personalized experience.</p>
+                            <p className="mt-3 text-sm">
+                                Get the latest announcements and participate in surveys to have your voice heard in shaping alumni programs.
+                            </p>
                         </CardContent>
                     </Card>
 
+                    {/* Alumni Feed */}
                     <Card className="group shadow-zinc-950/5">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <Sparkles
-                                    className="size-6"
-                                    aria-hidden
-                                />
+                                <MessageSquareText className="size-6" aria-hidden />
                             </CardDecorator>
-
-                            <h3 className="mt-6 font-medium">Powered By AI</h3>
+                            <h3 className="mt-6 font-medium">Alumni Feed</h3>
                         </CardHeader>
-
                         <CardContent>
-                            <p className="mt-3 text-sm">Elements to functionality, you have complete control to create a unique experience.</p>
+                            <p className="mt-3 text-sm">
+                                Post updates, share milestones, and connect with fellow graduates in a dedicated social space built for you.
+                            </p>
                         </CardContent>
                     </Card>
                 </div>
@@ -77,6 +76,8 @@ const CardDecorator = ({ children }: { children: ReactNode }) => (
             aria-hidden
             className="bg-radial to-background absolute inset-0 from-transparent to-75%"
         />
-        <div className="bg-background absolute inset-0 m-auto flex size-12 items-center justify-center border-l border-t">{children}</div>
+        <div className="bg-background absolute inset-0 m-auto flex size-12 items-center justify-center border-l border-t">
+            {children}
+        </div>
     </div>
 )

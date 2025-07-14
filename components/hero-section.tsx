@@ -16,18 +16,9 @@ export default function HeroSection() {
                     <div className="relative mx-auto px-6 py-28 lg:py-20 w-[80%] border">
                         <div className="lg:flex lg:items-center lg:gap-12 mt-12">
                             <div className="relative z-10 mx-auto max-w-xl text-center lg:ml-0 lg:w-1/2 lg:text-left">
-                                <Link
-                                    href="/"
-                                    className="rounded-(--radius) mx-auto flex w-fit items-center gap-2 border p-1 pr-3 lg:ml-0">
-                                    <span className="bg-muted rounded-[calc(var(--radius)-0.25rem)] px-2 py-1 text-xs">New</span>
-                                    <span className="text-sm">Introduction Tailark Html</span>
-                                    <span className="bg-(--color-border) block h-4 w-px"></span>
 
-                                    <ArrowRight className="size-4" />
-                                </Link>
-
-                                <TextEffect per='char' preset='fade' className="mt-10 text-balance text-4xl font-bold md:text-5xl xl:text-5xl">Production Ready Digital Marketing blocks</TextEffect>
-                                <TextEffect className="mt-8">Error totam sit illum. Voluptas doloribus asperiores quaerat aperiam. Quidem harum omnis beatae ipsum soluta!</TextEffect>
+                                <TextEffect per='char' preset='fade' className="mt-10 text-balance text-4xl font-bold md:text-5xl xl:text-5xl">Welcome to BTECHLINK</TextEffect>
+                                <TextEffect className="mt-8">Your gateway for staying connected beyond success. Explore alumni profiles, discover success stories, and stay in touch with the community that shaped your journey.</TextEffect>
 
                                 <div className="mt-12 flex flex-col items-center justify-center gap-2 sm:flex-row lg:justify-start">
                                     <Button

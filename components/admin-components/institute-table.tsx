@@ -1,175 +1,163 @@
-// components/InstitutesTable.tsx
-"use client";
+"use client"
 
-import { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { AddInstitute } from "./add-institute";
-
-const instituteData = [
-  { id: "1", name: "Massachusetts Institute of Technology", location: "Cambridge, MA", established: "1861" },
-  { id: "2", name: "Harvard University", location: "Cambridge, MA", established: "1636" },
-  { id: "3", name: "Stanford University", location: "Stanford, CA", established: "1885" },
-  { id: "4", name: "University of Oxford", location: "Oxford, UK", established: "1096" },
-  { id: "5", name: "California Institute of Technology", location: "Pasadena, CA", established: "1891" },
-];
+import { useState, useEffect } from "react"
+import { Search, Building2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { api2 } from "@/lib/api"
 
 interface Institute {
-  id: string;
-  name: string;
-  location: string;
-  established: string;
+  id: string
+  name: string
+  description?: string | null
+  image_path?: string | null
+  created_at?: string
+  updated_at?: string
 }
 
-export function InstitutesTable() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [locationFilter, setLocationFilter] = useState("All");
-  const [selectedInstitute, setSelectedInstitute] = useState<Institute | null>(null);
+export default function InstitutesList() {
+  const [institutes, setInstitutes] = useState<Institute[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
 
-  // Get unique locations for filter
-  const locations = ["All", ...new Set(instituteData.map(item => item.location))];
+  const fetchInstitutes = async (search = "") => {
+    try {
+      setLoading(true)
+      setError(null)
 
-  // Filter data based on search and location selection
-  const filteredData = instituteData.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = locationFilter === "All" || item.location === locationFilter;
-    return matchesSearch && matchesLocation;
-  });
+      const params = new URLSearchParams()
+      if (search) params.append("search", search)
+
+      const response = await api2.get(`/api/institutes?${params.toString()}`)
+
+      // Your API returns a direct array
+      const data = Array.isArray(response.data) ? response.data as Institute[] : []
+
+      setInstitutes(data)
+    } catch (err: any) {
+      console.error("API Error:", err)
+      setError(err.response?.data?.message || err.message || "Failed to fetch institutes")
+      setInstitutes([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchInstitutes()
+  }, [])
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value)
+    fetchInstitutes(value)
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )
+  }
 
   return (
-    <div className="w-full p-4">
-      {/* Search and Filter Controls */}
-      <AddInstitute />
-      <div className="flex gap-4 mb-4 mt-4">
-        <Input
-          placeholder="Search institutes..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        
-        <select 
-          value={locationFilter}
-          onChange={(e) => setLocationFilter(e.target.value)}
-          className="border rounded-md px-3 py-2"
-        >
-          {locations.map(location => (
-            <option key={location} value={location}>
-              {location}
-            </option>
-          ))}
-        </select>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Institutes</h1>
+          <p className="text-muted-foreground">
+            {institutes.length > 0
+              ? `Found ${institutes.length} institute${institutes.length === 1 ? "" : "s"}`
+              : "No institutes found"}
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search institutes..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
       </div>
 
-      {/* Table */}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Institute Name</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Established</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredData.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.name}</TableCell>
-              <TableCell>{item.location}</TableCell>
-              <TableCell>{item.established}</TableCell>
-              <TableCell>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setSelectedInstitute(item)}
-                    >
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                      <DialogTitle>Edit Institute Information</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <label htmlFor="id" className="text-right">
-                          Institute ID
-                        </label>
-                        <Input
-                          id="id"
-                          defaultValue={item.id}
-                          className="col-span-3"
-                          readOnly
-                        />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <label htmlFor="name" className="text-right">
-                          Name
-                        </label>
-                        <Input
-                          id="name"
-                          defaultValue={item.name}
-                          className="col-span-3"
-                        />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <label htmlFor="location" className="text-right">
-                          Location
-                        </label>
-                        <Input
-                          id="location"
-                          defaultValue={item.location}
-                          className="col-span-3"
-                        />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <label htmlFor="established" className="text-right">
-                          Established
-                        </label>
-                        <Input
-                          id="established"
-                          defaultValue={item.established}
-                          className="col-span-3"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline">Cancel</Button>
-                      <Button type="submit">Save Changes</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </TableCell>
-            </TableRow>
+      {/* Loading State */}
+      {loading && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+            </Card>
           ))}
-        </TableBody>
-      </Table>
-
-      {filteredData.length === 0 && (
-        <div className="text-center py-4 text-gray-500">
-          No institutes found
         </div>
       )}
-      {selectedInstitute && (
-        <div>{selectedInstitute.name}</div>
+
+      {/* Institutes Grid */}
+      {!loading && institutes.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {institutes.map((institute) => (
+            <Card key={institute.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">{institute.name}</CardTitle>
+                  </div>
+                  {institute.created_at && (
+                    <Badge variant="secondary" className="text-xs">
+                      {new Date(institute.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </Badge>
+                  )}
+                </div>
+                {institute.description && (
+                  <CardDescription className="line-clamp-2">{institute.description}</CardDescription>
+                )}
+              </CardHeader>
+
+              {institute.image_path && (
+                <CardContent>
+                  <div className="aspect-video relative overflow-hidden rounded-md bg-muted">
+                    <img
+                      src={`http://127.0.0.1:8000/${institute.image_path}`}
+                      alt={institute.name}
+                      className="object-cover w-full h-full"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none"
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && institutes.length === 0 && (
+        <div className="text-center py-12">
+          <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold">No institutes found</h3>
+          <p className="text-muted-foreground">
+            {searchTerm ? `No institutes match "${searchTerm}"` : "No institutes available at the moment"}
+          </p>
+        </div>
       )}
     </div>
-  );
+  )
 }

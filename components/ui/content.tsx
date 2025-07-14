@@ -16,8 +16,12 @@ export default function ContentSection() {
                 <div className="grid gap-6 md:grid-cols-2 md:gap-12">
                     <h2 className="text-4xl font-medium">The <span className='text-primary font-bold'>BTECHLINK</span> community brings together our <span className='text-primary font-bold'>BTECH</span> alumnis</h2>
                     <div className="space-y-6">
-                        <p>Lyra is evolving to be more than just the models. It supports an entire ecosystem — from products to the APIs and platforms helping developers and businesses innovate.</p>
-
+                        <p>
+                            BTECHLINK is a digital bridge connecting graduates of BTECH with each other and with the institution that shaped their journey. Whether you&rsquo;re here to update your alumni ID, read announcements, participate in surveys, or share your latest achievement &mdash; we&rsquo;ve built this platform to keep you involved, informed, and inspired.
+                        </p>
+                        <p>
+                            We believe alumni are not just part of the past &mdash; you&rsquo;re part of our future. Let&rsquo;s continue growing the BTECH legacy, together.
+                        </p>
                     </div>
                 </div>
             </div>

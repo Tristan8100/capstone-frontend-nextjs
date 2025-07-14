@@ -34,22 +34,24 @@ interface Institute {
 interface Course {
   id: string;
   name: string;
-  institute_id: string; // Add this if you use it for filtering courses
+  institute_id: string;
 }
-
+interface AddInstituteProps {
+  onSuccess: () => Promise<void>;
+}
 export function AccountTable() {
   const [alumni, setAlumni] = useState<Alumni[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedInstituteId, setSelectedInstituteId] = useState<string | null>(null); // Use ID for API calls
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null); // Use ID for API calls
+  const [selectedInstituteId, setSelectedInstituteId] = useState<string | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5); // Fixed items per page as per your mock setup
-  const [totalItems, setTotalItems] = useState(0); // Total items from API for pagination
-  const [lastPage, setLastPage] = useState(1); // Last page from API
+  const [itemsPerPage] = useState(5);
+  const [totalItems, setTotalItems] = useState(0);
+  const [lastPage, setLastPage] = useState(1);
 
   const [institutes, setInstitutes] = useState<Institute[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -60,7 +62,7 @@ export function AccountTable() {
   useEffect(() => {
     const fetchInstitutes = async () => {
       try {
-        const response = await api2.get<Institute[]>('/api/institutes'); // Using 'api' assuming it's public
+        const response = await api2.get<Institute[]>('/api/institutes');
         setInstitutes(response.data);
       } catch (err) {
         console.error("Error fetching institutes:", err);
@@ -73,19 +75,16 @@ export function AccountTable() {
   // 2. Fetch Courses based on selected institute
   useEffect(() => {
     const fetchCourses = async () => {
-      setCourses([]); // Clear courses when institute changes
+      setCourses([]); //Clear courses if institute changes
       if (selectedInstituteId) {
         try {
-          const response = await api2.get<Course[]>(`/api/courses?institute_id=${selectedInstituteId}`); // Using 'api'
+          const response = await api2.get<Course[]>(`/api/courses?institute_id=${selectedInstituteId}`);
           setCourses(response.data);
         } catch (err) {
           console.error("Error fetching courses:", err);
           setError("Failed to load courses.");
         }
       } else {
-        // If no institute is selected, fetch all courses or reset.
-        // For simplicity matching your mock, we'll fetch all if no institute is selected initially
-        // You might want to handle this differently, e.g., fetch all if 'all institutes' is chosen.
         try {
             const response = await api2.get<Course[]>(`/api/courses`); // Fetch all courses if no specific institute is chosen
             setCourses(response.data);
@@ -108,31 +107,29 @@ export function AccountTable() {
         page: currentPage,
         per_page: itemsPerPage,
         search: searchTerm,
-        institute: selectedInstituteId ? institutes.find(inst => inst.id === selectedInstituteId)?.name : null, // Send name to backend
-        course: selectedCourseId ? courses.find(c => c.id === selectedCourseId)?.name : null, // Send name to backend
+        institute: selectedInstituteId ? institutes.find(inst => inst.id === selectedInstituteId)?.name : null,
+        course: selectedCourseId ? courses.find(c => c.id === selectedCourseId)?.name : null,
       };
-
-      // Filter out null/empty params to avoid sending unnecessary query strings
       const filteredParams = Object.fromEntries(
         Object.entries(params).filter(([_, value]) => value !== null && value !== "")
       );
 
-      const response = await api2.get<Alumni>('/api/alumni', { params: filteredParams }); // Using 'api2' for authenticated calls
-      setAlumni(response.data.data); // Backend returns { data: [...], current_page: ... }
+      const response = await api2.get<Alumni>('/api/alumni', { params: filteredParams });
+      setAlumni(response.data.data); 
       setTotalItems(response.data.total);
       setLastPage(response.data.last_page);
-      setCurrentPage(response.data.current_page); // Sync with backend's current page
+      setCurrentPage(response.data.current_page);
     } catch (err: any) {
       console.error("Error fetching alumni:", err.response?.data || err);
       setError(err.response?.data?.message || "Failed to load alumni data.");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, selectedInstituteId, selectedCourseId, institutes, courses]); // Dependencies for useCallback
+  }, [currentPage, itemsPerPage, searchTerm, selectedInstituteId, selectedCourseId, institutes, courses]);
 
   useEffect(() => {
     fetchAlumni();
-  }, [fetchAlumni]); // Re-fetch alumni whenever fetchAlumni function reference changes (due to its dependencies)
+  }, [fetchAlumni]);
 
   // Handlers
   const handleInstituteChange = (value: string) => {

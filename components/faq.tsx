@@ -7,30 +7,31 @@ export default function FAQsTwo() {
     const faqItems = [
         {
             id: 'item-1',
-            question: 'How long does shipping take?',
-            answer: 'Standard shipping takes 3-5 business days, depending on your location. Express shipping options are available at checkout for 1-2 business day delivery.',
+            question: 'How do I get my Alumni ID?',
+            answer: 'After signing up and verifying your information, your Alumni ID will be generated automatically. You can view and download it from your profile page.',
         },
         {
             id: 'item-2',
-            question: 'What payment methods do you accept?',
-            answer: 'We accept all major credit cards (Visa, Mastercard, American Express), PayPal, Apple Pay, and Google Pay. For enterprise customers, we also offer invoicing options.',
+            question: 'Can I update my personal or academic information?',
+            answer: 'Yes. Once logged in, go to your profile and click the "Edit" button. You can update your name, contact details, course, batch, and more.',
         },
         {
             id: 'item-3',
-            question: 'Can I change or cancel my order?',
-            answer: 'You can modify or cancel your order within 1 hour of placing it. After this window, please contact our customer support team who will assist you with any changes.',
+            question: 'How will I receive announcements or survey invitations?',
+            answer: 'Announcements will appear on your dashboard, and survey invitations may also be sent to your registered email. Make sure your contact info is up to date.',
         },
         {
             id: 'item-4',
-            question: 'Do you ship internationally?',
-            answer: "Yes, we ship to over 50 countries worldwide. International shipping typically takes 7-14 business days. Additional customs fees may apply depending on your country's import regulations.",
+            question: 'Is this platform only for graduates of BTECH?',
+            answer: 'Yes. BTECHLINK is exclusively for BTECH alumni. All sign-ups are subject to verification before gaining full access.',
         },
         {
             id: 'item-5',
-            question: 'What is your return policy?',
-            answer: 'We offer a 30-day return policy for most items. Products must be in original condition with tags attached. Some specialty items may have different return terms, which will be noted on the product page.',
+            question: 'Is my data safe and private?',
+            answer: 'Absolutely. We prioritize data privacy and security. Your information is only visible to authorized personnel and is never shared without your consent.',
         },
     ]
+
 
     return (
         <section className="py-16 md:py-24" id='faqs'>

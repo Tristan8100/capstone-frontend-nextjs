@@ -1,6 +1,6 @@
 
 import { CoursesTable } from "@/components/admin-components/course-table"
-import { InstitutesTable } from "@/components/admin-components/institute-table"
+import InstitutesTable from "@/components/admin-components/institute-table"
 import {
   Tabs,
   TabsContent,

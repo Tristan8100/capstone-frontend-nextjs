@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // Disables ALL ESLint checks during build
   },
+  reactStrictMode: false,
 };
 
 export default nextConfig;
