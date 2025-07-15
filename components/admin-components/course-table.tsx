@@ -167,7 +167,7 @@ export function CoursesTable() {
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Edit Course</DialogTitle>
+                        <DialogTitle>Edit Program</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
                         <Input

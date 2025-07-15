@@ -67,7 +67,7 @@ const alumniNavigation = [
 
 const generalNavigation = [
   {
-    title: "Courses & Institutes",
+    title: "Programs & Institutes",
     url: "/admin/general",
     icon: BookOpen,
   },

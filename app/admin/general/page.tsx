@@ -17,7 +17,7 @@ export default function Page() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">General</h1>
             <TabsList>
-              <TabsTrigger value="courses">Courses</TabsTrigger>
+              <TabsTrigger value="courses">Program</TabsTrigger>
               <TabsTrigger value="institutes">Institutes</TabsTrigger>
             </TabsList>
           </div>

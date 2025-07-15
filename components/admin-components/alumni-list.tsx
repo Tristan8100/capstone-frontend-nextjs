@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Eye } from "lucide-react"
+import { Pencil } from "lucide-react"
 import { api2 } from "@/lib/api"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -198,7 +198,7 @@ export function AlumniTable() {
                       size="icon"
                       onClick={() => handleRowClick(alumni.id)}
                     >
-                      <Eye className="h-4 w-4" />
+                      <Pencil className="h-4 w-4" />
                       <span className="sr-only">View alumni details</span>
                     </Button>
                   </TableCell>

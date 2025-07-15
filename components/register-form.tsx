@@ -83,7 +83,7 @@ export function RegisterForm({
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await api.get<Course[]>('/api/get-courses')
+        const response = await api.get<Course[]>('/api/get-courses-general')
         setCourses(response.data)
       } catch (error) {
         console.error('Failed to fetch courses:', error)

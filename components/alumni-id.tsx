@@ -6,7 +6,7 @@ import Image from 'next/image';
 // Define the props interface for type safety
 interface AlumniIDCardProps {
   alumniName: string;
-  studentId: string;
+  studentId: number;
   institutionName: string;
   graduationYear?: string;
   profilePictureUrl?: string;
