@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // Disables ALL ESLint checks during build
   },
+  images: {
+    domains: [
+      '127.0.0.1',       // Laravel local
+    ],
+  },
   reactStrictMode: false,
 };
 

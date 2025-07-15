@@ -1,163 +1,258 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Search, Building2 } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { api2 } from "@/lib/api"
+import { useState, useEffect } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { api2 } from "@/lib/api"; // Using your axios instance
+import Image from 'next/image';
+import { AddInstitute } from "./add-institute";
 
-interface Institute {
-  id: string
-  name: string
-  description?: string | null
-  image_path?: string | null
-  created_at?: string
-  updated_at?: string
-}
+type Institute = {
+  id: string;
+  name: string;
+  description?: string;
+  image_path?: string;
+  courses_count?: number;
+};
 
-export default function InstitutesList() {
-  const [institutes, setInstitutes] = useState<Institute[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
+type InstitutesResponse = {
+  data: Institute[];
+  meta: {
+    current_page: number;
+    last_page: number;
+  };
+};
 
-  const fetchInstitutes = async (search = "") => {
+export function InstitutesTable() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [institutes, setInstitutes] = useState<Institute[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Fetch institutes with pagination and search
+  const fetchInstitutes = async (page: number = 1) => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        ...(searchTerm && { search: searchTerm }),
+      });
 
-      const params = new URLSearchParams()
-      if (search) params.append("search", search)
+      const response = await api2.get<InstitutesResponse>(`/api/institutes-general?${params.toString()}`);
+      const { data, meta } = response.data;
 
-      const response = await api2.get(`/api/institutes?${params.toString()}`)
-
-      // Your API returns a direct array
-      const data = Array.isArray(response.data) ? response.data as Institute[] : []
-
-      setInstitutes(data)
-    } catch (err: any) {
-      console.error("API Error:", err)
-      setError(err.response?.data?.message || err.message || "Failed to fetch institutes")
-      setInstitutes([])
+      setInstitutes(data);
+      setTotalPages(meta.last_page);
+      setCurrentPage(meta.current_page);
+    } catch (error) {
+      toast.error("Failed to fetch institutes");
+      setInstitutes([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
+  // Handle institute updates
+const handleUpdate = async (id: string, e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  const toastId = toast.loading('Updating institute...');
+  
+  const formData = new FormData(e.currentTarget);
+  formData.append('_method', 'PUT'); //need to put _method: 'PUT' in the request body
+  
+  try {
+    await api2.post(`/api/institutes-general/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    toast.success('Institute updated successfully!', { id: toastId });
+    fetchInstitutes(currentPage);
+  } catch (error) {
+    const message = (error as any).response?.data?.message || 'Update failed';
+    toast.error(message, { id: toastId });
+    console.error('Update error:', error);
+  }
+};
+
+// Handle institute deletion
+const handleDelete = async (id: string) => {
+  const toastId = toast.loading('Deleting...');
+  
+  try {
+    await api2.delete(`/api/institutes-general/${id}`);
+    toast.success('Institute deleted!', { id: toastId });
+    fetchInstitutes(1); // Reset to page 1 after deletion
+  } catch (error) {
+    const message = (error as any).response?.data?.message || 'Failed to delete';
+    toast.error(message, { id: toastId });
+    console.error('Delete error:', error);
+  }
+};
+
+  // Search debounce effect
   useEffect(() => {
-    fetchInstitutes()
-  }, [])
+    const timer = setTimeout(() => fetchInstitutes(1), 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value)
-    fetchInstitutes(value)
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    )
-  }
+  // Pagination effect
+  useEffect(() => {
+    fetchInstitutes(currentPage);
+  }, [currentPage]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Institutes</h1>
-          <p className="text-muted-foreground">
-            {institutes.length > 0
-              ? `Found ${institutes.length} institute${institutes.length === 1 ? "" : "s"}`
-              : "No institutes found"}
-          </p>
-        </div>
-
-        {/* Search */}
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search institutes..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+    <div className="space-y-4 p-4">
+      <div className="flex justify-between items-center">
+        <Input
+          placeholder="Search institutes..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <AddInstitute onSuccess={() => fetchInstitutes(currentPage)} />
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Institutes Grid */}
-      {!loading && institutes.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {institutes.map((institute) => (
-            <Card key={institute.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">{institute.name}</CardTitle>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Courses</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center">Loading...</TableCell>
+            </TableRow>
+          ) : institutes.length > 0 ? (
+            institutes.map((institute) => (
+              <TableRow key={institute.id}>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-3">
+                    {institute.image_path && (
+                      <Image
+                        src={`${api2.defaults.baseURL}/${institute.image_path}`}
+                        alt={institute.name}
+                        width={40}
+                        height={40}
+                        className="rounded-md object-cover"
+                        priority={false} // Set to true if above-the-fold
+                      />
+                    )}
+                    {institute.name}
                   </div>
-                  {institute.created_at && (
-                    <Badge variant="secondary" className="text-xs">
-                      {new Date(institute.created_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </Badge>
-                  )}
-                </div>
-                {institute.description && (
-                  <CardDescription className="line-clamp-2">{institute.description}</CardDescription>
-                )}
-              </CardHeader>
+                </TableCell>
+                <TableCell>{institute.description || '-'}</TableCell>
+                <TableCell>{institute.courses_count || 0}</TableCell>
+                <TableCell className="flex gap-2">
+                  <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">Edit</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Institute</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={(e) => handleUpdate(institute.id, e)}>
+                      <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <label htmlFor="name" className="text-right">
+                            Name
+                          </label>
+                          <Input
+                            name="name"
+                            defaultValue={institute.name}
+                            className="col-span-3"
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <label htmlFor="description" className="text-right">
+                            Description
+                          </label>
+                          <Input
+                            name="description"
+                            defaultValue={institute.description || ''}
+                            className="col-span-3"
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <label htmlFor="image" className="text-right">
+                            Logo
+                          </label>
+                          <div className="col-span-3 space-y-2">
+                            {institute.image_path && (
+                              <Image
+                                src={`${api2.defaults.baseURL}/${institute.image_path}`}
+                                alt="Current logo"
+                                width={80}
+                                height={80}
+                                className="rounded-md mb-2"
+                              />
+                            )}
+                            <Input
+                              id="image"
+                              name="image"
+                              type="file"
+                              accept="image/*"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Leave empty to keep current image
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button type="submit">Save</Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => handleDelete(institute.id)}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center">No institutes found</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-              {institute.image_path && (
-                <CardContent>
-                  <div className="aspect-video relative overflow-hidden rounded-md bg-muted">
-                    <img
-                      src={`http://127.0.0.1:8000/${institute.image_path}`}
-                      alt={institute.name}
-                      className="object-cover w-full h-full"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none"
-                      }}
-                    />
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && institutes.length === 0 && (
-        <div className="text-center py-12">
-          <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold">No institutes found</h3>
-          <p className="text-muted-foreground">
-            {searchTerm ? `No institutes match "${searchTerm}"` : "No institutes available at the moment"}
-          </p>
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="flex justify-between items-center">
+          <Button
+            variant="outline"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+          >
+            Previous
+          </Button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <Button
+            variant="outline"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+          >
+            Next
+          </Button>
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,16 +1,15 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react" // Add useCallback
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { Eye } from "lucide-react"
+
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// Import your API instances
-import { api2 } from "@/lib/api" // Assuming lib/api.ts is correct path
+import { api2 } from "@/lib/api"
 
 
 interface Alumni {
