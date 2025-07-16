@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import AddSurvey from "./admin-components/add-survey"
 import EditSurvey from "./admin-components/edit-survey"
+import Link from "next/link"
 
 interface Survey {
   id: number
@@ -122,7 +123,7 @@ export default function SurveysList() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Show</DropdownMenuItem>
+                      <DropdownMenuItem><Link className="border border-red-500 h-full w-full" href={`/admin/surveys/${survey.id}`}>Show</Link></DropdownMenuItem>
                       <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(survey.id)}>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
