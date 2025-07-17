@@ -92,7 +92,11 @@ export default function AdminSurveyEditPage() {
     }))
   }
 
-  const handleQuestionChange = (index: number, key: keyof Question, value: any) => {
+  const handleQuestionChange = <K extends keyof Question>(
+    index: number,
+    key: K,
+    value: Question[K]
+  ) => {
     const updatedQuestions = [...survey.questions]
     updatedQuestions[index][key] = value
     setSurvey((prev) => ({ ...prev, questions: updatedQuestions }))

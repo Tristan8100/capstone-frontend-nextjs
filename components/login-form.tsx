@@ -62,7 +62,7 @@ export function LoginForm({
         login(data.user_info, data.token);
         api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
         toast.success(data.message || 'Login successful!');
-        router.push('/alumni/dashboard');
+        router.push('/alumni/announcement');
         return;
       }
     } catch (error: any) {

@@ -39,11 +39,6 @@ import Link from "next/link"
 // Navigation data
 const homeNavigation = [
   {
-    title: "Dashboard",
-    url: "/alumni/dashboard",
-    icon: BarChart3,
-  },
-  {
     title: "Announcements",
     url: "/alumni/announcement",
     icon: Megaphone,

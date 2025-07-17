@@ -7,25 +7,6 @@ import HeaderAnnouncement from "@/components/admin-components/header-announcemen
 export default function Page() {
   return (
     <div className="space-y-6">
-      <HeaderAnnouncement />
-
-      {/* Filters and Search */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Filter Posts</span>
-            </div>
-            <div className="flex flex-col gap-2 md:flex-row md:items-center">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search posts..." className="pl-9 md:w-64" />
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="latest" className="space-y-6">
@@ -40,11 +21,6 @@ export default function Page() {
               Popular
             </TabsTrigger>
           </TabsList>
-
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="h-2 w-2 rounded-full bg-green-500"></div>
-            <span>Live updates</span>
-          </div>
         </div>
 
         <TabsContent value="latest" className="space-y-4">
