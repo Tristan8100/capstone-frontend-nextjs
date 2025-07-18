@@ -4,8 +4,11 @@ import { SurveyAnswerPage } from "@/components/alumni-components/answer-survey";
 import { useParams } from "next/navigation";
 
 export default function Page() {
-  const params = useParams();
-  const id = params.id; // assuming your route is /alumni/survey/[id]
+  const params = useParams()
+  let id = params.id
 
-  return <SurveyAnswerPage surveyId={id} />;
+  // If id is an array, get first element
+  if (Array.isArray(id)) id = id[0]
+
+  return <SurveyAnswerPage surveyId={id || ''}/>;
 }

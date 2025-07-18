@@ -49,61 +49,59 @@ interface ResponseType {
   answers: Answer[]
 }
 
-export function SurveyAnswerPage({ surveyId }: { surveyId: any }) {
+export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
   const router = useRouter()
   const [survey, setSurvey] = useState<Survey | null>(null)
-  const [answers, setAnswers] = useState<Record<number, any>>({}) // question_id -> answer(s)
+  const [answers, setAnswers] = useState<Record<number, string | number | number[]>>({})
+
 
   useEffect(() => {
     if (!surveyId) return
+    console.log('Fetching survey with ID:', surveyId)
 
-    console.log('Survey ID:', surveyId)
-
-    // Fetch survey
     api2.get<Survey>(`/api/surveys/${surveyId}`)
       .then(res => {
+        console.log('Survey fetched:', res.data)
         setSurvey(res.data)
 
-        // Fetch user's existing response (if any)
-        return api2.get<ResponseType>(`/api/responses/survey/${surveyId}`)
+        return api2.get<ResponseType | ResponseType[]>(`/api/responses/survey/${surveyId}`)
       })
       .then(resResp => {
-  // handle array response gracefully
-  const userResponse = Array.isArray(resResp.data) ? resResp.data[0] : resResp.data
+        console.log('User response fetched:', resResp.data)
+        const userResponse = Array.isArray(resResp.data) ? resResp.data[0] : resResp.data
+        if (!userResponse || !userResponse.answers) {
+          setAnswers({})
+          return
+        }
 
-  console.log('User response:', userResponse)
+        const mappedAnswers: Record<number, string | number[]> = {}
 
-  if (!userResponse || !userResponse.answers) {
-    setAnswers({})
-    return
-  }
+        userResponse.answers.forEach(ans => {
+          if (ans.answer_choices && ans.answer_choices.length > 0) {
+            mappedAnswers[ans.question_id] = ans.answer_choices.map(ac => ac.choice_id)
+          } else if (ans.answer_text !== null) {
+            mappedAnswers[ans.question_id] = ans.answer_text
+          }
+        })
 
-  const mappedAnswers: Record<number, any> = {}
-
-  userResponse.answers.forEach(ans => {
-    if (ans.answer_choices && ans.answer_choices.length > 0) {
-      mappedAnswers[ans.question_id] = ans.answer_choices.map(ac => ac.choice_id)
-    } else if (ans.answer_text !== null) {
-      mappedAnswers[ans.question_id] = String(ans.answer_text)
-    }
-  })
-
-  setAnswers(mappedAnswers)
-})
-
-      .catch(() => {
+        console.log('Mapped answers:', mappedAnswers)
+        setAnswers(mappedAnswers)
+      })
+      .catch(err => {
+        console.error('Failed to fetch survey or response:', err)
         setAnswers({})
       })
   }, [surveyId])
 
-  const handleChange = (questionId: number, value: any, type: string) => {
+  const handleChange = (questionId: number, value: string | number, type: string) => {
+    console.log(`Answer changed for question ${questionId}:`, value, 'type:', type)
     if (type === 'checkbox') {
       setAnswers(prev => {
-        const current = prev[questionId] || []
-        if (current.includes(value)) {
-          return { ...prev, [questionId]: current.filter((v: any) => v !== value) }
+        const current = (prev[questionId] as number[]) || []
+        if (current.includes(Number(value))) {
+          return { ...prev, [questionId]: current.filter(v => v !== Number(value)) }
         } else {
-          return { ...prev, [questionId]: [...current, value] }
+          return { ...prev, [questionId]: [...current, Number(value)] }
         }
       })
     } else {
@@ -112,61 +110,79 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: any }) {
   }
 
   const handleSubmit = async () => {
-    // Format answers for backend
-    const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => {
-      const base = { question_id: Number(questionId) }
+    if (!survey) return
 
-      if (Array.isArray(answer)) {
-        return { ...base, choice_ids: answer }
+    console.log('Submitting answers:', answers)
+
+    const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => {
+      const qid = Number(questionId)
+      const question = survey.questions.find(q => q.id === qid)
+
+      if (!question) return null
+
+      if (question.question_type === 'checkbox' || question.question_type === 'radio') {
+        let choiceIds: number[]
+        if (Array.isArray(answer)) {
+          choiceIds = answer.map(a => Number(a))
+        } else {
+          choiceIds = [Number(answer)]
+        }
+        return {
+          question_id: qid,
+          choice_ids: choiceIds,
+        }
       } else {
-        return { ...base, answer_text: String(answer) }
+        return {
+          question_id: qid,
+          answer_text: String(answer),
+        }
       }
-    })
+    }).filter(Boolean)
 
     const payload = {
-      survey_id: surveyId,
+      survey_id: survey.id,
       answers: formattedAnswers,
     }
 
-    console.log('Submitting this payload:', payload)
+    console.log('Payload to submit:', payload)
 
     try {
       const res = await api2.post('/api/responses', payload)
-      console.log(res.data)
+      console.log('Submission response:', res.data)
       alert('Survey submitted successfully!')
-      // Optionally: router.push or refresh
+      router.refresh()
     } catch (error) {
       console.error('Submission error:', error)
-      alert('Failed to submit survey. Please try again.')
+      alert('Failed to submit survey.')
     }
   }
 
   if (!survey) return <p>Loading survey...</p>
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 p-4">
+    <div className="max-w-3xl mx-auto p-4 space-y-6">
       <h1 className="text-3xl font-bold">{survey.title}</h1>
       <p className="text-muted-foreground">{survey.description}</p>
 
-      {survey.questions.map((q) => (
+      {survey.questions.map(q => (
         <Card key={q.id}>
-          <CardContent className="p-4 space-y-2">
+          <CardContent className="space-y-2 p-4">
             <p className="font-medium">{q.question_text}</p>
 
             {q.question_type === 'text' && (
               <Input
                 type="text"
-                value={answers[q.id] || ''}
-                onChange={(e) => handleChange(q.id, e.target.value, 'text')}
+                value={(answers[q.id] as string) || ''}
+                onChange={e => handleChange(q.id, e.target.value, 'text')}
               />
             )}
 
             {q.question_type === 'radio' && (
               <RadioGroup
-                onValueChange={(value) => handleChange(q.id, value, 'radio')}
+                onValueChange={val => handleChange(q.id, val, 'radio')}
                 value={answers[q.id] ? String(answers[q.id]) : ''}
               >
-                {q.choices.map((choice) => (
+                {q.choices.map(choice => (
                   <div key={choice.id} className="flex items-center space-x-2">
                     <RadioGroupItem value={String(choice.id)} id={`q${q.id}-c${choice.id}`} />
                     <label htmlFor={`q${q.id}-c${choice.id}`}>{choice.choice_text}</label>
@@ -177,11 +193,11 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: any }) {
 
             {q.question_type === 'checkbox' && (
               <div className="space-y-2">
-                {q.choices.map((choice) => (
+                {q.choices.map(choice => (
                   <div key={choice.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={`q${q.id}-c${choice.id}`}
-                      checked={answers[q.id]?.includes(choice.id) || false}
+                      checked={Array.isArray(answers[q.id]) && (answers[q.id] as number[]).includes(choice.id)}
                       onCheckedChange={() => handleChange(q.id, choice.id, 'checkbox')}
                     />
                     <label htmlFor={`q${q.id}-c${choice.id}`}>{choice.choice_text}</label>

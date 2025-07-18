@@ -30,7 +30,7 @@ export default function AlumniLayoutComponent({ children }: { children: React.Re
 
     const verifyUser = async () => {
       try {
-        const res = await api.get<{ user_info: User }>("/api/verify-user", {
+        const res = await api.get<{ user_info: User }>("/api/verify-user", { //RETURN THE IMAGE PATH IF EXIT AH
           headers: { Authorization: `Bearer ${token}` }
         });
         
