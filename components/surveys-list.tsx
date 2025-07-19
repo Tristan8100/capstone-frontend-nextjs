@@ -123,7 +123,8 @@ export default function SurveysList() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem><Link className="border border-red-500 h-full w-full" href={`/admin/surveys/${survey.id}`}>Show</Link></DropdownMenuItem>
+                      <DropdownMenuItem><Link className="h-full w-full" href={`/admin/surveys/${survey.id}`}>Show</Link></DropdownMenuItem>
+                      <DropdownMenuItem><Link className="h-full w-full" href={`/admin/surveys/responses/${survey.id}`}>Responses</Link></DropdownMenuItem>
                       <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(survey.id)}>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

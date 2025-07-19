@@ -14,6 +14,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
+import TextResponseDialog from '@/components/admin-components/text-response-dialogue'
 
 type Choice = {
   id: number
@@ -38,6 +39,9 @@ type SurveyResult = {
 
 export default function SurveyChart() {
   const [survey, setSurvey] = useState<SurveyResult | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null)
+
   const params = useParams()
   const surveyId = parseInt(params.id as string, 10)
 
@@ -53,6 +57,11 @@ export default function SurveyChart() {
 
     fetchData()
   }, [surveyId])
+
+  const handleTextClick = (id: number) => {
+    setSelectedQuestionId(id)
+    setDialogOpen(true)
+  }
 
   if (!survey) return <div>Loading...</div>
 
@@ -85,13 +94,22 @@ export default function SurveyChart() {
                 </BarChart>
               </ResponsiveContainer>
             ) : question.question_type === 'text' ? (
-              <p className="text-muted-foreground italic">
-                Text responses do not have analytics.
-              </p>
+              <button
+                onClick={() => handleTextClick(question.id)}
+                className="text-muted-foreground italic underline hover:text-primary"
+              >
+                View text responses
+              </button>
             ) : null}
           </CardContent>
         </Card>
       ))}
+
+      <TextResponseDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        questionId={selectedQuestionId}
+      />
     </div>
   )
 }

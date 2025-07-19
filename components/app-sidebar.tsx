@@ -33,7 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
+import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
 
 // Navigation data
@@ -82,6 +82,7 @@ const generalNavigation = [
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { logout } = useAuth()
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -201,8 +202,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
-                  <LogOut className="size-4" />
+                <DropdownMenuItem className="text-red-600" onClick={() => logout()} >
+                  <LogOut className="size-4"/>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
