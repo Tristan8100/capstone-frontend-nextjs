@@ -1,88 +1,77 @@
-"use client"
+'use client';
 
-import { useRef, useState } from "react"
-import { CardContent, CardFooter } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { ImagePlus, Send, X } from "lucide-react"
-import Image from "next/image"
+import { useState } from 'react';
+import { api2 } from '@/lib/api';
+import { toast } from 'sonner';
+import { Button } from './ui/button';
 
 export default function PostCreator() {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [previews, setPreviews] = useState<string[]>([])
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [images, setImages] = useState<File[]>([]);
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return
-    const urls = Array.from(files).map(file => URL.createObjectURL(file))
-    setPreviews(urls)
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const removeImage = (index: number) => {
-    setPreviews(prev => prev.filter((_, i) => i !== index))
-  }
+    if (!title.trim() || !content.trim()) {
+      toast.error('Title and content are required.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+
+    images.forEach((image) => {
+      formData.append('images[]', image); // <-- Important: images[] with brackets
+    });
+
+    try {
+      await api2.post('/api/announcements', formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      toast.success('Announcement created!');
+      setTitle('');
+      setContent('');
+      setImages([]);
+    } catch (error: any) {
+      console.error(error);
+      const message = error.response?.data?.message || 'Failed to create announcement.';
+      toast.error(message);
+    }
+  };
 
   return (
-    <div className="w-full">
-
-      <CardContent>
-        <Textarea
-          placeholder="What's on your mind?"
-          className="resize-none min-h-[100px] bg-muted/30"
-        />
-
-        {previews.length > 0 && (
-          <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-            {previews.map((src, index) => (
-              <div
-                key={index}
-                className="relative flex-shrink-0 w-24 h-24 rounded-md overflow-hidden bg-muted"
-              >
-                <Image
-                  src={src}
-                  alt={`preview-${index}`}
-                  className="w-full h-full object-cover"
-                  width={96}
-                  height={96}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-1 right-1 bg-background text-foreground p-0.5 rounded-full shadow"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4">
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2"
-          >
-            <ImagePlus className="w-4 h-4" />
-            Add Photos
-          </Button>
-        </div>
-      </CardContent>
-
-      <CardFooter className="justify-end">
-        <Button className="flex items-center gap-2">
-          <Send className="w-4 h-4" />
-          Post
-        </Button>
-      </CardFooter>
-    </div>
-  )
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <input
+        type="text"
+        name="title"
+        placeholder="Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="border rounded p-2 w-full"
+        required
+      />
+      <textarea
+        name="content"
+        placeholder="Content"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="border rounded p-2 w-full"
+        required
+      />
+      <input
+        type="file"
+        name="images[]"
+        accept="image/*"
+        multiple
+        onChange={(e) => setImages(Array.from(e.target.files || []))}
+        className="block"
+      />
+      <Button type="submit">Create Announcement</Button>
+    </form>
+  );
 }

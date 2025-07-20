@@ -1,14 +1,64 @@
+'use client'
 
+import { useState, useEffect } from "react"
 import CreateAnnouncement from "@/components/admin-components/create-announcement"
 import AdminAnnouncementComponent from "@/components/admin-components/admin-announcement"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardHeader } from "@/components/ui/card"
-import { TrendingUp, Clock, Filter, Search} from "lucide-react"
+import { TrendingUp, Clock, Filter, Search } from "lucide-react"
 import PostComponents from "@/components/alumni-components/posts-components"
 import HeaderAnnouncement from "@/components/admin-components/header-announcement"
+import { api2 } from "@/lib/api"
+import AnnouncementComponent from "@/components/admin-components/admin-announcement"
+
+
+type Image = {
+  id: number
+  announcement_id: number
+  image_name: string
+  image_file: string
+  created_at: string
+  updated_at: string
+}
+
+type Comment = {
+  id: number
+  announcement_id: number
+  user_id: string
+  parent_id: number | null
+  content: string
+  created_at: string
+  updated_at: string
+  replies: Comment[]  // Recursive type for nested replies
+}
+
+type Announcement = {
+  title: string
+  content: string
+  images: Image[]
+  comments: Comment[]
+  adminId: number
+  createdAt: string
+  updatedAt: string
+}
 
 export default function Page() {
+  const [announcements, setAnnouncements] = useState([])
+
+  useEffect(() => {
+    const fetchAnnouncements = async function() {
+      try {
+        const response = await api2.get<Announcement[]>("/api/announcements")
+        setAnnouncements(response.data)
+      } catch (error) {
+        console.error("Failed to fetch announcements:", error)
+      }
+    }
+
+    fetchAnnouncements()
+  }, [])
+
   return (
     <div className="space-y-6">
       <HeaderAnnouncement />
@@ -59,8 +109,23 @@ export default function Page() {
                 <span>Latest posts from your network</span>
               </div>
             </div>
-            <div className="p-4">
-              <AdminAnnouncementComponent />
+            <div className="p-4 space-y-6">
+              {announcements.length === 0 ? (
+                <p>No announcements found.</p>
+              ) : (
+                announcements.map((announcement) => (
+                  <AnnouncementComponent
+                    key={announcement.id}
+                    title={announcement.title}
+                    content={announcement.content}
+                    images={announcement.images}
+                    comments={announcement.comments}
+                    adminId={announcement.admin_id}
+                    createdAt={announcement.created_at}
+                    updatedAt={announcement.updated_at}
+                  />
+                ))
+              )}
             </div>
           </div>
         </TabsContent>

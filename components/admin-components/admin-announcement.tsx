@@ -1,16 +1,34 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import { Heart, MessageCircle, MoreHorizontal, Send, Edit, Trash2 } from "lucide-react"
+import { useState } from "react";
+import Image from "next/image";
+import {
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Send,
+  Edit,
+  Trash2,
+} from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -18,143 +36,171 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
-interface Comment {
-  id: string
-  author: string
-  avatar: string
-  content: string
-  timestamp: string
-  replies?: Comment[]
+import { useAuth } from "@/contexts/AuthContext";
+
+interface User {
+  id: string;
+  first_name: string;
+  middle_name?: string | null;
+  last_name: string;
+  profile_path?: string | null;
+  full_name?: string; // optionally included from backend accessor
 }
 
-export default function AnnouncementComponent() {
-  const [showComments, setShowComments] = useState(false)
-  const [newComment, setNewComment] = useState("")
-  const [replyingTo, setReplyingTo] = useState<string | null>(null)
-  const [newReply, setNewReply] = useState("")
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editedContent, setEditedContent] = useState("")
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+interface Comment {
+  id: string;
+  content: string;
+  timestamp: string;
+  parent_id?: string | null;
+  user: User;
+  replies?: Comment[];
+}
 
-  const images = [
-    "/static/TSBA Logo.png",
-    "/placeholder.svg?height=400&width=600",
-    "/placeholder.svg?height=400&width=600",
-    "/placeholder.svg?height=400&width=600",
-  ]
+interface ImageType {
+  id: string;
+  announcement_id: string;
+  image_name: string;
+  image_file: string;
+  created_at: string;
+  updated_at: string;
+}
 
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: "1",
-      author: "Sarah Johnson",
-      avatar: "/placeholder.svg?height=32&width=32",
-      content: "This looks absolutely amazing! Can't wait to try it out. When will it be available?",
-      timestamp: "1h",
-      replies: [
-        {
-          id: "1-1",
-          author: "Acme Corporation",
-          avatar: "/placeholder.svg?height=32&width=32",
-          content: "Thanks Sarah! We're planning to launch next month. Stay tuned for updates!",
-          timestamp: "45m",
-        },
-      ],
-    },
-    {
-      id: "2",
-      author: "Mike Chen",
-      avatar: "/placeholder.svg?height=32&width=32",
-      content: "The design looks incredible. Your team has outdone themselves!",
-      timestamp: "2h",
-    },
-    {
-      id: "3",
-      author: "Emily Rodriguez",
-      avatar: "/placeholder.svg?height=32&width=32",
-      content: "Finally! I've been waiting for something like this. The innovation is exactly what the market needs.",
-      timestamp: "3h",
-      replies: [
-        {
-          id: "3-1",
-          author: "David Kim",
-          avatar: "/placeholder.svg?height=32&width=32",
-          content: "Totally agree! This is going to be a game changer.",
-          timestamp: "2h",
-        },
-      ],
-    },
-  ])
+interface AnnouncementProps {
+  title: string;
+  content: string;
+  images: ImageType[];
+  comments: Comment[];
+  adminId: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
+function getInitials(name: string) {
+  if (!name) return "??";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+}
+
+function getUserDisplayName(user: User) {
+  if (user.full_name) return user.full_name;
+  // Compose full name manually if full_name missing
+  const names = [user.first_name, user.middle_name, user.last_name].filter(Boolean);
+  if (names.length === 0) return "??";
+  return names.join(" ");
+}
+
+function getUserInitials(user: User) {
+  // Use first letters of first and last name if middle missing
+  const firstInitial = user.first_name?.[0] ?? "";
+  const middleInitial = user.middle_name ? user.middle_name[0] : "";
+  const lastInitial = user.last_name?.[0] ?? "";
+  const initials = [firstInitial, middleInitial, lastInitial].filter(Boolean).join("");
+  return initials || "??";
+}
+
+export default function AnnouncementComponent({
+  title,
+  content,
+  images,
+  comments: initialComments,
+  adminId,
+  createdAt,
+  updatedAt,
+}: AnnouncementProps) {
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [newReply, setNewReply] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editedContent, setEditedContent] = useState(content);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const { user } = useAuth();
+
+  const CURRENT_USER = {
+    id: "currentUser",
+    first_name: "You",
+    last_name: "",
+    profile_path: null,
+    full_name: "You",
+  };
+
+  // Handle Add Comment
   const handleAddComment = () => {
     if (newComment.trim()) {
       const newCommentObj: Comment = {
         id: Date.now().toString(),
-        author: "Current User",
-        avatar: "/placeholder.svg?height=32&width=32",
         content: newComment,
         timestamp: "Just now",
-      }
-      setComments([...comments, newCommentObj])
-      setNewComment("")
+        user: CURRENT_USER,
+        replies: [],
+      };
+      setComments([...comments, newCommentObj]);
+      setNewComment("");
     }
-  }
+  };
 
+  // Handle Add Reply
   const handleAddReply = (commentId: string) => {
     if (newReply.trim()) {
-      const updatedComments = comments.map(comment => {
+      const updatedComments = comments.map((comment) => {
         if (comment.id === commentId) {
           const newReplyObj: Comment = {
             id: `${commentId}-${Date.now()}`,
-            author: "Current User",
-            avatar: "/placeholder.svg?height=32&width=32",
             content: newReply,
             timestamp: "Just now",
-          }
+            user: CURRENT_USER,
+            replies: [],
+            parent_id: commentId,
+          };
           return {
             ...comment,
-            replies: [...(comment.replies || []), newReplyObj]
-          }
+            replies: [...(comment.replies || []), newReplyObj],
+          };
         }
-        return comment
-      })
-      setComments(updatedComments)
-      setNewReply("")
-      setReplyingTo(null)
+        return comment;
+      });
+      setComments(updatedComments);
+      setNewReply("");
+      setReplyingTo(null);
     }
-  }
+  };
 
   const handleEditPost = () => {
-    setIsEditDialogOpen(true)
-    // Set initial content for editing - in a real app this would be the current post content
-    setEditedContent("We're thrilled to announce the launch of our revolutionary new product line! After months of development and testing, we're finally ready to share something truly special with our community. These images showcase just a glimpse of what's to come. Stay tuned for more details and get ready to experience innovation like never before! #Innovation #ProductLaunch #Exciting")
-  }
+    setIsEditDialogOpen(true);
+    setEditedContent(content);
+  };
 
   const handleSaveEdit = () => {
-    // In a real app, you would save the edited content to your database here
-    console.log("Saving edited content:", editedContent)
-    setIsEditDialogOpen(false)
-  }
+    console.log("Saving edited content:", editedContent);
+    setIsEditDialogOpen(false);
+  };
 
   const handleDeletePost = () => {
-    // In a real app, you would delete the post from your database here
-    console.log("Deleting post")
-    setIsDeleteDialogOpen(false)
-  }
+    console.log("Deleting post");
+    setIsDeleteDialogOpen(false);
+  };
 
   return (
     <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
+      {/* Header */}
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Company Logo" />
-              <AvatarFallback>AC</AvatarFallback>
+              <Image src="/static/TSBA Logo.png" width={40} height={40} alt="Admin" />
+              <AvatarFallback>AD</AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-sm">Acme Corporation</h3>
-              <p className="text-xs text-muted-foreground">2 hours ago</p>
+              <h3 className="font-semibold text-sm">Admin</h3>
+              <p className="text-xs text-muted-foreground">
+                {new Date(createdAt).toLocaleString()}
+              </p>
             </div>
           </div>
           <DropdownMenu>
@@ -172,14 +218,6 @@ export default function AnnouncementComponent() {
               <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Heart className="mr-2 h-4 w-4" />
-                Save post
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Hide post
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -231,44 +269,42 @@ export default function AnnouncementComponent() {
         </DialogContent>
       </Dialog>
 
+      {/* Content */}
       <CardContent className="px-0 pb-3">
         <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 px-6 pb-4">
           <div className="flex-1 w-full md:w-auto min-w-0">
-            <h2 className="text-lg font-semibold mb-2">🎉 Exciting Product Launch Announcement!</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Were thrilled to announce the launch of our revolutionary new product line! After months of development and
-              testing, were finally ready to share something truly special with our community. These images showcase just
-              a glimpse of whats to come. Stay tuned for more details and get ready to experience innovation like never
-              before!
-              <span className="text-primary font-medium"> #Innovation #ProductLaunch #Exciting</span>
-            </p>
+            <h2 className="text-lg font-semibold mb-2">{title}</h2>
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{content}</p>
           </div>
 
-          <Carousel className="flex-1 w-full lg:w-auto min-w-0">
-            <CarouselContent>
-              {images.map((src, index) => (
-                <CarouselItem key={index}>
-                  <div className="relative">
-                    <Image
-                      src={src || "/placeholder.svg"}
-                      alt={`Announcement image ${index + 1}`}
-                      width={600}
-                      height={400}
-                      className="w-full h-96 object-cover"
-                    />
-                    <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                      {index + 1} / {images.length}
+          {images.length > 0 && (
+            <Carousel className="flex-1 w-full lg:w-auto min-w-0">
+              <CarouselContent>
+                {images.map((img, i) => (
+                  <CarouselItem key={img.id}>
+                    <div className="relative">
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_API_URL}/${img.image_file}`}
+                        alt={img.image_name}
+                        width={600}
+                        height={400}
+                        className="w-full h-96 object-cover rounded-md"
+                      />
+                      <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                        {i + 1} / {images.length}
+                      </div>
                     </div>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="left-4" />
-            <CarouselNext className="right-4" />
-          </Carousel>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-4" />
+              <CarouselNext className="right-4" />
+            </Carousel>
+          )}
         </div>
       </CardContent>
 
+      {/* Footer: Comments */}
       <CardFooter className="flex flex-col space-y-3 pt-0">
         <div className="flex items-center justify-between w-full text-sm text-muted-foreground px-2">
           <span>{comments.length} comments</span>
@@ -299,10 +335,20 @@ export default function AnnouncementComponent() {
             {/* Add New Comment */}
             <div className="w-full space-y-3">
               <div className="flex space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Your avatar" />
-                  <AvatarFallback>YU</AvatarFallback>
-                </Avatar>
+                <Avatar className="h-8 w-8 relative">
+                          {user.profile_path ? (
+                            <Image
+                              src={`${user.profile_path}`}
+                              alt={user.name}
+                              fill
+                              style={{ objectFit: "cover", borderRadius: "50%" }}
+                              sizes="32px"
+                              priority
+                            />
+                          ) : (
+                            <AvatarFallback>{user.name}</AvatarFallback>
+                          )}
+                        </Avatar>
                 <div className="flex-1 space-y-2">
                   <Textarea
                     placeholder="Write a comment..."
@@ -324,104 +370,138 @@ export default function AnnouncementComponent() {
 
             {/* Comments List */}
             <div className="w-full space-y-4">
-              {comments.map((comment) => (
-                <div key={comment.id} className="space-y-3">
-                  {/* Main Comment */}
-                  <div className="flex space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={comment.avatar || "/placeholder.svg"} alt={comment.author} />
-                      <AvatarFallback>
-                        {comment.author
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-1">
-                      <div className="bg-muted rounded-lg px-3 py-2">
-                        <p className="font-semibold text-sm">{comment.author}</p>
-                        <p className="text-sm">{comment.content}</p>
-                      </div>
-                      <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                        <span>{comment.timestamp}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
-                          onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                        >
-                          Reply
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+              {comments
+                .filter((comment) => !comment.parent_id) // Only top-level comments
+                .map((comment) => {
+                  const user = comment.user;
+                  const displayName = getUserDisplayName(user);
+                  const initials = getUserInitials(user);
+                  const avatarSrc = user.profile_path
+                    ? `${process.env.NEXT_PUBLIC_API_URL}${user.profile_path}`
+                    : null;
 
-                  {/* Reply Input */}
-                  {replyingTo === comment.id && (
-                    <div className="ml-11 flex space-x-3">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Your avatar" />
-                        <AvatarFallback className="text-xs">YU</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-2">
-                        <Textarea
-                          placeholder={`Reply to ${comment.author}...`}
-                          value={newReply}
-                          onChange={(e) => setNewReply(e.target.value)}
-                          className="min-h-[50px] resize-none text-sm"
-                        />
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setReplyingTo(null)
-                              setNewReply("")
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button size="sm" onClick={() => handleAddReply(comment.id)} disabled={!newReply.trim()}>
-                            Reply
-                          </Button>
+                  return (
+                    <div key={comment.id} className="space-y-3">
+                      {/* Main Comment */}
+                      <div className="flex space-x-3">
+                        <Avatar className="h-8 w-8 relative">
+                          {avatarSrc ? (
+                            <Image
+                              src={`${avatarSrc}`}
+                              alt={displayName}
+                              fill
+                              style={{ objectFit: "cover", borderRadius: "50%" }}
+                              sizes="32px"
+                              priority
+                            />
+                          ) : (
+                            <AvatarFallback>{initials}</AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="flex-1 space-y-1">
+                          <div className="bg-muted rounded-lg px-3 py-2">
+                            <p className="font-semibold text-sm">{displayName}</p>
+                            <p className="text-sm">{comment.content}</p>
+                          </div>
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            <span>{comment.timestamp}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
+                              onClick={() =>
+                                setReplyingTo(replyingTo === comment.id ? null : comment.id)
+                              }
+                            >
+                              Reply
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Replies */}
-                  {comment.replies && comment.replies.length > 0 && (
-                    <div className="ml-11 space-y-3">
-                      {comment.replies.map((reply) => (
-                        <div key={reply.id} className="flex space-x-3">
+                      {/* Reply Input */}
+                      {replyingTo === comment.id && (
+                        <div className="ml-11 flex space-x-3">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={reply.avatar || "/placeholder.svg"} alt={reply.author} />
-                            <AvatarFallback className="text-xs">
-                              {reply.author
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
+                            <AvatarImage
+                              src="/placeholder.svg?height=24&width=24"
+                              alt="Your avatar"
+                            />
+                            <AvatarFallback className="text-xs">YU</AvatarFallback>
                           </Avatar>
-                          <div className="flex-1 space-y-1">
-                            <div className="bg-muted rounded-lg px-3 py-2">
-                              <p className="font-semibold text-sm">{reply.author}</p>
-                              <p className="text-sm">{reply.content}</p>
-                            </div>
-                            <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                              <span>{reply.timestamp}</span>
+                          <div className="flex-1 space-y-2">
+                            <Textarea
+                              placeholder={`Reply to ${displayName}...`}
+                              value={newReply}
+                              onChange={(e) => setNewReply(e.target.value)}
+                              className="min-h-[50px] resize-none text-sm"
+                            />
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setReplyingTo(null);
+                                  setNewReply("");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleAddReply(comment.id)}
+                                disabled={!newReply.trim()}
+                              >
+                                Reply
+                              </Button>
                             </div>
                           </div>
                         </div>
-                      ))}
+                      )}
+
+                      {/* Replies */}
+                      {comment.replies && comment.replies.length > 0 && (
+                        <div className="ml-11 space-y-3">
+                          {comment.replies.map((reply) => {
+                            const replyUser = reply.user;
+                            const replyDisplayName = getUserDisplayName(replyUser);
+                            const replyInitials = getUserInitials(replyUser);
+                            const replyAvatarSrc = replyUser.profile_path
+                              ? `${process.env.NEXT_PUBLIC_API_URL}${replyUser.profile_path}`
+                              : null;
+
+                            return (
+                              <div key={reply.id} className="flex space-x-3">
+                                <Avatar className="h-6 w-6">
+                                  {replyAvatarSrc ? (
+                                    <AvatarImage src={replyAvatarSrc} alt={replyDisplayName} />
+                                  ) : (
+                                    <AvatarFallback className="text-xs">
+                                      {replyInitials}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                <div className="flex-1 space-y-1">
+                                  <div className="bg-muted rounded-lg px-3 py-2">
+                                    <p className="font-semibold text-sm">{replyDisplayName}</p>
+                                    <p className="text-sm">{reply.content}</p>
+                                  </div>
+                                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                    <span>{reply.timestamp}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                  );
+                })}
             </div>
           </>
         )}
       </CardFooter>
     </Card>
-  )
+  );
 }
