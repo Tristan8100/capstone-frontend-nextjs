@@ -18,6 +18,7 @@ interface User {
   email: string;
   course: string | null;
   qr_code_path: string | null;
+  profile_path: string | null;
 }
 
 interface LoginResponse {
