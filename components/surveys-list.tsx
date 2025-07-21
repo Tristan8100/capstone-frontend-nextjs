@@ -95,7 +95,7 @@ export default function SurveysList() {
               {searchTerm ? `${filteredSurveys.length} result(s) for "${searchTerm}"` : "Manage and view your surveys"}
             </p>
           </div>
-          <AddSurvey onSuccess={(newSurvey) => setSurveys([...surveys, newSurvey])} />
+          <AddSurvey onSuccess={(newSurvey) => setSurveys([newSurvey, ...surveys])} />
         </div>
 
         {/* No Results Message */}
