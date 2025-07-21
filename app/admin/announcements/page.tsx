@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import CreateAnnouncement from "@/components/admin-components/create-announcement"
-import AdminAnnouncementComponent from "@/components/admin-components/admin-announcement"
+import AdminAnnouncementComponent from "@/components/admin-components/admin-announcement" // This component will import types from here
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardHeader } from "@/components/ui/card"
@@ -10,10 +10,18 @@ import { TrendingUp, Clock, Filter, Search } from "lucide-react"
 import PostComponents from "@/components/alumni-components/posts-components"
 import HeaderAnnouncement from "@/components/admin-components/header-announcement"
 import { api2 } from "@/lib/api"
-import AnnouncementComponent from "@/components/admin-components/admin-announcement"
 
+// --- Type Definitions (all in this single file, exported for other components) ---
+export interface User {
+  id: string // Ensure this is string
+  first_name: string
+  middle_name?: string | null
+  last_name: string
+  profile_path?: string | null
+  full_name?: string
+}
 
-type Image = {
+export interface ImageType {
   id: number
   announcement_id: number
   image_name: string
@@ -22,42 +30,67 @@ type Image = {
   updated_at: string
 }
 
-type Comment = {
-  id: number
-  announcement_id: number
-  user_id: string
-  parent_id: number | null
+export interface Comment {
+  id: number | string // Can be number from backend or string from client-side generation
   content: string
-  created_at: string
-  updated_at: string
-  replies: Comment[]  // Recursive type for nested replies
+  timestamp: string // For display, derived from created_at
+  parent_id?: number | string | null // Can be number from backend or string from client-side generation
+  user: User
+  replies?: Comment[]
+  announcement_id: number // For backend payload
+  user_id: string // For backend payload
+  created_at: string // From backend
+  updated_at: string // From backend
 }
 
-type Announcement = {
+export interface Announcement {
+  id: number
   title: string
   content: string
-  images: Image[]
+  images: ImageType[]
   comments: Comment[]
-  adminId: number
-  createdAt: string
-  updatedAt: string
+  admin_id: number
+  created_at: string
+  updated_at: string
 }
 
+export interface AnnouncementProps {
+  id: number
+  title: string
+  content: string
+  images: ImageType[]
+  comments: Comment[]
+  admin_id: number
+  created_at: string
+  updated_at: string
+  onDeleteSuccess: () => void
+  onUpdateSuccess: () => void
+}
+
+// --- Main Page Component ---
 export default function Page() {
-  const [announcements, setAnnouncements] = useState([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+
+  const fetchAnnouncements = useCallback(async () => {
+    try {
+      const response = await api2.get<Announcement[]>("/api/announcements")
+      setAnnouncements(response.data)
+    } catch (error) {
+      console.error("Failed to fetch announcements:", error)
+    }
+  }, [])
 
   useEffect(() => {
-    const fetchAnnouncements = async function() {
-      try {
-        const response = await api2.get<Announcement[]>("/api/announcements")
-        setAnnouncements(response.data)
-      } catch (error) {
-        console.error("Failed to fetch announcements:", error)
-      }
-    }
-
     fetchAnnouncements()
-  }, [])
+  }, [fetchAnnouncements])
+
+  const handleAnnouncementDeleted = () => {
+    fetchAnnouncements()
+  };
+
+  const handleAnnouncementUpdated = () => {
+    fetchAnnouncements()
+  };
 
   return (
     <div className="space-y-6">
@@ -80,7 +113,6 @@ export default function Page() {
           </div>
         </CardHeader>
       </Card>
-
       {/* Main Content Tabs */}
       <Tabs defaultValue="latest" className="space-y-6">
         <div className="flex items-center justify-between">
@@ -94,13 +126,11 @@ export default function Page() {
               Popular
             </TabsTrigger>
           </TabsList>
-
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="h-2 w-2 rounded-full bg-green-500"></div>
             <span>Live updates</span>
           </div>
         </div>
-
         <TabsContent value="latest" className="space-y-4">
           <div className="rounded-lg border bg-card">
             <div className="border-b p-4">
@@ -114,22 +144,24 @@ export default function Page() {
                 <p>No announcements found.</p>
               ) : (
                 announcements.map((announcement) => (
-                  <AnnouncementComponent
+                  <AdminAnnouncementComponent
                     key={announcement.id}
+                    id={announcement.id}
                     title={announcement.title}
                     content={announcement.content}
                     images={announcement.images}
                     comments={announcement.comments}
-                    adminId={announcement.admin_id}
-                    createdAt={announcement.created_at}
-                    updatedAt={announcement.updated_at}
+                    admin_id={announcement.admin_id}
+                    created_at={announcement.created_at}
+                    updated_at={announcement.updated_at}
+                    onDeleteSuccess={handleAnnouncementDeleted}
+                    onUpdateSuccess={handleAnnouncementUpdated}
                   />
                 ))
               )}
             </div>
           </div>
         </TabsContent>
-
         <TabsContent value="popular" className="space-y-4">
           <div className="rounded-lg border bg-card">
             <div className="border-b p-4">
