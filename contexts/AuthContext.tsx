@@ -4,7 +4,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
-type User = {
+export type User = {
   id: number;
   name: string;
   email: string;

@@ -17,7 +17,7 @@ export default function Page() {
 
   const fetchposts = async () => {
     try {
-      const response = await api2.get<any>("/api/posts");
+      const response = await api2.get<any>("/api/posts/status/pending");
       setPosts(response.data);
       console.log(response.data);
     } catch (err) {
@@ -37,7 +37,10 @@ export default function Page() {
 
       <Separator className="border-border my-6" />
 
-      <PostComponentsAlumni />
+      {posts.map((post) => (
+        <PostComponentsAlumni key={post.id} post={post} />
+      ))}
+      
     </>
   );
 }

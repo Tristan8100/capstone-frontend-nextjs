@@ -8,18 +8,10 @@ import { useId, useState } from "react"
 import { EyeIcon, EyeOffIcon } from "lucide-react"
 import Link from "next/link"
 import { api } from "@/lib/api"
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth, User } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  course: string | null;
-  qr_code_path: string | null;
-  profile_path: string | null;
-}
 
 interface LoginResponse {
   response_code: number;

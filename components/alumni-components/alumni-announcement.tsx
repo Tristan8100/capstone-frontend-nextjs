@@ -264,7 +264,7 @@ export default function AlumniAnnouncementComponent({
                             <p className="text-sm">{comment.content}</p>
                           </div>
                           <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                            <span>{comment.timestamp}</span>
+                            <span>{new Date(comment.created_at).toLocaleString()}</span>
                             <Button
                               variant="ghost"
                               size="sm"

@@ -2,18 +2,9 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import AlumniLayout from "@/components/layout/alumni-layout";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, User } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { useEffect } from "react";
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  course: string | null;
-  qr_code_path: string | null;
-  profile_path: string | null;
-};
 
 
 export default function AlumniLayoutComponent({ children }: { children: React.ReactNode }) {
@@ -31,7 +22,7 @@ export default function AlumniLayoutComponent({ children }: { children: React.Re
 
     const verifyUser = async () => {
       try {
-        const res = await api.get<{ user_info: User }>("/api/verify-user", { //RETURN THE IMAGE PATH IF EXIT AH
+        const res = await api.get<{ user_info: User }>("/api/verify-user", { //RETURN THE IMAGE PATH IF EXIST AH
           headers: { Authorization: `Bearer ${token}` }
         });
         

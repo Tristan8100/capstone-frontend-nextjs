@@ -1,17 +1,9 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/admin-layout';
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, User } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  course: string | null;
-  qr_code_path: string | null;
-  profile_path: string | null;
-};
 
 export default function AdminLayoutComponent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();

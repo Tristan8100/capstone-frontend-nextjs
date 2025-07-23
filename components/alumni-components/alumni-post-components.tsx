@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Heart, MessageCircle, MoreHorizontal, Send } from "lucide-react"
 
@@ -10,88 +10,104 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/contexts/AuthContext"
+import { api2 } from "@/lib/api"
 
-interface Comment {
-  id: string
-  author: string
-  avatar: string
-  content: string
-  timestamp: string
-  replies?: Comment[]
-}
-
-export default function PostComponentsAlumni() {
+export default function PostComponentsAlumni({ post }: { post: any }) {
+  const [posts, setPosts] = useState(post)
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [newReply, setNewReply] = useState("")
 
-  const images = [
-    "/static/TSBA Logo.png",
-    "/placeholder.svg?height=400&width=600",
-    "/placeholder.svg?height=400&width=600",
-    "/placeholder.svg?height=400&width=600",
-  ]
+  const { user } = useAuth()
 
-  const comments: Comment[] = [
-    {
-      id: "1",
-      author: "Sarah Johnson",
-      avatar: "/placeholder.svg?height=32&width=32",
-      content: "This looks absolutely amazing! Can't wait to try it out. When will it be available?",
-      timestamp: "1h",
-      replies: [
-        {
-          id: "1-1",
-          author: "Acme Corporation",
-          avatar: "/placeholder.svg?height=32&width=32",
-          content: "Thanks Sarah! We're planning to launch next month. Stay tuned for updates!",
-          timestamp: "45m",
-        },
-      ],
-    },
-    {
-      id: "2",
-      author: "Mike Chen",
-      avatar: "/placeholder.svg?height=32&width=32",
-      content: "The design looks incredible. Your team has outdone themselves!",
-      timestamp: "2h",
-    },
-    {
-      id: "3",
-      author: "Emily Rodriguez",
-      avatar: "/placeholder.svg?height=32&width=32",
-      content: "Finally! I've been waiting for something like this. The innovation is exactly what the market needs.",
-      timestamp: "3h",
-      replies: [
-        {
-          id: "3-1",
-          author: "David Kim",
-          avatar: "/placeholder.svg?height=32&width=32",
-          content: "Totally agree! This is going to be a game changer.",
-          timestamp: "2h",
-        },
-      ],
-    },
-  ]
+  const CURRENT_USER: any = user?.id
+  ? {
+      id: user.id.toString(),
+      first_name: user.name.split(" ")[0] || "",
+      last_name: user.name.split(" ").slice(1).join(" ") || "",
+      profile_path: user.profile_path,
+      full_name: user.name,
+    }
+  : {
+      id: "currentUser",
+      first_name: "You",
+      last_name: "",
+      profile_path: null,
+      full_name: "You",
+    }
 
-  const handleAddComment = () => {
+  useEffect(() => {
+    console.log("Post data:", post)
+  }, [post])
+
+  const handleAddComment = async () => {
     if (newComment.trim()) {
-      // Here you would typically send to your database
+      try{
+        const payload = {
+          post_id: post.id,
+          content: newComment,
+        }
+        const response = await api2.post<any>("/api/posts/comments", payload)
+
+        const commentWithUser = {
+          ...response.data,
+          user: CURRENT_USER,
+          timestamp: new Date(response.data.created_at).toLocaleString(),
+        }
+
+        setPosts((prev) => ({
+          ...prev,
+          comments: [...(prev.comments || []), { ...commentWithUser, replies: [] }],
+        }));
+      }catch (error) {
+        
+      }
       console.log("Adding comment:", newComment)
       setNewComment("")
     }
   }
 
-  const handleAddReply = (commentId: string) => {
+  const handleAddReply = async (commentId: string) => {
     if (newReply.trim()) {
-      // Here you would typically send to your database
       console.log("Adding reply to comment", commentId, ":", newReply)
+      try{
+        const response = await api2.post<any>("/api/posts/comments", { //same routes just adds parent_id
+          post_id: post.id,
+          parent_id: commentId,
+          content: newReply
+        })
+
+        const replyWithUser = {
+          ...response.data,
+          user: CURRENT_USER,
+          timestamp: new Date(response.data.created_at).toLocaleString(),
+        }
+
+        setPosts((prev) => ({
+          ...prev,
+          comments: prev.comments.map((comment) => {
+            if (comment.id === commentId) {
+              return {
+                ...comment,
+                replies: [...(comment.replies || []), replyWithUser],
+              }
+            }
+            return comment
+          }),
+        }))
+      }catch (error) {
+        
+      }
       setNewReply("")
       setReplyingTo(null)
     }
   }
+
+  const postuser = posts.user
+  const images = posts.images || []
+  const comments = posts.comments || []
 
   return (
     <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
@@ -99,68 +115,62 @@ export default function PostComponentsAlumni() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Company Logo" />
-              <AvatarFallback>AC</AvatarFallback>
+              {postuser?.profile_path ? (
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_API_URL}${postuser.profile_path}`}
+                  alt={postuser?.name ? `${postuser.name}` : "User profile picture"}
+                  fill
+                  style={{ objectFit: "cover", borderRadius: "50%" }}
+                  sizes="32px"
+                  priority
+                />
+              ) : (
+                <AvatarFallback>
+                  {postuser?.name?.[0] || "U"}
+                </AvatarFallback>
+              )}
             </Avatar>
             <div>
-              <h3 className="font-semibold text-sm">Acme Corporation</h3>
-              <p className="text-xs text-muted-foreground">2 hours ago</p>
+              <h3 className="font-semibold text-sm">{`${postuser?.first_name} ${postuser?.last_name}`}</h3>
+              <p className="text-xs text-muted-foreground">{new Date(post.created_at).toLocaleString()}</p>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">More options</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Save post</DropdownMenuItem>
-              <DropdownMenuItem>Hide post</DropdownMenuItem>
-              <DropdownMenuItem>Report post</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </CardHeader>
 
       <CardContent className="px-0 pb-3">
-        {/* Flex container: defaults to column on small screens, becomes row on medium and up */}
         <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 px-6 pb-4">
-          {/* Text Section */}
-          <div className="flex-1 w-full md:w-auto min-w-0"> {/* flex-1 allows it to grow, min-w-0 prevents overflow issues */}
-            <h2 className="text-lg font-semibold mb-2">🎉 Exciting Product Launch Announcement!</h2>
+          <div className="flex-1 w-full md:w-auto min-w-0">
+            <h2 className="text-lg font-semibold mb-2">{post.title}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Were thrilled to announce the launch of our revolutionary new product line! After months of development and
-              testing, were finally ready to share something truly special with our community. These images showcase just
-              a glimpse of whats to come. Stay tuned for more details and get ready to experience innovation like never
-              before!
-              <span className="text-primary font-medium"> #Innovation #ProductLaunch #Exciting</span>
+              {post.content}
             </p>
           </div>
-
-          {/* Carousel Section */}
-          <Carousel className="flex-1 w-full lg:w-auto min-w-0"> {/* flex-1 allows it to grow, min-w-0 prevents overflow issues */}
-            <CarouselContent>
-              {images.map((src, index) => (
-                <CarouselItem key={index}>
-                  <div className="relative">
-                    <Image
-                      src={src || "/placeholder.svg"}
-                      alt={`Announcement image ${index + 1}`}
-                      width={600}
-                      height={400}
-                      className="w-full h-96 object-cover"
-                    />
-                    <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                      {index + 1} / {images.length}
+          {images.length > 0 && (
+          <Carousel className="flex-1 w-full lg:w-auto min-w-0">
+            
+              <CarouselContent>
+                {images.map((img: any, index: number) => (
+                  <CarouselItem key={img.id || index}>
+                    <div className="relative">
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_API_URL}/${img.image_file}`}
+                        alt={`Post image ${index + 1}`}
+                        width={600}
+                        height={400}
+                        className="w-full h-96 object-cover"
+                      />
+                      <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                        {index + 1} / {images.length}
+                      </div>
                     </div>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
             <CarouselPrevious className="left-4" />
             <CarouselNext className="right-4" />
           </Carousel>
+          )}
         </div>
       </CardContent>
 
@@ -191,12 +201,23 @@ export default function PostComponentsAlumni() {
           <>
             <Separator />
 
-            {/* Add New Comment */}
             <div className="w-full space-y-3">
               <div className="flex space-x-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Your avatar" />
-                  <AvatarFallback>YU</AvatarFallback>
+                  {user?.profile_path ? (
+                    <Image
+                      src={`${process.env.NEXT_PUBLIC_API_URL}${user.profile_path}`}
+                      alt={user?.name}
+                      fill
+                      style={{ objectFit: "cover", borderRadius: "50%" }}
+                      sizes="32px"
+                      priority
+                    />
+                  ) : (
+                    <AvatarFallback>
+                      {user?.name?.[0]}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <div className="flex-1 space-y-2">
                   <Textarea
@@ -217,28 +238,39 @@ export default function PostComponentsAlumni() {
 
             <Separator />
 
-            {/* Comments List */}
             <div className="w-full space-y-4">
-              {comments.map((comment) => (
+            {(posts.comments || [])
+              .filter((c: any) => !c.parent_id)
+              .map((comment: any) => (
                 <div key={comment.id} className="space-y-3">
-                  {/* Main Comment */}
+                  {/* Comment */}
                   <div className="flex space-x-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={comment.avatar || "/placeholder.svg"} alt={comment.author} />
-                      <AvatarFallback>
-                        {comment.author
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
+                      {comment.user?.profile_path ? (
+                        <Image
+                          src={`${process.env.NEXT_PUBLIC_API_URL}${comment.user.profile_path}`}
+                          alt={ `${comment.user?.first_name}` || "user photo"}
+                          fill
+                          style={{ objectFit: "cover", borderRadius: "50%" }}
+                          sizes="32px"
+                          priority
+                        />
+                      ) : (
+                        <AvatarFallback>
+                          {comment.user?.first_name?.[0]}
+                          {comment.user?.last_name?.[0]}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                     <div className="flex-1 space-y-1">
                       <div className="bg-muted rounded-lg px-3 py-2">
-                        <p className="font-semibold text-sm">{comment.author}</p>
+                        <p className="font-semibold text-sm">
+                          {comment.user?.first_name} {comment.user?.last_name}
+                        </p>
                         <p className="text-sm">{comment.content}</p>
                       </div>
                       <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                        <span>{comment.timestamp}</span>
+                        <span>{new Date(comment.created_at).toLocaleString()}</span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -251,16 +283,29 @@ export default function PostComponentsAlumni() {
                     </div>
                   </div>
 
-                  {/* Reply Input */}
+                  {/* Reply Form */}
                   {replyingTo === comment.id && (
                     <div className="ml-11 flex space-x-3">
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Your avatar" />
-                        <AvatarFallback className="text-xs">YU</AvatarFallback>
+                        {user?.profile_path ? (
+                          <Image
+                            src={`${process.env.NEXT_PUBLIC_API_URL}${user.profile_path}`}
+                            alt={user?.name}
+                            fill
+                            style={{ objectFit: "cover", borderRadius: "50%" }}
+                            sizes="32px"
+                            priority
+                          />
+                        ) : (
+                          <AvatarFallback>
+                            {user?.name?.[0]}
+                            {user?.name?.[0]}
+                          </AvatarFallback>
+                        )}
                       </Avatar>
                       <div className="flex-1 space-y-2">
                         <Textarea
-                          placeholder={`Reply to ${comment.author}...`}
+                          placeholder={`Reply to ${comment.user?.first_name}...`}
                           value={newReply}
                           onChange={(e) => setNewReply(e.target.value)}
                           className="min-h-[50px] resize-none text-sm"
@@ -270,13 +315,17 @@ export default function PostComponentsAlumni() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              setReplyingTo(null)
-                              setNewReply("")
+                              setReplyingTo(null);
+                              setNewReply("");
                             }}
                           >
                             Cancel
                           </Button>
-                          <Button size="sm" onClick={() => handleAddReply(comment.id)} disabled={!newReply.trim()}>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAddReply(comment.id)}
+                            disabled={!newReply.trim()}
+                          >
                             Reply
                           </Button>
                         </div>
@@ -285,26 +334,36 @@ export default function PostComponentsAlumni() {
                   )}
 
                   {/* Replies */}
-                  {comment.replies && comment.replies.length > 0 && (
+                  {Array.isArray(comment.replies) && comment.replies.length > 0 && (
                     <div className="ml-11 space-y-3">
-                      {comment.replies.map((reply) => (
+                      {comment.replies.map((reply: any) => (
                         <div key={reply.id} className="flex space-x-3">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={reply.avatar || "/placeholder.svg"} alt={reply.author} />
-                            <AvatarFallback className="text-xs">
-                              {reply.author
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
+                            {reply.user?.profile_path ? (
+                              <Image
+                                src={`${process.env.NEXT_PUBLIC_API_URL}${reply.user.profile_path}`}
+                                alt={reply.user?.first_name}
+                                fill
+                                style={{ objectFit: "cover", borderRadius: "50%" }}
+                                sizes="32px"
+                                priority
+                              />
+                            ) : (
+                              <AvatarFallback>
+                                {reply.user?.first_name?.[0]}
+                                {reply.user?.last_name?.[0]}
+                              </AvatarFallback>
+                            )}
                           </Avatar>
                           <div className="flex-1 space-y-1">
                             <div className="bg-muted rounded-lg px-3 py-2">
-                              <p className="font-semibold text-sm">{reply.author}</p>
+                              <p className="font-semibold text-sm">
+                                {reply.user?.first_name} {reply.user?.last_name}
+                              </p>
                               <p className="text-sm">{reply.content}</p>
                             </div>
                             <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                              <span>{reply.timestamp}</span>
+                              <span>{new Date(reply.created_at).toLocaleString()}</span>
                             </div>
                           </div>
                         </div>
@@ -313,7 +372,7 @@ export default function PostComponentsAlumni() {
                   )}
                 </div>
               ))}
-            </div>
+          </div>
           </>
         )}
       </CardFooter>
