@@ -71,7 +71,7 @@ export default function PostCreatorAlumni() {
         onChange={(e) => setImages(Array.from(e.target.files || []))}
         className="block"
       />
-      <Button type="submit">Create Announcement</Button>
+      <Button type="submit">Create Post</Button>
     </form>
   );
 }

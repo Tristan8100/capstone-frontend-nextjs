@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 export default function Page() {
   const [posts, setPosts] = useState([]);
+  const [status, setStatus] = useState("accepted");
 
   useEffect(() => {
     fetchposts();
@@ -17,7 +18,7 @@ export default function Page() {
 
   const fetchposts = async () => {
     try {
-      const response = await api2.get<any>("/api/posts/status/pending");
+      const response = await api2.get<any>(`/api/posts/status/${status}`);
       setPosts(response.data);
       console.log(response.data);
     } catch (err) {
@@ -38,7 +39,7 @@ export default function Page() {
       <Separator className="border-border my-6" />
 
       {posts.map((post) => (
-        <PostComponentsAlumni key={post.id} post={post} />
+        <PostComponentsAlumni status={status} isAdmin={false} key={post.id} post={post} />
       ))}
       
     </>
