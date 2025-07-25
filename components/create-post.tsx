@@ -5,13 +5,15 @@ import { api2 } from '@/lib/api';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 
-export default function PostCreator() {
+export default function PostCreator({ onSuccess }: { onSuccess?: () => void }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [images, setImages] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     if (!title.trim() || !content.trim()) {
       toast.error('Title and content are required.');
@@ -27,16 +29,29 @@ export default function PostCreator() {
     });
 
     try {
-      await api2.post('/api/announcements', formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      toast.success('Announcement created!');
+      await toast.promise(
+        new Promise((resolve, reject) => {
+          api2
+            .post('/api/announcements', formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            })
+            .then(resolve)
+            .catch(reject);
+        }),
+        {
+          loading: 'Creating announcement...',
+          success: 'Announcement created!',
+          error: (err) =>
+            err?.response?.data?.message || 'Failed to create announcement.',
+        }
+      );
       setTitle('');
       setContent('');
       setImages([]);
+      setLoading(false);
+      onSuccess?.();
     } catch (error: any) {
       console.error(error);
       const message = error.response?.data?.message || 'Failed to create announcement.';
@@ -71,7 +86,7 @@ export default function PostCreator() {
         onChange={(e) => setImages(Array.from(e.target.files || []))}
         className="block"
       />
-      <Button type="submit">Create Announcement</Button>
+      <Button disabled={loading} type="submit">Create Announcement</Button>
     </form>
   );
 }

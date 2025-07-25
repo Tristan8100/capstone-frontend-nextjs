@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
         port: url.port || '', // include port if needed (like 8000)
         pathname: '/**',       // allow all image paths
       } as any,
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
   reactStrictMode: false,

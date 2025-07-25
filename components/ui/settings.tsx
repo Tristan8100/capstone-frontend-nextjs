@@ -39,7 +39,7 @@ export function UserSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  
   const [profile, setprofile] = useState(user.profile_path)
   
 
@@ -106,7 +106,7 @@ export function UserSettings() {
                   preview
                     ? preview
                     : user?.profile_path
-                    ? baseUrl + profile
+                    ? profile
                     : '/static/user.png'
                 }
                 alt="Profile"

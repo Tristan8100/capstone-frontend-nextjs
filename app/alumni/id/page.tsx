@@ -16,8 +16,8 @@ export default function Page() {
     studentId: user.id,
     institutionName: "",
     graduationYear: "2018",
-    profilePictureUrl: baseUrl + user.profile_path,
-    qrCodeUrl: baseUrl + '/' + user.qr_code_path,
+    profilePictureUrl: user.profile_path,
+    qrCodeUrl: user.qr_code_path,
   };
   return (
     <>

@@ -95,7 +95,7 @@ export default function Page() {
   return (
     <div className="space-y-6">
       <HeaderAnnouncement />
-      <CreateAnnouncement />
+      <CreateAnnouncement onSuccess1={fetchAnnouncements} />
       {/* Filters and Search */}
       <Card>
         <CardHeader className="pb-4">

@@ -159,7 +159,7 @@ export default function AlumniAnnouncementComponent({
                   <CarouselItem key={img.id}>
                     <div className="relative">
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_API_URL}/${img.image_file}`}
+                        src={`${img.image_file}`} //MODIFIED
                         alt={img.image_name}
                         width={600}
                         height={400}
@@ -209,7 +209,7 @@ export default function AlumniAnnouncementComponent({
                 <Avatar className="h-8 w-8 relative">
                   {CURRENT_USER.profile_path ? (
                     <Image
-                      src={`${process.env.NEXT_PUBLIC_API_URL}${CURRENT_USER.profile_path}`}
+                      src={`${CURRENT_USER.profile_path}`}
                       alt={CURRENT_USER.full_name || "Your avatar"}
                       fill
                       style={{ objectFit: "cover", borderRadius: "50%" }}
@@ -245,7 +245,7 @@ export default function AlumniAnnouncementComponent({
                   const displayName = getUserDisplayName(comment.user)
                   const initials = getUserInitials(comment.user)
                   const avatarSrc = comment.user.profile_path
-                    ? `${process.env.NEXT_PUBLIC_API_URL}${comment.user.profile_path}`
+                    ? `${comment.user.profile_path}`
                     : null
 
                   return (
@@ -283,7 +283,7 @@ export default function AlumniAnnouncementComponent({
                           <Avatar className="h-6 w-6">
                             {CURRENT_USER.profile_path ? (
                               <Image
-                                src={`${process.env.NEXT_PUBLIC_API_URL}${CURRENT_USER.profile_path}`}
+                                src={`${CURRENT_USER.profile_path}`}
                                 alt={CURRENT_USER.full_name}
                                 fill
                                 style={{ objectFit: "cover", borderRadius: "50%" }}
@@ -320,7 +320,7 @@ export default function AlumniAnnouncementComponent({
                             const replyName = getUserDisplayName(reply.user)
                             const replyInitials = getUserInitials(reply.user)
                             const replyAvatar = reply.user.profile_path
-                              ? `${process.env.NEXT_PUBLIC_API_URL}${reply.user.profile_path}`
+                              ? `${reply.user.profile_path}`
                               : null
 
                             return (

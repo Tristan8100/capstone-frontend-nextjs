@@ -280,7 +280,7 @@ export default function AdminAnnouncementComponent({
                   <CarouselItem key={img.id}>
                     <div className="relative">
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_API_URL}/${img.image_file}`}
+                        src={`${img.image_file}`} //MODIFIED
                         alt={img.image_name}
                         width={600}
                         height={400}
@@ -368,7 +368,7 @@ export default function AdminAnnouncementComponent({
                   const user = comment.user
                   const displayName = getUserDisplayName(user)
                   const initials = getUserInitials(user)
-                  const avatarSrc = user.profile_path ? `${process.env.NEXT_PUBLIC_API_URL}${user.profile_path}` : null
+                  const avatarSrc = user.profile_path ? `${user.profile_path}` : null
                   return (
                     <div key={comment.id} className="space-y-3">
                       {/* Main Comment */}
@@ -457,7 +457,7 @@ export default function AdminAnnouncementComponent({
                             const replyDisplayName = getUserDisplayName(replyUser)
                             const replyInitials = getUserInitials(replyUser)
                             const replyAvatarSrc = replyUser.profile_path
-                              ? `${process.env.NEXT_PUBLIC_API_URL}${replyUser.profile_path}`
+                              ? `${replyUser.profile_path}`
                               : null
                             return (
                               <div key={reply.id} className="flex space-x-3">

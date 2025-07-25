@@ -138,7 +138,7 @@ const handleDelete = async (id: string) => {
                   <div className="flex items-center gap-3">
                     {institute.image_path && (
                       <Image
-                        src={`${api2.defaults.baseURL}/${institute.image_path}`}
+                        src={`${institute.image_path}`}
                         alt={institute.name}
                         width={40}
                         height={40}
@@ -190,7 +190,7 @@ const handleDelete = async (id: string) => {
                           <div className="col-span-3 space-y-2">
                             {institute.image_path && (
                               <Image
-                                src={`${api2.defaults.baseURL}/${institute.image_path}`}
+                                src={`${institute.image_path}`}
                                 alt="Current logo"
                                 width={80}
                                 height={80}

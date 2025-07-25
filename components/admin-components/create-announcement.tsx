@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { CardHeader } from "../ui/card";
 import { DialogHeader } from "../ui/dialog";
 
-export default function CreateAnnouncement() {
+export default function CreateAnnouncement({ onSuccess1 }: { onSuccess1?: () => void }) {
   return (
     <Dialog>
         <DialogTrigger asChild>
@@ -25,7 +25,7 @@ export default function CreateAnnouncement() {
             </DialogHeader>
 
             <div className="mt-4">
-              <PostCreator />
+              <PostCreator onSuccess={() => onSuccess1?.()}/>
             </div>
           </DialogContent>
         </DialogPortal>
