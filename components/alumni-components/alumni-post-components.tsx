@@ -230,27 +230,30 @@ export default function PostComponentsAlumni({ post, isAdmin, status }: { post: 
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="p-1 rounded-full">
-                    <MoreHorizontal className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={5} className="w-28">
-                  <DropdownMenuItem 
-                    onClick={() => setIsEditDialogOpen(true)}
-                    className="capitalize"
-                  >
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="capitalize text-destructive"
-                  >
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              // Only show dropdown if current user is the author of the post
+              CURRENT_USER.id === postuser.id.toString() && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="p-1 rounded-full">
+                      <MoreHorizontal className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" sideOffset={5} className="w-28">
+                    <DropdownMenuItem 
+                      onClick={() => setIsEditDialogOpen(true)}
+                      className="capitalize"
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      className="capitalize text-destructive"
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )
             )}
 
           </div>

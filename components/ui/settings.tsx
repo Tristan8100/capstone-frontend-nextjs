@@ -69,6 +69,7 @@ export function UserSettings() {
 
       toast.success(res.data.message || 'Photo uploaded successfully.')
       setprofile(res.data.profile_path)
+      setPreview(res.data.profile_path)
       // reload or update preview
       setPreview(null)
     } catch (err: any) {
