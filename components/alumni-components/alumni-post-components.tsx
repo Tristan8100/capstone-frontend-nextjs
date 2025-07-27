@@ -28,12 +28,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 
-export default function PostComponentsAlumni({ post, isAdmin, status }: { post: any, isAdmin: boolean, status: string }) {
+export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialIsLiked, status }: { post: any, isAdmin: boolean, is_liked: boolean, status: string }) {
   const [posts, setPosts] = useState(post)
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [newReply, setNewReply] = useState("")
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editedTitle, setEditedTitle] = useState(post.title)
@@ -60,6 +61,7 @@ export default function PostComponentsAlumni({ post, isAdmin, status }: { post: 
 
   useEffect(() => {
     console.log("Post data:", post)
+    console.log("is like?", isLiked)
   }, [post])
 
   const handleAddComment = async () => {
@@ -170,6 +172,21 @@ export default function PostComponentsAlumni({ post, isAdmin, status }: { post: 
       console.error(error);
     }
   }
+
+  const handleLike = async () => {
+    try {
+      const response = await api2.put<any>(`/api/posts/like/${posts.id}`);
+      setIsLiked(!isLiked);
+      setPosts(prev => ({
+        ...prev,
+        likes_count: response.data.likes_count
+      }));
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
+  };
+
+
 
   const postuser = posts.user
   const images = posts.images || []
@@ -302,14 +319,27 @@ export default function PostComponentsAlumni({ post, isAdmin, status }: { post: 
           <Separator />
 
           <div className="flex items-center justify-around w-full">
-            <Button variant="ghost" size="sm" className="flex-1 hover:bg-muted/50">
-              <Heart className="h-4 w-4 mr-2" />
-              Like
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`flex-1 hover:bg-muted/50 ${isLiked ? 'text-blue-500' : 'text-muted-foreground'}`}
+              onClick={handleLike}
+            >
+              <div className="flex items-center">
+                <Heart 
+                  className={`h-4 w-4 mr-1 ${isLiked ? 'fill-blue-500' : 'fill-none'}`} 
+                />
+                {posts.likes_count > 0 && (
+                  <span className="text-xs ml-1">
+                    {posts.likes_count}
+                  </span>
+                )}
+              </div>
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="flex-1 hover:bg-muted/50"
+              className="flex-1 hover:bg-muted/50 text-muted-foreground"
               onClick={() => setShowComments(!showComments)}
             >
               <MessageCircle className="h-4 w-4 mr-2" />

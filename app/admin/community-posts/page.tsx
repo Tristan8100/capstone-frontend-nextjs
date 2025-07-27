@@ -38,7 +38,7 @@ export default function Page() {
           <p className="text-center text-muted-foreground">No posts found.</p>
         ) : (
           posts.map((post) => (
-            <PostComponentsAlumni status={status} isAdmin={true} key={post.id} post={post} />
+            <PostComponentsAlumni status={status} is_liked={post.is_liked} isAdmin={true} key={post.id} post={post} />
           ))
         )}
       </div>

@@ -39,7 +39,7 @@ export default function Page() {
       <Separator className="border-border my-6" />
 
       {posts.map((post) => (
-        <PostComponentsAlumni status={status} isAdmin={false} key={post.id} post={post} />
+        <PostComponentsAlumni status={status} is_liked={post.is_liked} isAdmin={false} key={post.id} post={post} />
       ))}
       
     </>

@@ -66,6 +66,7 @@ export default function Page() {
                       status={status}
                       key={post.id}
                       post={post}
+                      is_liked={post.is_liked}
                       isAdmin={true} // Only true for pending
                     />
                   ))
