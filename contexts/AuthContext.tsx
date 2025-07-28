@@ -9,6 +9,8 @@ export type User = {
   name: string;
   email: string;
   course: string | null;
+  batch: number | null;
+  course_id: number | null;
   qr_code_path: string | null;
   profile_path: string | null;
 };
