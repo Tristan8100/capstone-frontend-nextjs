@@ -35,7 +35,7 @@ export default function AlumniLayout({children, currentPage}: {children: React.R
             </Breadcrumb>
           </div>
           <div className="ml-auto mr-4 flex gap-2">
-            <SearchAlumni />
+            <SearchAlumni isAdmin={false} />
             <ModeToggle />
           </div>
         </header>

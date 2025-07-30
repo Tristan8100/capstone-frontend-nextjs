@@ -20,19 +20,10 @@ import {
 } from "@/components/ui/dialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
-// --- Import types from the page.tsx file ---
-import type { User, Comment, AnnouncementProps } from "@/app/admin/announcements/page"
+import type { User, Comment, Announcement } from "@/app/admin/announcements/page"
 import { Input } from "../ui/input"
 
-// --- Helper Functions (kept here as they are specific to this component's rendering) ---
-function getInitials(name: string) {
-  if (!name) return "??"
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-}
+
 
 function getUserDisplayName(user: User) {
   if (user.full_name) return user.full_name
@@ -49,25 +40,25 @@ function getUserInitials(user: User) {
   return initials || "??"
 }
 
-export default function AdminAnnouncementComponent({
-  id,
-  title,
-  content,
-  images,
-  comments: initialComments,
-  admin_id,
-  created_at,
-  updated_at,
-  onDeleteSuccess,
-  onUpdateSuccess,
-}: AnnouncementProps) {
+interface AdminAnnouncementProps {
+  announcement: Announcement
+  onUpdateSuccess?: () => void
+  onDeleteSuccess?: () => void
+}
+
+export default function AdminAnnouncementComponent({ 
+  announcement,
+  onUpdateSuccess = () => {},
+  onDeleteSuccess = () => {} 
+}: AdminAnnouncementProps) {
+  const { id, title, content, images, comments: initialComments, created_at, likes_count = 0, is_liked = false } = announcement
   const [showComments, setShowComments] = useState(false)
-  const [titleEdit, setTitleEdit] = useState(title)
+  const [titleEdit, setTitleEdit] = useState(announcement.title)
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [newReply, setNewReply] = useState("")
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editedContent, setEditedContent] = useState(content)
+  const [editedContent, setEditedContent] = useState(announcement.content)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [comments, setComments] = useState<Comment[]>(initialComments)
   const { user } = useAuth()
@@ -185,7 +176,7 @@ export default function AdminAnnouncementComponent({
   }
 
   return (
-    <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
+    <Card className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
       {/* Header */}
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -311,7 +302,7 @@ export default function AdminAnnouncementComponent({
         <div className="flex items-center justify-around w-full">
           <Button variant="ghost" size="sm" className="flex-1 hover:bg-muted/50">
             <Heart className="h-4 w-4 mr-2" />
-            Like
+            <span>{likes_count}</span>
           </Button>
           <Button
             variant="ghost"

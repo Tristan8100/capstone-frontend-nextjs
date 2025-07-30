@@ -8,6 +8,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type Alumni = {
   id: number
@@ -37,6 +48,8 @@ export function AlumniTable() {
   const [alumni, setAlumni] = useState<Alumni[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [totalPages, setTotalPages] = useState(1)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [alumniToDelete, setAlumniToDelete] = useState<number | null>(null)
   const itemsPerPage = 5
 
   //Form state for editing
@@ -143,6 +156,34 @@ export function AlumniTable() {
     }
   }
 
+  const handleDeleteClick = (alumniId: number) => {
+    setAlumniToDelete(alumniId)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!alumniToDelete) return
+
+    try {
+      await api2.delete(`/api/alumni-list/${alumniToDelete}`)
+      toast.success("Alumni deleted successfully")
+
+      // Refresh the list
+      const response = await api2.get<PaginatedResponse<Alumni>>('/api/alumni-list', {
+        params: {
+          page: currentPage,
+          per_page: itemsPerPage
+        }
+      })
+      setAlumni(response.data.data)
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete alumni")
+    } finally {
+      setIsDeleteDialogOpen(false)
+      setAlumniToDelete(null)
+    }
+  }
+
 
   return (
     <div className="space-y-4">
@@ -200,6 +241,14 @@ export function AlumniTable() {
                     >
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">View alumni details</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleDeleteClick(alumni.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <span className="sr-only">Delete</span>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -342,6 +391,27 @@ export function AlumniTable() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the alumni record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

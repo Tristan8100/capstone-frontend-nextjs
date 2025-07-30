@@ -36,7 +36,7 @@ export default function AdminLayout({children, currentPage}: {children: React.Re
             </Breadcrumb>
           </div>
           <div className="ml-auto mr-4 flex gap-2">
-            <SearchAlumni />
+            <SearchAlumni isAdmin={true} />
             <ModeToggle />
           </div>
         </header>

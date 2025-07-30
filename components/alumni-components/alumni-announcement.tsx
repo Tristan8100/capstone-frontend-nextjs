@@ -35,6 +35,9 @@ export interface ImageType {
   updated_at: string
 }
 
+interface AlumniAnnouncementProps {
+  announcement: Announcement
+}
 
 export interface AnnouncementCardProps {
   key : number
@@ -46,19 +49,15 @@ export interface AnnouncementCardProps {
   created_at: string
 }
 
-export default function AlumniAnnouncementComponent({
-  id,
-  title,
-  content,
-  images,
-  comments: initialComments,
-  created_at,
-}: Announcement) {
+export default function AlumniAnnouncementComponent({ announcement }: AlumniAnnouncementProps) {
+  const { id, title, content, images, comments: initialComments, created_at, likes_count = 0, is_liked = false } = announcement
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [newReply, setNewReply] = useState("")
   const [comments, setComments] = useState<Comment[]>(initialComments)
+  const [currentLikes, setCurrentLikes] = useState(likes_count)
+  const [currentIsLiked, setCurrentIsLiked] = useState(is_liked)
   const { user } = useAuth()
 
   const CURRENT_USER: User = user?.id
@@ -129,8 +128,18 @@ export default function AlumniAnnouncementComponent({
     }
   }
 
+  const handleLike = async () => {
+    try {
+      const response = await api2.put<any>(`/api/announcements/${id}/like`)
+      setCurrentIsLiked(response.data.is_liked)
+      setCurrentLikes(response.data.likes_count)
+    } catch (error) {
+      console.error("Error toggling like:", error)
+    }
+  }
+
   return (
-    <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
+    <Card className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
       {/* Header */}
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-3">
@@ -186,9 +195,16 @@ export default function AlumniAnnouncementComponent({
         </div>
         <Separator />
         <div className="flex items-center justify-around w-full">
-          <Button variant="ghost" size="sm" className="flex-1 hover:bg-muted/50">
-            <Heart className="h-4 w-4 mr-2" />
-            Like
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`flex-1 hover:bg-muted/50 ${currentIsLiked ? 'text-blue-500' : 'text-muted-foreground'}`}
+            onClick={handleLike}
+          >
+            <div className="flex items-center">
+              <Heart className={`h-4 w-4 mr-1 ${currentIsLiked ? 'fill-blue-500' : 'fill-none'}`} />
+              {currentLikes > 0 && <span className="text-xs ml-1">{currentLikes}</span>}
+            </div>
           </Button>
           <Button
             variant="ghost"

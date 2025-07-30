@@ -9,8 +9,9 @@ import AlumniAnnouncementComponent from "@/components/alumni-components/alumni-a
 import PostComponents from "@/components/alumni-components/posts-components"
 import HeaderAnnouncement from "@/components/admin-components/header-announcement"
 import { api2 } from "@/lib/api"
+import InfiniteScroll from "@/components/infinite-scroll"
+import { Loader2 } from "lucide-react"
 
-// --- Type Definitions (shared in this file) ---
 export interface User {
   id: string
   first_name: string
@@ -51,30 +52,48 @@ export interface Announcement {
   admin_id: number
   created_at: string
   updated_at: string
+  likes_count?: number
+  is_liked?: boolean
 }
 
-// --- Main Page Component ---
 export default function Page() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("latest")
 
-  const fetchAnnouncements = useCallback(async () => {
+  const fetchAnnouncements = useCallback(async (reset = false) => {
+    if ((!hasMore && !reset) || loading) return
+    
+    setLoading(true)
     try {
-      const response = await api2.get<Announcement[]>("/api/alumni/announcements")
-      setAnnouncements(response.data)
+      const currentPage = reset ? 1 : page
+      const response = await api2.get<any>(`/api/alumni/announcements?page=${currentPage}`)
+      
+      const newAnnouncements = response.data.data || []
+      setAnnouncements(prev => reset ? newAnnouncements : [...prev, ...newAnnouncements])
+      setPage(reset ? 2 : prev => prev + 1)
+      setHasMore(!!response.data.pagination?.next_page_url)
     } catch (error) {
       console.error("Failed to fetch announcements:", error)
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }, [page, hasMore, loading])
 
   useEffect(() => {
-    fetchAnnouncements()
-  }, [fetchAnnouncements])
+    fetchAnnouncements(true)
+  }, [activeTab]) // Reset when tab changes
 
   return (
     <div className="space-y-6">
-
       {/* Main Content Tabs */}
-      <Tabs defaultValue="latest" className="space-y-6">
+      <Tabs 
+        defaultValue="latest" 
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <div className="flex items-center justify-between">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="latest" className="flex items-center gap-2">
@@ -86,10 +105,6 @@ export default function Page() {
               Popular
             </TabsTrigger>
           </TabsList>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="h-2 w-2 rounded-full bg-green-500"></div>
-            <span>Live updates</span>
-          </div>
         </div>
 
         {/* Latest Announcements Tab */}
@@ -102,19 +117,30 @@ export default function Page() {
               </div>
             </div>
             <div className="p-4 space-y-6">
-              {announcements.length === 0 ? (
+              {announcements.length === 0 && !loading ? (
                 <p>No announcements found.</p>
               ) : (
-                announcements.map((announcement) => (
-                  <AlumniAnnouncementComponent
-                    key={announcement.id}
-                    id={announcement.id}
-                    title={announcement.title}
-                    content={announcement.content}
-                    images={announcement.images}
-                    comments={announcement.comments}
-                    created_at={announcement.created_at} admin_id={0} updated_at={""}                  />
-                ))
+                <>
+                  {announcements.map((announcement) => (
+                    <AlumniAnnouncementComponent 
+                      key={announcement.id}
+                      announcement={announcement}
+                    />
+                  ))}
+                  
+                  <InfiniteScroll
+                    hasMore={hasMore}
+                    isLoading={loading}
+                    next={fetchAnnouncements}
+                    threshold={0.8}
+                  >
+                    {hasMore && (
+                      <div className="flex justify-center p-4">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    )}
+                  </InfiniteScroll>
+                </>
               )}
             </div>
           </div>
