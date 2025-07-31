@@ -152,11 +152,11 @@ export default function AdminAnnouncementComponent({
 
   const handleSaveEdit = async () => {
     try {
-      const response = await api2.put(`/api/announcements/${id}`, {
+      await api2.put(`/api/announcements/${id}`, {
         title: titleEdit, //from usestate
         content: editedContent,
       })
-      console.log("Announcement updated successfully:", response.data)
+      console.log("Announcement updated successfully:")
       setIsEditDialogOpen(false)
       onUpdateSuccess() //notify parent
     } catch (error) {

@@ -63,6 +63,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false)
 
   const fetchAnnouncements = useCallback(async (reset = false) => {
+    console.log("Fetching announcements...")
     if ((!hasMore && !reset) || loading) return
     
     setLoading(true)
@@ -71,11 +72,7 @@ export default function Page() {
       const response = await api2.get<any>(`/api/announcements?page=${currentPage}`)
       
       const newAnnouncements = response.data.data || []
-      setAnnouncements(prev => {
-        const existingIds = new Set(prev.map(a => a.id))
-        const filteredNew = newAnnouncements.filter(a => !existingIds.has(a.id))
-        return reset ? filteredNew : [...prev, ...filteredNew]
-      })
+      setAnnouncements(prev => reset ? newAnnouncements : [...prev, ...newAnnouncements])
       setPage(reset ? 2 : prev => prev + 1)
       setHasMore(!!response.data.pagination?.next_page_url)
     } catch (error) {
@@ -87,7 +84,9 @@ export default function Page() {
 
 
   const handleRefresh = useCallback(() => {
+    console.log("Refreshing announcements...")
     fetchAnnouncements(true)
+    console.log("Announcements refreshed.")
   }, [fetchAnnouncements])
 
   useEffect(() => {
