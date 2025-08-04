@@ -39,52 +39,52 @@ export default function PostAnalytics() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Posts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">{stats.pending_posts_count}</p>
-            <p className="text-sm text-muted-foreground">
-              {stats.pending_ratio?.toFixed(1)}% of total posts
-            </p>
-          </CardContent>
-        </Card>
+        {/* Pending Posts */}
+      <Card className="bg-rose-500/10 border border-rose-500/20">
+        <CardHeader className="pb-2">
+          <p className="text-sm font-medium text-rose-500">Pending Posts</p>
+          <p className="text-3xl font-bold">{stats.pending_posts_count}</p>
+          <p className="text-xs text-rose-500/80">
+            {stats.pending_ratio?.toFixed(1)}% of total posts
+          </p>
+        </CardHeader>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Poster</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats.top_users?.length > 0 && (
-              <>
-                <p className="text-2xl font-bold">
-                  {stats.top_users[0].first_name} {stats.top_users[0].last_name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {stats.top_users[0].posts_count} posts
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+      {/* Top Poster */}
+      <Card className="bg-emerald-500/10 border border-emerald-500/20">
+        <CardHeader className="pb-2">
+          <p className="text-sm font-medium text-emerald-500">Top Poster</p>
+          {stats.top_users?.length > 0 && (
+            <>
+              <p className="text-3xl font-bold">
+                {stats.top_users[0].first_name} {stats.top_users[0].last_name}
+              </p>
+              <p className="text-xs text-emerald-500/80">
+                {stats.top_users[0].posts_count} posts
+              </p>
+            </>
+          )}
+        </CardHeader>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Common Words</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(stats.common_words || {})
-                .slice(0, 5)
-                .map(([word, count]) => (
-                  <span key={word} className="bg-secondary px-2 py-1 rounded text-sm">
-                    {word} ({String(count)})
-                  </span>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Common Words */}
+      <Card className="bg-indigo-500/10 border border-indigo-500/20">
+        <CardHeader className="pb-2">
+          <p className="text-sm font-medium text-indigo-500">Common Words</p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {Object.entries(stats.common_words || {})
+              .slice(0, 5)
+              .map(([word, count]) => (
+                <span 
+                  key={word} 
+                  className="bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded text-xs"
+                >
+                  {word} ({String(count)})
+                </span>
+              ))}
+          </div>
+        </CardHeader>
+      </Card>
       </div>
 
       {/* Posts Trend Chart */}

@@ -19,30 +19,13 @@ export default function AlumniAnalytics() {
       setLoading(false)
   }, [])
 
-  if (loading) {
+  if (!data) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Batch Distribution</CardTitle>
-          </CardHeader>
-          <CardContent className="h-80">
-            <Skeleton className="h-full w-full" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Course Distribution</CardTitle>
-          </CardHeader>
-          <CardContent className="h-80">
-            <Skeleton className="h-full w-full" />
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p>Loading dashboard...</p>
       </div>
     )
   }
-
-  if (!data) return <div>No data available</div>
 
   return (
     <div className="space-y-6">
