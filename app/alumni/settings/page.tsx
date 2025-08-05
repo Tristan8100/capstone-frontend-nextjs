@@ -1,4 +1,4 @@
-import { UserSettings } from "@/components/ui/settings"
+import { UserSettings } from "@/components/alumni-components/user-settings"
 
 
 export default function Page() {

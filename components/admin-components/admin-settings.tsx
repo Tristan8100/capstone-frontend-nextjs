@@ -32,16 +32,20 @@ type response = {
   profile_path: string
 }
 
-export function UserSettings() {
+export function AdminSettings() {
   const { setTheme, theme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const { user } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  
   const [profile, setprofile] = useState(user.profile_path)
   
+  // Password state
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -63,14 +67,13 @@ export function UserSettings() {
 
     setLoading(true)
     try {
-      const res = await api2.post<response>('/api/profile-picture', formData, {
+      const res = await api2.post<response>('/api/profile-picture-admin', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
       toast.success(res.data.message || 'Photo uploaded successfully.')
       setprofile(res.data.profile_path)
       setPreview(res.data.profile_path)
-      // reload or update preview
       setPreview(null)
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Upload failed.')
@@ -81,6 +84,31 @@ export function UserSettings() {
 
   const handleThemeChange = (value: 'light' | 'dark' | 'system') => {
     setTheme(value)
+  }
+
+  const handlePasswordChange = async () => {
+    if (newPassword !== confirmPassword) {
+      return toast.error('New password and confirmation do not match.')
+    }
+
+    setIsPasswordLoading(true)
+    try {
+      await api2.post('/api/update-password-admin', {
+        email: user.email,
+        current_password: currentPassword,
+        new_password: newPassword,
+        new_password_confirmation: confirmPassword
+      })
+
+      toast.success('Password changed successfully!')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to change password.')
+    } finally {
+      setIsPasswordLoading(false)
+    }
   }
 
   return (
@@ -190,19 +218,39 @@ export function UserSettings() {
         <CardContent className="space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="current-password">Current Password</Label>
-            <Input id="current-password" type="password" />
+            <Input 
+              id="current-password" 
+              type="password" 
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="new-password">New Password</Label>
-            <Input id="new-password" type="password" />
+            <Input 
+              id="new-password" 
+              type="password" 
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="confirm-password">Confirm New Password</Label>
-            <Input id="confirm-password" type="password" />
+            <Input 
+              id="confirm-password" 
+              type="password" 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={() => console.log('Update Password clicked')}>Update Password</Button>
+          <Button 
+            onClick={handlePasswordChange}
+            disabled={isPasswordLoading || !currentPassword || !newPassword || !confirmPassword}
+          >
+            {isPasswordLoading ? 'Updating...' : 'Update Password'}
+          </Button>
         </CardFooter>
       </Card>
     </div>

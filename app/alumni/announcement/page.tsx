@@ -43,6 +43,13 @@ export interface Comment {
   updated_at: string
 }
 
+export interface Admin {
+  id: number
+  name: string
+  email: string
+  profile_path?: string | null
+}
+
 export interface Announcement {
   id: number
   title: string
@@ -54,6 +61,7 @@ export interface Announcement {
   updated_at: string
   likes_count?: number
   is_liked?: boolean
+  admin: Admin
 }
 
 export default function Page() {

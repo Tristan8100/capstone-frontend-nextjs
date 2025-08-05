@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
-import type { User, Comment, Announcement } from "@/app/admin/announcements/page"
+import type { User, Admin, Comment, Announcement } from "@/app/admin/announcements/page"
 import { Input } from "../ui/input"
 
 
@@ -182,11 +182,19 @@ export default function AdminAnnouncementComponent({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <Image src="/static/TSBA Logo.png" width={40} height={40} alt="Admin" />
-              <AvatarFallback>AD</AvatarFallback>
+              {announcement.admin.profile_path ? (
+                <AvatarImage
+                  src={announcement.admin.profile_path}
+                  alt={announcement.admin.name}
+                  width={40}
+                  height={40}
+                />
+              ) : (
+                <AvatarFallback>{announcement.admin.name?.charAt(0).toUpperCase()}</AvatarFallback>
+              )}
             </Avatar>
             <div>
-              <h3 className="font-semibold text-sm">Admin</h3>
+              <h3 className="font-semibold text-sm">{announcement.admin.name}</h3>
               <p className="text-xs text-muted-foreground">{new Date(created_at).toLocaleString()}</p>
             </div>
           </div>

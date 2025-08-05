@@ -143,12 +143,22 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
       {/* Header */}
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-3">
-          <Avatar className="h-10 w-10">
-            <Image src="/static/TSBA Logo.png" width={40} height={40} alt="Admin" />
-            <AvatarFallback>AD</AvatarFallback>
-          </Avatar>
+          {announcement.admin.profile_path ? (
+            <Avatar className="h-10 w-10">
+              <Image
+                src={`${announcement.admin.profile_path}`} //MODIFIED
+                alt={announcement.admin.name}
+                width={600}
+                height={600}
+              />
+            </Avatar>
+          ) : (
+            <Avatar className="h-10 w-10">
+              <AvatarFallback>{announcement.admin.name?.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          )}
           <div>
-            <h3 className="font-semibold text-sm">Admin</h3>
+            <h3 className="font-semibold text-sm">{announcement.admin.name}</h3>
             <p className="text-xs text-muted-foreground">{new Date(created_at).toLocaleString()}</p>
           </div>
         </div>
