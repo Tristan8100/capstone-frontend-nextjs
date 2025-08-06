@@ -17,7 +17,13 @@ interface Survey {
   id: number
   title: string
   description: string | null
-    created_at: string
+  created_at: string
+  course: Course | null
+}
+
+interface Course {
+  id: string
+  name: string
 }
 
 interface EditSurveyProps {

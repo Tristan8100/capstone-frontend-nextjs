@@ -17,6 +17,12 @@ interface Survey {
   title: string
   description: string | null
   created_at: string
+  course: Course | null
+}
+
+interface Course {
+  id: string
+  name: string
 }
 
 export default function SurveysList() {
@@ -148,6 +154,12 @@ export default function SurveysList() {
                       )
                     }}
                   />
+                  {survey.course && (
+                    <Badge variant="secondary" className="bg-purple-500 hover:bg-purple-600">
+                      <Users className="w-4 h-4 mr-1" />
+                      {survey.course.name}
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>

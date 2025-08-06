@@ -5,18 +5,27 @@ import { api2 } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search, FileText, Calendar } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface Survey {
   id: number
   title: string
   description: string | null
   created_at: string
+  has_responded: boolean
+  course: Course | null
 }
 
+interface Course {
+  id: number
+  name: string
+}
 export default function SurveysListUser() {
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const { user } = useAuth()
 
   useEffect(() => {
     const fetchSurveys = async () => {
@@ -31,11 +40,15 @@ export default function SurveysListUser() {
     fetchSurveys()
   }, [])
 
-  const filteredSurveys = surveys.filter(
-    (survey) =>
-      survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredSurveys = surveys.filter(survey => {
+    const matchesSearch = survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (survey.description?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-  )
+    
+    //NEW MODIFIED: Add course validation
+    const hasAccess = !survey.course || survey.course.id === user?.course_id
+    
+    return matchesSearch && hasAccess
+  })
 
   return (
     <div className="min-h-screen w-full">
@@ -107,6 +120,17 @@ export default function SurveysListUser() {
                       <span>{new Date(survey.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
+                  {!survey.has_responded && (
+                      <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">
+                        Pending
+                      </Badge>
+                    )}
+
+                  {survey.course && (
+                    <Badge variant="default" className="mt-2">
+                      <span className="text-white">{survey.course.name}</span>
+                    </Badge>
+                  )}
                 </CardContent>
               </Card>
             </Link>
