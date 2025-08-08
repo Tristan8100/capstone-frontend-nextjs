@@ -11,6 +11,7 @@ import { api2 } from "@/lib/api"
 import InfiniteScroll from "@/components/infinite-scroll"
 import { Loader2 } from "lucide-react"
 import { Clock } from "lucide-react"
+import HeaderCommunity from "@/components/admin-components/header-community"
 
 export interface User {
   id: string
@@ -103,7 +104,7 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
-      <HeaderAnnouncement />
+      <HeaderCommunity currentPage="Community Posts" text='View and manage announcements' />
       <CreateAnnouncement onSuccess1={handleRefresh} />
 
       <div className="rounded-lg border bg-card">

@@ -20,7 +20,7 @@ export default function Page() {
     
     setLoading(true);
     try {
-      const response = await api2.get<any>(`/api/posts/status/${status}?page=${page}`);
+      const response = await api2.get<any>(`/api/posts-only/status/${status}?page=${page}`);
       const newPosts = response.data.data;
       
       setPosts(prev => [...prev, ...newPosts]);

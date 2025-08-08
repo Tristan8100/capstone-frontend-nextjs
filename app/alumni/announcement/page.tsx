@@ -62,6 +62,7 @@ export interface Announcement {
   likes_count?: number
   is_liked?: boolean
   admin: Admin
+  comments_count: number //added
 }
 
 export default function Page() {
@@ -77,7 +78,7 @@ export default function Page() {
     setLoading(true)
     try {
       const currentPage = reset ? 1 : page
-      const response = await api2.get<any>(`/api/alumni/announcements?page=${currentPage}`)
+      const response = await api2.get<any>(`/api/alumni/announcements-only?page=${currentPage}`)
       
       const newAnnouncements = response.data.data || []
       setAnnouncements(prev => reset ? newAnnouncements : [...prev, ...newAnnouncements])
@@ -102,18 +103,6 @@ export default function Page() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <div className="flex items-center justify-between">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="latest" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Latest
-            </TabsTrigger>
-            <TabsTrigger value="popular" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Popular
-            </TabsTrigger>
-          </TabsList>
-        </div>
 
         {/* Latest Announcements Tab */}
         <TabsContent value="latest" className="space-y-4">

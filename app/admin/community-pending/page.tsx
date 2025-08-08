@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react"
 interface Post {
   id: number
   is_liked: boolean
-  // ... other post fields
+  // add 
 }
 
 export default function Page() {
@@ -28,7 +28,7 @@ export default function Page() {
     
     setLoading(true)
     try {
-      const response = await api2.get<any>(`/api/posts/status/${status}?page=${pageNum}`)
+      const response = await api2.get<any>(`/api/posts-only/status/${status}?page=${pageNum}`)
       const newPosts = response.data.data
       
       if (reset) {
@@ -58,7 +58,7 @@ export default function Page() {
 
   return (
     <div className="space-y-6 pb-10">
-      <HeaderCommunity currentPage="Pending Posts" />
+      <HeaderCommunity currentPage="Pending Posts" text="View and manage pending posts"/>
 
       <Tabs value={status} onValueChange={setStatus} className="space-y-6">
         <div className="flex items-center justify-between">

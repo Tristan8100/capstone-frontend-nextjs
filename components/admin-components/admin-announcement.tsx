@@ -1,15 +1,26 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Image from "next/image"
-import { Heart, MessageCircle, MoreHorizontal, Send, Edit, Trash2 } from "lucide-react"
+import { Heart, MessageCircle, MoreHorizontal, Send, Edit, Trash2, Loader2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -20,158 +31,239 @@ import {
 } from "@/components/ui/dialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
-import type { User, Admin, Comment, Announcement } from "@/app/admin/announcements/page"
 import { Input } from "../ui/input"
 
-
-
-function getUserDisplayName(user: User) {
-  if (user.full_name) return user.full_name
-  const names = [user.first_name, user.middle_name, user.last_name].filter(Boolean)
-  if (names.length === 0) return "??"
-  return names.join(" ")
+function getUserDisplayName(user: any) {
+  if (user?.full_name) return user.full_name
+  const names = [user?.first_name, user?.middle_name, user?.last_name].filter(Boolean)
+  return names.length ? names.join(" ") : "??"
 }
-
-function getUserInitials(user: User) {
-  const firstInitial = user.first_name?.[0] ?? ""
-  const middleInitial = user.middle_name ? user.middle_name[0] : ""
-  const lastInitial = user.last_name?.[0] ?? ""
+function getUserInitials(user: any) {
+  const firstInitial = user?.first_name?.[0] ?? ""
+  const middleInitial = user?.middle_name?.[0] ?? ""
+  const lastInitial = user?.last_name?.[0] ?? ""
   const initials = [firstInitial, middleInitial, lastInitial].filter(Boolean).join("")
   return initials || "??"
 }
 
-interface AdminAnnouncementProps {
-  announcement: Announcement
-  onUpdateSuccess?: () => void
-  onDeleteSuccess?: () => void
-}
-
-export default function AdminAnnouncementComponent({ 
+export default function AdminAnnouncementComponent({
   announcement,
   onUpdateSuccess = () => {},
-  onDeleteSuccess = () => {} 
-}: AdminAnnouncementProps) {
-  const { id, title, content, images, comments: initialComments, created_at, likes_count = 0, is_liked = false } = announcement
+  onDeleteSuccess = () => {},
+}: any) {
+  const {
+    id,
+    title,
+    content,
+    images = [],
+    comments: initialComments = [],
+    created_at,
+    likes_count = 0,
+    is_liked = false,
+    comments_count,
+  } = announcement
+
+  const { user } = useAuth()
+  const CURRENT_USER: any = useMemo(
+    () =>
+      user?.id
+        ? {
+            id: user.id.toString(),
+            first_name: user.name.split(" ")[0] || "",
+            last_name: user.name.split(" ").slice(1).join(" ") || "",
+            profile_path: user.profile_path,
+            full_name: user.name,
+          }
+        : {
+            id: "currentUser",
+            first_name: "You",
+            last_name: "",
+            profile_path: null,
+            full_name: "You",
+          },
+    [user]
+  )
+
+  // UI state: edit/delete
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [titleEdit, setTitleEdit] = useState(title)
+  const [editedContent, setEditedContent] = useState(content)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  // Likes and comments count display (count is local so we can increment on new comment)
+  const [currentLikes] = useState(likes_count)
+  const [currentCommentsCount, setCurrentCommentsCount] = useState(
+    typeof comments_count === "number"
+      ? comments_count
+      : (Array.isArray(initialComments) ? initialComments.length : 0)
+  )
+
+  // Comment/reply compose
   const [showComments, setShowComments] = useState(false)
-  const [titleEdit, setTitleEdit] = useState(announcement.title)
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [newReply, setNewReply] = useState("")
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editedContent, setEditedContent] = useState(announcement.content)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [comments, setComments] = useState<Comment[]>(initialComments)
-  const { user } = useAuth()
 
-  const CURRENT_USER: User = user?.id
-    ? {
-        id: user.id.toString(), // FIX: Ensure user.id is converted to string
-        first_name: user.name.split(" ")[0] || "",
-        last_name: user.name.split(" ").slice(1).join(" ") || "",
-        profile_path: user.profile_path,
-        full_name: user.name,
-      }
-    : {
-        id: "currentUser",
-        first_name: "You",
-        last_name: "",
-        profile_path: null,
-        full_name: "You",
-      }
+  // Lazy comments pagination
+  const [comments, setComments] = useState<any[]>([])
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [commentsNextUrl, setCommentsNextUrl] = useState<string | null>(
+    `/api/announcements-only/${id}?page=1`
+  )
 
+  // Per-comment replies pagination
+  const [repliesLoading, setRepliesLoading] = useState<any>({})
+  const [repliesNextUrl, setRepliesNextUrl] = useState<any>({})
+
+  // Fetch comments
+  const fetchComments = async () => {
+    if (!commentsNextUrl || commentsLoading) return
+    setCommentsLoading(true)
+    try {
+      const res = await api2.get<any>(commentsNextUrl)
+      const data = res.data?.data ?? []
+      // Deduplicate by id
+      setComments(prev => {
+        const seen = new Set(prev.map((c: any) => String(c.id)))
+        const add = data.filter((c: any) => !seen.has(String(c.id)))
+        return [...prev, ...add]
+      })
+      setCommentsNextUrl(res.data?.pagination?.next_page_url || null)
+    } catch (err) {
+      console.error("Error fetching comments:", err)
+    } finally {
+      setCommentsLoading(false)
+    }
+  }
+
+  // Fetch replies for 1 comment
+  const fetchReplies = async (commentId: string | number) => {
+    const key = String(commentId)
+    if (repliesLoading[key]) return
+    const nextUrl = repliesNextUrl[key] ?? `/api/announcements-only/replies/${key}?page=1`
+
+    setRepliesLoading((p: any) => ({ ...p, [key]: true }))
+    try {
+      const res = await api2.get<any>(nextUrl)
+      const incoming = res.data?.data ?? []
+      setComments(prev =>
+        prev.map(c => {
+          if (String(c.id) !== key) return c
+          const curr = Array.isArray(c.replies) ? c.replies : []
+          const seen = new Set(curr.map((r: any) => String(r.id)))
+          const add = incoming.filter((r: any) => !seen.has(String(r.id)))
+          const nextCount = Math.max((c.replies_count || 0) - add.length, 0)
+          return {
+            ...c,
+            replies: [...curr, ...add],
+            replies_count: nextCount,
+          }
+        })
+      )
+      const next = res.data?.pagination?.next_page_url || null
+      setRepliesNextUrl((p: any) => ({ ...p, [key]: next }))
+    } catch (err) {
+      console.error("Error fetching replies:", err)
+    } finally {
+      setRepliesLoading((p: any) => ({ ...p, [key]: false }))
+    }
+  }
+
+  // Add comment
   const handleAddComment = async () => {
-    if (newComment.trim() && CURRENT_USER.id) {
-      try {
-        const payload = {
-          announcement_id: id,
-          user_id: CURRENT_USER.id,
-          content: newComment,
-        }
-        const response = await api2.post<Comment>("/api/comments", payload)
-        const addedComment = response.data
-
-        const commentWithUser: Comment = {
-          ...addedComment,
-          user: CURRENT_USER,
-          timestamp: new Date(addedComment.created_at).toLocaleString(),
-          replies: [],
-        }
-
-        setComments((prevComments) => [...prevComments, commentWithUser])
-        setNewComment("")
-        console.log("New comment added:", commentWithUser)
-      } catch (error) {
-        console.error("Failed to add comment:", error)
+    if (!newComment.trim() || !CURRENT_USER.id) return
+    try {
+      const payload = {
+        announcement_id: id,
+        user_id: CURRENT_USER.id,
+        content: newComment,
       }
+      const res = await api2.post<any>("/api/comments", payload)
+      const added = {
+        ...res.data,
+        user: CURRENT_USER,
+        replies: [],
+        replies_count: 0,
+      }
+      // Prepend newest so admins see it immediately
+      setComments(prev => [added, ...prev])
+      setNewComment("")
+      setCurrentCommentsCount((n: number) => n + 1)
+      // Optionally scroll to it or toast
+    } catch (error) {
+      console.error("Failed to add comment:", error)
     }
   }
 
-  //not working yet (especially for admin, will delete later)
+  // Add reply
   const handleAddReply = async (commentId: string | number) => {
-    if (newReply.trim() && CURRENT_USER.id) {
-      try {
-        const payload = {
-          announcement_id: id,
-          user_id: CURRENT_USER.id,
-          content: newReply,
-          parent_id: commentId,
-        }
-        const response = await api2.post<Comment>("/api/comments", payload)
-        const addedReply = response.data
-
-        const replyWithUser: Comment = {
-          ...addedReply,
-          user: CURRENT_USER,
-          timestamp: new Date(addedReply.created_at).toLocaleString(),
-        }
-
-        setComments((prevComments) =>
-          prevComments.map((comment) => {
-            if (comment.id === commentId) {
-              return {
-                ...comment,
-                replies: [...(comment.replies || []), replyWithUser],
-              }
-            }
-            return comment
-          }),
-        )
-        setNewReply("")
-        setReplyingTo(null)
-        console.log("New reply added:", replyWithUser)
-      } catch (error) {
-        console.error("Failed to add reply:", error)
+    if (!newReply.trim() || !CURRENT_USER.id) return
+    try {
+      const payload = {
+        announcement_id: id,
+        user_id: CURRENT_USER.id,
+        content: newReply,
+        parent_id: commentId,
       }
+      const res = await api2.post<any>("/api/comments", payload)
+      const replyItem = { ...res.data, user: CURRENT_USER }
+      setComments(prev =>
+        prev.map(c => {
+          if (String(c.id) === String(commentId)) {
+            const curr = Array.isArray(c.replies) ? c.replies : []
+            const count = typeof c.replies_count === "number" ? c.replies_count : 0
+            return {
+              ...c,
+              replies: [...curr, replyItem],
+              replies_count: Math.max(count - 1, 0),
+            }
+          }
+          return c
+        })
+      )
+      setNewReply("")
+      setReplyingTo(null)
+    } catch (error) {
+      console.error("Failed to add reply:", error)
     }
   }
 
+  // Edit
   const handleEditPost = () => {
     setIsEditDialogOpen(true)
     setEditedContent(content)
+    setTitleEdit(title)
   }
-
   const handleSaveEdit = async () => {
     try {
       await api2.put(`/api/announcements/${id}`, {
-        title: titleEdit, //from usestate
+        title: titleEdit,
         content: editedContent,
       })
-      console.log("Announcement updated successfully:")
       setIsEditDialogOpen(false)
-      onUpdateSuccess() //notify parent
+      onUpdateSuccess()
     } catch (error) {
       console.error("Failed to update announcement:", error)
     }
   }
 
+  // Delete
   const handleDeletePost = async () => {
     try {
       await api2.delete(`/api/announcements/${id}`)
-      console.log("Announcement deleted successfully.")
       setIsDeleteDialogOpen(false)
-      onDeleteSuccess() //notify parent
+      onDeleteSuccess()
     } catch (error) {
       console.error("Failed to delete announcement:", error)
+    }
+  }
+
+  // Toggle comments and load initial page
+  const toggleComments = () => {
+    const next = !showComments
+    setShowComments(next)
+    if (next && comments.length === 0) {
+      fetchComments()
     }
   }
 
@@ -182,22 +274,25 @@ export default function AdminAnnouncementComponent({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              {announcement.admin.profile_path ? (
+              {announcement.admin?.profile_path ? (
                 <AvatarImage
-                  src={announcement.admin.profile_path}
+                  src={announcement.admin.profile_path || "/placeholder.svg"}
                   alt={announcement.admin.name}
-                  width={40}
-                  height={40}
                 />
               ) : (
-                <AvatarFallback>{announcement.admin.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {announcement.admin?.name?.charAt(0).toUpperCase()}
+                </AvatarFallback>
               )}
             </Avatar>
             <div>
-              <h3 className="font-semibold text-sm">{announcement.admin.name}</h3>
-              <p className="text-xs text-muted-foreground">{new Date(created_at).toLocaleString()}</p>
+              <h3 className="font-semibold text-sm">{announcement.admin?.name}</h3>
+              <p className="text-xs text-muted-foreground">
+                {new Date(created_at).toLocaleString()}
+              </p>
             </div>
           </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -219,8 +314,6 @@ export default function AdminAnnouncementComponent({
         </div>
       </CardHeader>
 
-
-
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
@@ -230,11 +323,11 @@ export default function AdminAnnouncementComponent({
               Make changes to your announcement here. Click save when you&apos;re done.
             </DialogDescription>
           </DialogHeader>
-          <Input value={titleEdit} onChange={(e) => setTitleEdit(e.target.value)}></Input>
+          <Input value={titleEdit} onChange={e => setTitleEdit(e.target.value)} />
           <div className="grid gap-4 py-4">
             <Textarea
               value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
+              onChange={e => setEditedContent(e.target.value)}
               className="min-h-[200px]"
             />
           </div>
@@ -246,7 +339,8 @@ export default function AdminAnnouncementComponent({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Delete Confirmation Dialog */}
+
+      {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -265,22 +359,26 @@ export default function AdminAnnouncementComponent({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       {/* Content */}
       <CardContent className="px-0 pb-3">
         <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 px-6 pb-4">
           <div className="flex-1 w-full md:w-auto min-w-0">
             <h2 className="text-lg font-semibold mb-2">{title}</h2>
-            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{content}</p>
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+              {content}
+            </p>
           </div>
+
           {images.length > 0 && (
             <Carousel className="flex-1 w-full lg:w-auto min-w-0">
               <CarouselContent>
-                {images.map((img, i) => (
-                  <CarouselItem key={img.id}>
+                {images.map((img: any, i: number) => (
+                  <CarouselItem key={img.id || i}>
                     <div className="relative">
                       <Image
-                        src={`${img.image_file}`} //MODIFIED
-                        alt={img.image_name}
+                        src={`${img.image_file}`}
+                        alt={img.image_name || `image-${i + 1}`}
                         width={600}
                         height={400}
                         className="w-full h-96 object-cover rounded-md"
@@ -299,32 +397,34 @@ export default function AdminAnnouncementComponent({
         </div>
       </CardContent>
 
-
-      
       {/* Footer: Comments */}
       <CardFooter className="flex flex-col space-y-3 pt-0">
         <div className="flex items-center justify-between w-full text-sm text-muted-foreground px-2">
-          <span>{comments.length} comments</span>
+          <span>{currentCommentsCount} comments</span>
         </div>
+
         <Separator />
+
         <div className="flex items-center justify-around w-full">
           <Button variant="ghost" size="sm" className="flex-1 hover:bg-muted/50">
             <Heart className="h-4 w-4 mr-2" />
-            <span>{likes_count}</span>
+            <span>{currentLikes}</span>
           </Button>
           <Button
             variant="ghost"
             size="sm"
             className="flex-1 hover:bg-muted/50"
-            onClick={() => setShowComments(!showComments)}
+            onClick={toggleComments}
           >
             <MessageCircle className="h-4 w-4 mr-2" />
             Comment
           </Button>
         </div>
+
         {showComments && (
           <>
             <Separator />
+
             {/* Add New Comment */}
             <div className="w-full space-y-3">
               <div className="flex space-x-3">
@@ -336,7 +436,6 @@ export default function AdminAnnouncementComponent({
                       fill
                       style={{ objectFit: "cover", borderRadius: "50%" }}
                       sizes="32px"
-                      priority
                     />
                   ) : (
                     <AvatarFallback>{getUserInitials(CURRENT_USER)}</AvatarFallback>
@@ -346,11 +445,15 @@ export default function AdminAnnouncementComponent({
                   <Textarea
                     placeholder="Write a comment..."
                     value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
+                    onChange={e => setNewComment(e.target.value)}
                     className="min-h-[60px] resize-none"
                   />
                   <div className="flex justify-end">
-                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()}>
+                    <Button
+                      size="sm"
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || commentsLoading}
+                    >
                       <Send className="h-4 w-4 mr-1" />
                       Post
                     </Button>
@@ -358,16 +461,22 @@ export default function AdminAnnouncementComponent({
                 </div>
               </div>
             </div>
+
             <Separator />
-            {/* Comments List */}
+
+            {/* Comments list */}
             <div className="w-full space-y-4">
               {comments
-                .filter((comment) => !comment.parent_id)
-                .map((comment) => {
+                .filter((c: any) => !c.parent_id)
+                .map((comment: any) => {
                   const user = comment.user
                   const displayName = getUserDisplayName(user)
                   const initials = getUserInitials(user)
-                  const avatarSrc = user.profile_path ? `${user.profile_path}` : null
+                  const avatarSrc = user?.profile_path ? `${user.profile_path}` : null
+                  const key = String(comment.id)
+                  const repliesCount = typeof comment.replies_count === "number" ? comment.replies_count : 0
+                  const hasMoreReplies = !!repliesNextUrl[key] || repliesCount > 0
+
                   return (
                     <div key={comment.id} className="space-y-3">
                       {/* Main Comment */}
@@ -380,7 +489,6 @@ export default function AdminAnnouncementComponent({
                               fill
                               style={{ objectFit: "cover", borderRadius: "50%" }}
                               sizes="32px"
-                              priority
                             />
                           ) : (
                             <AvatarFallback>{initials}</AvatarFallback>
@@ -392,13 +500,13 @@ export default function AdminAnnouncementComponent({
                             <p className="text-sm">{comment.content}</p>
                           </div>
                           <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                            <span>{comment.timestamp}</span>
+                            <span>{new Date(comment.created_at).toLocaleString()}</span>
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
                               onClick={() =>
-                                setReplyingTo(replyingTo === comment.id.toString() ? null : comment.id.toString())
+                                setReplyingTo(replyingTo === key ? null : key)
                               }
                             >
                               Reply
@@ -406,9 +514,10 @@ export default function AdminAnnouncementComponent({
                           </div>
                         </div>
                       </div>
+
                       {/* Reply Input */}
-                      {replyingTo === comment.id.toString() && (
-                        <div className="ml-11 flex space-x-3">
+                      {replyingTo === key && (
+                        <div className="ml-10 pl-4 flex space-x-3 border-l border-muted-foreground/20">
                           <Avatar className="h-6 w-6">
                             {CURRENT_USER.profile_path ? (
                               <Image
@@ -417,17 +526,18 @@ export default function AdminAnnouncementComponent({
                                 fill
                                 style={{ objectFit: "cover", borderRadius: "50%" }}
                                 sizes="24px"
-                                priority
                               />
                             ) : (
-                              <AvatarFallback className="text-xs">{getUserInitials(CURRENT_USER)}</AvatarFallback>
+                              <AvatarFallback className="text-xs">
+                                {getUserInitials(CURRENT_USER)}
+                              </AvatarFallback>
                             )}
                           </Avatar>
                           <div className="flex-1 space-y-2">
                             <Textarea
                               placeholder={`Reply to ${displayName}...`}
                               value={newReply}
-                              onChange={(e) => setNewReply(e.target.value)}
+                              onChange={e => setNewReply(e.target.value)}
                               className="min-h-[50px] resize-none text-sm"
                             />
                             <div className="flex justify-end space-x-2">
@@ -441,30 +551,46 @@ export default function AdminAnnouncementComponent({
                               >
                                 Cancel
                               </Button>
-                              <Button size="sm" onClick={() => handleAddReply(comment.id)} disabled={!newReply.trim()}>
+                              <Button
+                                size="sm"
+                                onClick={() => handleAddReply(comment.id)}
+                                disabled={!newReply.trim() || repliesLoading[key]}
+                              >
                                 Reply
                               </Button>
                             </div>
                           </div>
                         </div>
                       )}
+
                       {/* Replies */}
-                      {comment.replies && comment.replies.length > 0 && (
-                        <div className="ml-11 space-y-3">
-                          {comment.replies.map((reply) => {
+                      {Array.isArray(comment.replies) && comment.replies.length > 0 && (
+                        <div className="ml-10 pl-4 space-y-3 border-l border-muted-foreground/20">
+                          {comment.replies.map((reply: any) => {
                             const replyUser = reply.user
                             const replyDisplayName = getUserDisplayName(replyUser)
                             const replyInitials = getUserInitials(replyUser)
-                            const replyAvatarSrc = replyUser.profile_path
+                            const replyAvatarSrc = replyUser?.profile_path
                               ? `${replyUser.profile_path}`
                               : null
                             return (
-                              <div key={reply.id} className="flex space-x-3">
+                              <div
+                                key={`${reply.id}-${reply.created_at || ""}`}
+                                className="flex space-x-3"
+                              >
                                 <Avatar className="h-6 w-6">
                                   {replyAvatarSrc ? (
-                                    <AvatarImage src={replyAvatarSrc || "/placeholder.svg"} alt={replyDisplayName} />
+                                    <Image
+                                      src={replyAvatarSrc || "/placeholder.svg"}
+                                      alt={replyDisplayName}
+                                      fill
+                                      style={{ objectFit: "cover", borderRadius: "50%" }}
+                                      sizes="24px"
+                                    />
                                   ) : (
-                                    <AvatarFallback className="text-xs">{replyInitials}</AvatarFallback>
+                                    <AvatarFallback className="text-xs">
+                                      {replyInitials}
+                                    </AvatarFallback>
                                   )}
                                 </Avatar>
                                 <div className="flex-1 space-y-1">
@@ -472,7 +598,7 @@ export default function AdminAnnouncementComponent({
                                     <p className="font-semibold text-sm">{replyDisplayName}</p>
                                     <p className="text-sm">{reply.content}</p>
                                   </div>
-                                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                  <div className="text-xs text-muted-foreground">
                                     <span>{new Date(reply.created_at).toLocaleString()}</span>
                                   </div>
                                 </div>
@@ -481,9 +607,51 @@ export default function AdminAnnouncementComponent({
                           })}
                         </div>
                       )}
+
+                      {/* Load more replies */}
+                      {hasMoreReplies && (
+                        <div className="ml-10 pl-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => fetchReplies(comment.id)}
+                            disabled={!!repliesLoading[key]}
+                          >
+                            {repliesLoading[key] ? (
+                              <span className="inline-flex items-center">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Loading replies...
+                              </span>
+                            ) : Array.isArray(comment.replies) && comment.replies.length ? (
+                              repliesNextUrl[key] ? "Show more replies" : "Replies loaded"
+                            ) : (
+                              `Show replies (${repliesCount})`
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
+
+              {/* Load more comments */}
+              {commentsNextUrl && (
+                <Button
+                  variant="outline"
+                  onClick={fetchComments}
+                  disabled={commentsLoading}
+                  className="w-full"
+                >
+                  {commentsLoading ? (
+                    <span className="inline-flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading...
+                    </span>
+                  ) : (
+                    "Load more comments"
+                  )}
+                </Button>
+              )}
             </div>
           </>
         )}

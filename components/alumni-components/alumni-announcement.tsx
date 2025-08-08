@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Image from "next/image"
-import { Heart, MessageCircle, Send } from "lucide-react"
+import { Heart, MessageCircle, Send, Loader2 } from 'lucide-react'
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -11,154 +11,228 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
-import type { User, Comment, Announcement } from "@/app/alumni/announcement/page"
 
-function getUserDisplayName(user: User) {
-  if (user.full_name) return user.full_name
-  const names = [user.first_name, user.middle_name, user.last_name].filter(Boolean)
+function getUserDisplayName(user: any) {
+  if (user?.full_name) return user.full_name
+  const names = [user?.first_name, user?.middle_name, user?.last_name].filter(Boolean)
   return names.length ? names.join(" ") : "??"
 }
 
-function getUserInitials(user: User) {
-  const firstInitial = user.first_name?.[0] ?? ""
-  const middleInitial = user.middle_name?.[0] ?? ""
-  const lastInitial = user.last_name?.[0] ?? ""
+function getUserInitials(user: any) {
+  const firstInitial = user?.first_name?.[0] ?? ""
+  const middleInitial = user?.middle_name?.[0] ?? ""
+  const lastInitial = user?.last_name?.[0] ?? ""
   return [firstInitial, middleInitial, lastInitial].filter(Boolean).join("") || "??"
 }
 
-export interface ImageType {
-  id: number
-  announcement_id: number
-  image_name: string
-  image_file: string
-  created_at: string
-  updated_at: string
-}
+export default function AlumniAnnouncementComponent({ announcement }: any) {
+  const {
+    id,
+    title,
+    content,
+    images = [],
+    created_at,
+    likes_count = 0,
+    is_liked = false,
+    comments_count,
+    admin = {},
+  } = announcement
 
-interface AlumniAnnouncementProps {
-  announcement: Announcement
-}
+  const { user } = useAuth()
 
-export interface AnnouncementCardProps {
-  key : number
-  id: number
-  title: string
-  content: string
-  images: ImageType[]
-  comments: Comment[]
-  created_at: string
-}
+  const CURRENT_USER: any = useMemo(
+    () =>
+      user?.id
+        ? {
+            id: user.id.toString(),
+            first_name: user.name.split(" ")[0] || "",
+            last_name: user.name.split(" ").slice(1).join(" ") || "",
+            profile_path: user.profile_path,
+            full_name: user.name,
+          }
+        : {
+            id: "currentUser",
+            first_name: "You",
+            last_name: "",
+            profile_path: null,
+            full_name: "You",
+          },
+    [user]
+  )
 
-export default function AlumniAnnouncementComponent({ announcement }: AlumniAnnouncementProps) {
-  const { id, title, content, images, comments: initialComments, created_at, likes_count = 0, is_liked = false } = announcement
+  // Likes
+  const [currentLikes, setCurrentLikes] = useState(likes_count)
+  const [currentIsLiked, setCurrentIsLiked] = useState(!!is_liked)
+
+  const [currentCommentsCount, setCurrentCommentsCount] = useState(
+    typeof comments_count === "number"
+      ? comments_count
+      : (Array.isArray(announcement?.comments) ? announcement.comments.length : 0)
+  )
+
+  // Comments (lazy, paginated)
   const [showComments, setShowComments] = useState(false)
+  const [comments, setComments] = useState<any[]>([])
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [commentsNextUrl, setCommentsNextUrl] = useState<string | null>(`/api/announcements-only/${id}?page=1`)
+
+  // Compose
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [newReply, setNewReply] = useState("")
-  const [comments, setComments] = useState<Comment[]>(initialComments)
-  const [currentLikes, setCurrentLikes] = useState(likes_count)
-  const [currentIsLiked, setCurrentIsLiked] = useState(is_liked)
-  const { user } = useAuth()
 
-  const CURRENT_USER: User = user?.id
-    ? {
-        id: user.id.toString(),
-        first_name: user.name.split(" ")[0] || "",
-        last_name: user.name.split(" ").slice(1).join(" ") || "",
-        profile_path: user.profile_path,
-        full_name: user.name,
-      }
-    : {
-        id: "currentUser",
-        first_name: "You",
-        last_name: "",
-        profile_path: null,
-        full_name: "You",
-      }
+  // Replies (per comment pagination)
+  const [repliesLoading, setRepliesLoading] = useState<any>({})
+  const [repliesNextUrl, setRepliesNextUrl] = useState<any>({})
 
+  // Comments fetch
+  const fetchComments = async () => {
+    if (!commentsNextUrl || commentsLoading) return
+    setCommentsLoading(true)
+    try {
+      const res = await api2.get<any>(commentsNextUrl)
+      const data = res.data?.data ?? []
+      setComments(prev => {
+        const existing = new Set(prev.map((c: any) => String(c.id)))
+        const toAppend = data.filter((c: any) => !existing.has(String(c.id)))
+        return [...prev, ...toAppend]
+      })
+      setCommentsNextUrl(res.data?.pagination?.next_page_url || null)
+    } catch (e) {
+      console.error("Error fetching comments:", e)
+    } finally {
+      setCommentsLoading(false)
+    }
+  }
+
+  // Replies fetch (by comment)
+  const fetchReplies = async (commentId: string | number) => {
+    const key = String(commentId)
+    if (repliesLoading[key]) return
+    const nextUrl = repliesNextUrl[key] ?? `/api/announcements-only/replies/${key}?page=1`
+
+    setRepliesLoading((prev: any) => ({ ...prev, [key]: true }))
+    try {
+      const res = await api2.get<any>(nextUrl)
+      const incoming = res.data?.data ?? []
+
+      setComments(prev =>
+        prev.map(c => {
+          if (String(c.id) !== key) return c
+          const currentReplies = Array.isArray(c.replies) ? c.replies : []
+          const seen = new Set(currentReplies.map((r: any) => String(r.id)))
+          const newOnes = incoming.filter((r: any) => !seen.has(String(r.id)))
+          const newCount = Math.max((c.replies_count || 0) - newOnes.length, 0)
+          return {
+            ...c,
+            replies: [...currentReplies, ...newOnes],
+            replies_count: newCount,
+          }
+        })
+      )
+
+      const next = res.data?.pagination?.next_page_url || null
+      setRepliesNextUrl((prev: any) => ({ ...prev, [key]: next }))
+    } catch (e) {
+      console.error("Error fetching replies:", e)
+    } finally {
+      setRepliesLoading((prev: any) => ({ ...prev, [key]: false }))
+    }
+  }
+
+  // Add comment
   const handleAddComment = async () => {
-    if (newComment.trim() && CURRENT_USER.id) {
-      try {
-        const response = await api2.post<Comment>("/api/comments", {
-          announcement_id: id,
-          user_id: CURRENT_USER.id,
-          content: newComment,
-        })
-        const addedComment = {
-          ...response.data,
-          user: CURRENT_USER,
-          timestamp: new Date(response.data.created_at).toLocaleString(),
-          replies: [],
-        }
-        setComments((prev) => [...prev, addedComment])
-        setNewComment("")
-      } catch (error) {
-        console.error("Failed to add comment:", error)
+    if (!newComment.trim() || !CURRENT_USER.id) return
+    try {
+      const res = await api2.post<any>("/api/comments", {
+        announcement_id: id,
+        user_id: CURRENT_USER.id,
+        content: newComment,
+      })
+      const newItem = {
+        ...res.data,
+        user: CURRENT_USER,
+        replies: [],
+        replies_count: 0,
       }
+      // Prepend newest
+      setComments(prev => [newItem, ...prev])
+      setNewComment("")
+      setCurrentCommentsCount((prev: number) => prev + 1)
+    } catch (e) {
+      console.error("Failed to add comment:", e)
     }
   }
 
+  // Add reply
   const handleAddReply = async (commentId: string | number) => {
-    if (newReply.trim() && CURRENT_USER.id) {
-      try {
-        const response = await api2.post<Comment>("/api/comments", {
-          announcement_id: id,
-          user_id: CURRENT_USER.id,
-          content: newReply,
-          parent_id: commentId,
+    if (!newReply.trim() || !CURRENT_USER.id) return
+    try {
+      const res = await api2.post<any>("/api/comments", {
+        announcement_id: id,
+        user_id: CURRENT_USER.id,
+        content: newReply,
+        parent_id: commentId,
+      })
+      const newReplyItem = { ...res.data, user: CURRENT_USER }
+      setComments(prev =>
+        prev.map(c => {
+          if (String(c.id) === String(commentId)) {
+            const currentReplies = Array.isArray(c.replies) ? c.replies : []
+            const replies_count = typeof c.replies_count === "number" ? c.replies_count : 0
+            return {
+              ...c,
+              replies: [...currentReplies, ...[newReplyItem]],
+              replies_count: Math.max(replies_count - 1, 0),
+            }
+          }
+          return c
         })
-        const reply = {
-          ...response.data,
-          user: CURRENT_USER,
-          timestamp: new Date(response.data.created_at).toLocaleString(),
-        }
-
-        setComments((prev) =>
-          prev.map((comment) =>
-            comment.id === commentId
-              ? { ...comment, replies: [...(comment.replies || []), reply] }
-              : comment
-          )
-        )
-        setNewReply("")
-        setReplyingTo(null)
-      } catch (error) {
-        console.error("Failed to add reply:", error)
-      }
+      )
+      setCurrentCommentsCount((prev: number) => prev + 1)
+      setNewReply("")
+      setReplyingTo(null)
+    } catch (e) {
+      console.error("Failed to add reply:", e)
     }
   }
 
+  // Like
   const handleLike = async () => {
     try {
-      const response = await api2.put<any>(`/api/announcements/${id}/like`)
-      setCurrentIsLiked(response.data.is_liked)
-      setCurrentLikes(response.data.likes_count)
-    } catch (error) {
-      console.error("Error toggling like:", error)
+      const res = await api2.put<any>(`/api/announcements/${id}/like`)
+      setCurrentIsLiked(!!res.data?.is_liked)
+      setCurrentLikes(res.data?.likes_count ?? 0)
+    } catch (e) {
+      console.error("Error toggling like:", e)
     }
   }
+
+  // Toggle comments and load first page once
+  const handleToggleComments = () => {
+    const next = !showComments
+    setShowComments(next)
+    if (next && comments.length === 0) fetchComments()
+  }
+
+  const totalCommentsDisplay = currentCommentsCount
 
   return (
     <Card className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
       {/* Header */}
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-3">
-          {announcement.admin.profile_path ? (
+          {admin?.profile_path ? (
             <Avatar className="h-10 w-10">
-              <Image
-                src={`${announcement.admin.profile_path}`} //MODIFIED
-                alt={announcement.admin.name}
-                width={600}
-                height={600}
-              />
+              <Image src={`${admin.profile_path}`} alt={admin?.name || "Admin"} width={600} height={600} />
             </Avatar>
           ) : (
             <Avatar className="h-10 w-10">
-              <AvatarFallback>{announcement.admin.name?.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarFallback>{(admin?.name?.[0] || "A").toUpperCase()}</AvatarFallback>
             </Avatar>
           )}
           <div>
-            <h3 className="font-semibold text-sm">{announcement.admin.name}</h3>
+            <h3 className="font-semibold text-sm">{admin?.name || "Admin"}</h3>
             <p className="text-xs text-muted-foreground">{new Date(created_at).toLocaleString()}</p>
           </div>
         </div>
@@ -174,12 +248,12 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
           {images.length > 0 && (
             <Carousel className="flex-1 w-full lg:w-auto min-w-0">
               <CarouselContent>
-                {images.map((img, i) => (
-                  <CarouselItem key={img.id}>
+                {images.map((img: any, i: number) => (
+                  <CarouselItem key={img.id || i}>
                     <div className="relative">
                       <Image
-                        src={`${img.image_file}`} //MODIFIED
-                        alt={img.image_name}
+                        src={`${img.image_file}`}
+                        alt={img.image_name || `image-${i + 1}`}
                         width={600}
                         height={400}
                         className="w-full h-96 object-cover rounded-md"
@@ -198,30 +272,28 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
         </div>
       </CardContent>
 
-      {/* Footer: Comments */}
+      {/* Footer */}
       <CardFooter className="flex flex-col space-y-3 pt-0">
         <div className="flex items-center justify-between w-full text-sm text-muted-foreground px-2">
-          <span>{comments.length} comments</span>
+          <span>{totalCommentsDisplay} comments</span>
         </div>
+
         <Separator />
+
         <div className="flex items-center justify-around w-full">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`flex-1 hover:bg-muted/50 ${currentIsLiked ? 'text-blue-500' : 'text-muted-foreground'}`}
-            onClick={handleLike}
-          >
-            <div className="flex items-center">
-              <Heart className={`h-4 w-4 mr-1 ${currentIsLiked ? 'fill-blue-500' : 'fill-none'}`} />
-              {currentLikes > 0 && <span className="text-xs ml-1">{currentLikes}</span>}
-            </div>
-          </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 hover:bg-muted/50"
-            onClick={() => setShowComments(!showComments)}
+            className={`flex-1 hover:bg-muted/50 ${currentIsLiked ? "text-blue-500" : "text-muted-foreground"}`}
+            onClick={handleLike}
           >
+            <div className="flex items-center">
+              <Heart className={`h-4 w-4 mr-1 ${currentIsLiked ? "fill-blue-500" : "fill-none"}`} />
+              {currentLikes > 0 && <span className="text-xs ml-1">{currentLikes}</span>}
+            </div>
+          </Button>
+
+          <Button variant="ghost" size="sm" className="flex-1 hover:bg-muted/50" onClick={handleToggleComments}>
             <MessageCircle className="h-4 w-4 mr-2" />
             Comment
           </Button>
@@ -230,6 +302,8 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
         {showComments && (
           <>
             <Separator />
+
+            {/* Add comment */}
             <div className="w-full space-y-3">
               <div className="flex space-x-3">
                 <Avatar className="h-8 w-8 relative">
@@ -240,7 +314,6 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
                       fill
                       style={{ objectFit: "cover", borderRadius: "50%" }}
                       sizes="32px"
-                      priority
                     />
                   ) : (
                     <AvatarFallback>{getUserInitials(CURRENT_USER)}</AvatarFallback>
@@ -250,11 +323,11 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
                   <Textarea
                     placeholder="Write a comment..."
                     value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
+                    onChange={e => setNewComment(e.target.value)}
                     className="min-h-[60px] resize-none"
                   />
                   <div className="flex justify-end">
-                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()}>
+                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || commentsLoading}>
                       <Send className="h-4 w-4 mr-1" />
                       Post
                     </Button>
@@ -262,24 +335,33 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
                 </div>
               </div>
             </div>
+
             <Separator />
 
+            {/* Comments list */}
             <div className="w-full space-y-4">
               {comments
-                .filter((comment) => !comment.parent_id)
-                .map((comment) => {
+                .filter((c: any) => !c.parent_id)
+                .map((comment: any) => {
                   const displayName = getUserDisplayName(comment.user)
                   const initials = getUserInitials(comment.user)
-                  const avatarSrc = comment.user.profile_path
-                    ? `${comment.user.profile_path}`
-                    : null
+                  const avatarSrc = comment.user?.profile_path ? `${comment.user.profile_path}` : null
+                  const key = String(comment.id)
+                  const repliesCount = typeof comment.replies_count === "number" ? comment.replies_count : 0
+                  const hasMoreReplies = !!repliesNextUrl[key] || repliesCount > 0
 
                   return (
                     <div key={comment.id} className="space-y-3">
                       <div className="flex space-x-3">
                         <Avatar className="h-8 w-8 relative">
                           {avatarSrc ? (
-                            <Image src={avatarSrc} alt={displayName} fill style={{ objectFit: "cover", borderRadius: "50%" }} sizes="32px" />
+                            <Image
+                              src={avatarSrc || "/placeholder.svg"}
+                              alt={displayName}
+                              fill
+                              style={{ objectFit: "cover", borderRadius: "50%" }}
+                              sizes="32px"
+                            />
                           ) : (
                             <AvatarFallback>{initials}</AvatarFallback>
                           )}
@@ -295,7 +377,7 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
                               variant="ghost"
                               size="sm"
                               className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
-                              onClick={() => setReplyingTo(replyingTo === comment.id.toString() ? null : comment.id.toString())}
+                              onClick={() => setReplyingTo(replyingTo === key ? null : key)}
                             >
                               Reply
                             </Button>
@@ -303,18 +385,17 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
                         </div>
                       </div>
 
-                      {/* Reply Input */}
-                      {replyingTo === comment.id.toString() && (
-                        <div className="ml-11 flex space-x-3">
+                      {/* Reply input */}
+                      {replyingTo === key && (
+                        <div className="ml-10 pl-4 flex space-x-3 border-l border-muted-foreground/20">
                           <Avatar className="h-6 w-6">
                             {CURRENT_USER.profile_path ? (
                               <Image
                                 src={`${CURRENT_USER.profile_path}`}
-                                alt={CURRENT_USER.full_name}
+                                alt={CURRENT_USER.full_name || "Your avatar"}
                                 fill
                                 style={{ objectFit: "cover", borderRadius: "50%" }}
                                 sizes="24px"
-                                priority
                               />
                             ) : (
                               <AvatarFallback className="text-xs">{getUserInitials(CURRENT_USER)}</AvatarFallback>
@@ -324,14 +405,21 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
                             <Textarea
                               placeholder={`Reply to ${displayName}...`}
                               value={newReply}
-                              onChange={(e) => setNewReply(e.target.value)}
+                              onChange={e => setNewReply(e.target.value)}
                               className="min-h-[50px] resize-none text-sm"
                             />
                             <div className="flex justify-end space-x-2">
-                              <Button variant="ghost" size="sm" onClick={() => { setReplyingTo(null); setNewReply("") }}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setReplyingTo(null)
+                                  setNewReply("")
+                                }}
+                              >
                                 Cancel
                               </Button>
-                              <Button size="sm" onClick={() => handleAddReply(comment.id)} disabled={!newReply.trim()}>
+                              <Button size="sm" onClick={() => handleAddReply(comment.id)} disabled={!newReply.trim() || repliesLoading[key]}>
                                 Reply
                               </Button>
                             </div>
@@ -339,21 +427,24 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
                         </div>
                       )}
 
-                      {/* Replies */}
-                      {comment.replies?.length > 0 && (
-                        <div className="ml-11 space-y-3">
-                          {comment.replies.map((reply) => {
+                      {/* Replies list */}
+                      {Array.isArray(comment.replies) && comment.replies.length > 0 && (
+                        <div className="ml-10 pl-4 space-y-3 border-l border-muted-foreground/20">
+                          {comment.replies.map((reply: any) => {
                             const replyName = getUserDisplayName(reply.user)
                             const replyInitials = getUserInitials(reply.user)
-                            const replyAvatar = reply.user.profile_path
-                              ? `${reply.user.profile_path}`
-                              : null
-
+                            const replyAvatar = reply.user?.profile_path ? `${reply.user.profile_path}` : null
                             return (
-                              <div key={reply.id} className="flex space-x-3">
+                              <div key={`${reply.id}-${reply.created_at || ""}`} className="flex space-x-3">
                                 <Avatar className="h-6 w-6">
                                   {replyAvatar ? (
-                                    <Image src={replyAvatar} alt={replyName} fill style={{ objectFit: "cover", borderRadius: "50%" }} sizes="24px" />
+                                    <Image
+                                      src={replyAvatar || "/placeholder.svg"}
+                                      alt={replyName}
+                                      fill
+                                      style={{ objectFit: "cover", borderRadius: "50%" }}
+                                      sizes="24px"
+                                    />
                                   ) : (
                                     <AvatarFallback className="text-xs">{replyInitials}</AvatarFallback>
                                   )}
@@ -372,9 +463,46 @@ export default function AlumniAnnouncementComponent({ announcement }: AlumniAnno
                           })}
                         </div>
                       )}
+
+                      {/* Load more replies */}
+                      {hasMoreReplies && (
+                        <div className="ml-10 pl-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => fetchReplies(comment.id)}
+                            disabled={!!repliesLoading[key]}
+                          >
+                            {repliesLoading[key] ? (
+                              <span className="inline-flex items-center">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Loading replies...
+                              </span>
+                            ) : Array.isArray(comment.replies) && comment.replies.length ? (
+                              repliesNextUrl[key] ? "Show more replies" : "Replies loaded"
+                            ) : (
+                              `Show replies (${repliesCount})`
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
+
+              {/* Load more comments */}
+              {commentsNextUrl && (
+                <Button variant="outline" onClick={fetchComments} disabled={commentsLoading} className="w-full">
+                  {commentsLoading ? (
+                    <span className="inline-flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading...
+                    </span>
+                  ) : (
+                    "Load more comments"
+                  )}
+                </Button>
+              )}
             </div>
           </>
         )}

@@ -22,7 +22,7 @@ export default function Page() {
     
     setLoading(true)
     try {
-      const response = await api2.get<any>(`/api/posts/status/${status}?page=${pageNum}`)
+      const response = await api2.get<any>(`/api/posts-only/status/${status}?page=${pageNum}`)
       const newPosts = response.data.data
       
       if (reset) {
@@ -51,7 +51,7 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
-      <HeaderCommunity currentPage="Community Posts" />
+      <HeaderCommunity currentPage="Community Posts" text="View and manage community posts"/>
 
       {/* Posts list with infinite scroll */}
       <div className="space-y-4 mx-auto">
