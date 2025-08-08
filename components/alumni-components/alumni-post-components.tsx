@@ -44,6 +44,8 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   const [hasMoreComments, setHasMoreComments] = useState(true)
   const [commentsLoading, setCommentsLoading] = useState(false)
   const [repliesLoading, setRepliesLoading] = useState<any>({})
+  const [repliesPage, setRepliesPage] = useState<any>({})
+  const [repliesHasMore, setRepliesHasMore] = useState<any>({})
 
   // Compose state
   const [newComment, setNewComment] = useState("")
@@ -91,16 +93,21 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     if (!hasMoreComments || commentsLoading) return
     setCommentsLoading(true)
     try {
+      // Use your working endpoints
       const res = await api2.get<any>(`/api/posts-only/comments/${posts.id}?page=${commentsPage}`)
       const newComments = res.data?.data ?? []
 
+      // Ensure replies array exists and replies_count set
       const normalized = newComments.map((c: any) => ({
         ...c,
         replies: Array.isArray(c.replies) ? c.replies : [],
         replies_count: typeof c.replies_count === "number" ? c.replies_count : (c.replies?.length || 0),
       }))
 
-      setComments(prev => [...prev, ...normalized])
+      setComments(prev => {
+        const combined = [...prev, ...normalized]
+        return combined.filter((c, i, arr) => arr.findIndex(x => String(x.id) === String(c.id)) === i)
+      })
       setHasMoreComments(!!res.data?.next_page_url)
       setCommentsPage(prev => prev + 1)
     } catch (err) {
@@ -112,28 +119,40 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   }
 
   // Fetch replies for a specific comment (append to that comment only)
-  const fetchReplies = async (commentId: string) => {
+  async function fetchReplies(commentId: string) {
     if (repliesLoading[commentId]) return
     setRepliesLoading((prev: any) => ({ ...prev, [commentId]: true }))
     try {
-      const res = await api2.get<any>(`/api/posts-only/replies/${commentId}`)
+      const page = repliesPage[commentId] || 1
+      const res = await api2.get<any>(`/api/posts-only/replies/${commentId}?page=${page}`)
       const newReplies = res.data?.data ?? []
-
-      // Sort replies ascending by created_at to feel natural (oldest first)
+      // Optional: oldest-first per page
       newReplies.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
       setComments(prev =>
-        prev.map(c => {
-          if (sameId(c.id, commentId)) {
+        prev.map((c: any) => {
+          if (String(c.id) === String(commentId)) {
+            const combined = [...(c.replies || []), ...newReplies]
+            const deduped = combined.filter(
+              (r: any, i: number, arr: any[]) =>
+                arr.findIndex((x: any) => String(x.id) === String(r.id)) === i
+            )
             return {
               ...c,
-              replies: [...(c.replies || []), ...newReplies],
+              replies: deduped,
               replies_count: Math.max((c.replies_count || 0) - newReplies.length, 0),
             }
           }
           return c
         })
       )
+
+      const hasMore =
+        !!(res.data?.pagination?.next_page_url || res.data?.next_page_url)
+      setRepliesHasMore((prev: any) => ({ ...prev, [commentId]: hasMore }))
+      if (hasMore) {
+        setRepliesPage((prev: any) => ({ ...prev, [commentId]: page + 1 }))
+      }
     } catch (err) {
       console.error("Error fetching replies:", err)
       toast.error("Failed to load replies")
@@ -380,7 +399,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
             >
               <div className="flex items-center">
                 <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-blue-500" : "fill-none"}`} />
-                {posts.likes_count > 0 ? (
+                {typeof posts?.likes_count === "number" && posts.likes_count > 0 ? (
                   <span className="text-xs ml-1">{posts.likes_count}</span>
                 ) : (
                   <span className="text-xs ml-1">Like</span>
@@ -471,7 +490,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                           </div>
                         </div>
 
-                        {/* Reply form   */}
+                        {/* Reply form (indented) */}
                         {replyingTo === String(comment.id) && (
                           <div className="ml-10 pl-4 flex space-x-3 border-l border-muted-foreground/20">
                             <Avatar className="h-6 w-6">
@@ -511,7 +530,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                           </div>
                         )}
 
-                        {/* Replies container */}
+                        {/* Replies container (indented and at the bottom) */}
                         {Array.isArray(comment.replies) && comment.replies.length > 0 && (
                           <div className="ml-10 pl-4 space-y-3 border-l border-muted-foreground/20">
                             {comment.replies.map((reply: any) => (
@@ -545,20 +564,21 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                           </div>
                         )}
 
-                        {/* REPLIES */}
-                        {comment.replies_count > 0 && (
+                        {(repliesHasMore[String(comment.id)] ?? (comment.replies_count > 0)) && (
                           <div className="ml-10 pl-4">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => fetchReplies(String(comment.id))}
-                              disabled={repliesLoading[String(comment.id)]}
+                              disabled={repliesLoading[String(comment.id)] || repliesHasMore[String(comment.id)] === false}
                             >
                               {repliesLoading[String(comment.id)] ? (
                                 <span className="inline-flex items-center">
                                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                   Loading replies...
                                 </span>
+                              ) : repliesHasMore[String(comment.id)] === false ? (
+                                "No more replies"
                               ) : comment.replies?.length ? (
                                 "Show more replies"
                               ) : (
