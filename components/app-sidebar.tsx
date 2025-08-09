@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
+import path from "path"
+import { usePathname } from "next/navigation"
 
 // Navigation data
 const homeNavigation = [
@@ -78,6 +80,7 @@ const generalNavigation = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth()
+  const pathname = usePathname();
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -108,7 +111,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {homeNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton isActive={pathname === item.url} asChild>
                     <Link href={item.url}>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -127,7 +130,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {communityNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton isActive={pathname === item.url} asChild>
                     <Link href={item.url}>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -146,7 +149,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {generalNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton isActive={pathname === item.url} asChild>
                     <Link href={item.url}>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -173,7 +176,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-semibold">Account</span>
-                    <span className="text-xs text-sidebar-foreground/70">ALU-2024-001</span>
+                    <span className="text-xs text-sidebar-foreground/70">Access Account</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

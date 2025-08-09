@@ -51,6 +51,14 @@ export default function AdminLayoutComponent({ children }: { children: React.Rea
   const currentPage = (() => {
     if (pathname.includes('/admin/dashboard')) return 'Dashboard';
     if (pathname.includes('/admin/settings')) return 'Settings';
+    if (pathname.includes('/admin/surveys')) return 'Surveys';
+    if (pathname.includes('/admin/alumni')) return 'Alumni List';
+    if (pathname.includes('/admin/accounts')) return 'Accounts';
+    if (pathname.includes('/admin/general')) return 'Programs and Institutes';
+    if (pathname.includes('/admin/announcements')) return 'Announcements';
+    if (pathname.includes('/admin/community-posts')) return 'Community Posts';
+    if (pathname.includes('/admin/community-pending')) return 'Posts Pending Approval';
+    if (pathname.includes('/admin/community-chat')) return 'Chat Support';
     return 'Admin';
   })();
   return (

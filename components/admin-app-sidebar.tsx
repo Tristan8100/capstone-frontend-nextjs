@@ -38,6 +38,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 // New Navigation data
 const dashboardNavigation = [
@@ -100,6 +101,7 @@ const communityNavigation = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth()
+  const pathname = usePathname();
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -129,7 +131,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {dashboardNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton isActive={pathname === item.url} asChild>
                     <Link href={item.url}>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -148,7 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {alumniNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton isActive={pathname === item.url} asChild>
                     <Link href={item.url}>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -167,7 +169,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {generalNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton isActive={pathname === item.url} asChild>
                     <Link href={item.url}>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -186,7 +188,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {communityNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton isActive={pathname === item.url} asChild>
                     <Link href={item.url}>
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -223,13 +225,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem>
-                  <Link href={"/admin/account"} className="flex items-center w-full gap-2">
-                    <User className="size-4" />
-                    Admin Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link href={"/admin/settings"} className="flex items-center w-full gap-2">
                     <Settings className="size-4" />

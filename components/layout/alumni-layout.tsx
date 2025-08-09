@@ -25,7 +25,7 @@ export default function AlumniLayout({children, currentPage}: {children: React.R
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Alumni Portal</BreadcrumbLink>
+                  <BreadcrumbLink href="/">BTECHLINK</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
