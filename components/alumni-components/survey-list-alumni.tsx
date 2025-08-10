@@ -100,7 +100,7 @@ export default function SurveysListUser() {
         )}
 
         {/* Surveys Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredSurveys.map((survey) => (
             <Link key={survey.id} href={`/alumni/surveys/${survey.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">

@@ -55,7 +55,6 @@ export default function SurveysList() {
     }
   }
 
-
   const filteredSurveys = surveys.filter(
     (survey) =>
       survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -114,10 +113,10 @@ export default function SurveysList() {
         )}
 
         {/* Surveys Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredSurveys.map((survey) => (
-            <Card key={survey.id} className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
+            <Card key={survey.id} className="hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full">
+              <CardHeader className="pb-3 flex-grow">
                 <div className="flex items-start justify-between">
                   <div className="w-12 h-12 bg-gray-500 rounded-lg flex items-center justify-center mb-3">
                     <FileText className="w-6 h-6 text-white" />
@@ -139,27 +138,27 @@ export default function SurveysList() {
                 <CardDescription className="line-clamp-2">{survey.description || "No description"}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(survey.created_at).toLocaleDateString()}</span>
-                    </div>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <span>{new Date(survey.created_at).toLocaleDateString()}</span>
                   </div>
-                  <EditSurvey
-                    survey={survey}
-                    onSuccess={(updatedSurvey) => {
-                      setSurveys((prev) =>
-                        prev.map((s) => (s.id === updatedSurvey.id ? updatedSurvey : s))
-                      )
-                    }}
-                  />
-                  {survey.course && (
-                    <Badge variant="secondary" className="bg-purple-500 hover:bg-purple-600">
-                      <Users className="w-4 h-4 mr-1" />
-                      {survey.course.name}
-                    </Badge>
-                  )}
+                  <div>
+                    <EditSurvey
+                      survey={survey}
+                      onSuccess={(updatedSurvey) => {
+                        setSurveys((prev) =>
+                          prev.map((s) => (s.id === updatedSurvey.id ? updatedSurvey : s))
+                        )
+                      }}
+                    />
+                    {survey.course && (
+                      <Badge variant="secondary" className="bg-purple-500 ml-2 hover:bg-purple-600">
+                        <Users className="w-4 h-4 mr-1" />
+                        <span className="truncate">{survey.course.name}</span>
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
