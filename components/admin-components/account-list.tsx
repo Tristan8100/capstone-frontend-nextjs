@@ -236,7 +236,7 @@ export function AccountTable() {
                   <TableCell>{alumnus.course}</TableCell>
                   <TableCell>{alumnus.institute}</TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/alumni/${alumnus.id}`}>
+                    <Link href={`/admin/view/${alumnus.id}`}>
                       <Button variant="ghost" size="icon">
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">View alumni details</span>

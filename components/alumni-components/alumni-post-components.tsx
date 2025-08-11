@@ -93,8 +93,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     if (!hasMoreComments || commentsLoading) return
     setCommentsLoading(true)
     try {
-      // Use your working endpoints
-      const res = await api2.get<any>(`/api/posts-only/comments/${posts.id}?page=${commentsPage}`)
+      const res = await api2.get<any>(`/api/posts-only/comments/${posts.id}?page=${commentsPage}`)// Any for now
       const newComments = res.data?.data ?? []
 
       // Ensure replies array exists and replies_count set
@@ -636,7 +635,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                 id="content"
                 value={editedContent}
                 onChange={e => setEditedContent(e.target.value)}
-                className="min-h-[100px]"
+                className="min-h-[100px] max-h-[300px] overflow-y-auto"
               />
             </div>
           </div>

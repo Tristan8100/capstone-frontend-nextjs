@@ -21,7 +21,9 @@ export default function Page() {
   };
   return (
     <>
-      <AlumniIDCard {...alumniData} />
+      <div className="flex justify-center min-h-screen p-4">
+        <AlumniIDCard {...alumniData} />
+      </div>
     </>
   )
 }
