@@ -32,10 +32,13 @@ import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
+import { useRouter } from "next/navigation";
 
-export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialIsLiked, status }: any) {
+
+export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialIsLiked, status, fetchPosts }: any) {
   const [posts, setPosts] = useState<any>(post)
   const [isLiked, setIsLiked] = useState<boolean>(initialIsLiked)
+  const router = useRouter();
 
   // Comments state (paginated)
   const [showComments, setShowComments] = useState(false)
@@ -244,7 +247,9 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   const handleChangeStatus = async (newStatus: "accepted" | "declined") => {
     try {
       const res = await api2.put<any>(`/api/posts/change-status/${posts.id}`, { status: newStatus })
-      toast.success(res.data?.message || "Status updated")
+      toast.success(res.data?.message)
+      console.log("Status changed:", res.data)
+      fetchPosts() // Refresh the page to reflect changes
     } catch (error) {
       console.error(error)
       toast.error("Failed to change status")

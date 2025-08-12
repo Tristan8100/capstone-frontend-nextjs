@@ -103,6 +103,7 @@ export default function Page() {
                             post={post}
                             is_liked={post.is_liked}
                             isAdmin={true}
+                            fetchPosts={() => fetchPosts(status, 1, true)}
                           />
                         ))}
                         
