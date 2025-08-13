@@ -15,7 +15,7 @@ export default function Page() {
     alumniName: user.name,
     studentId: user.id,
     institutionName: "",
-    graduationYear: user.batch.toString(),
+    graduationYear: user.batch?.toString(),
     profilePictureUrl: user.profile_path,
     qrCodeUrl: user.qr_code_path,
   };

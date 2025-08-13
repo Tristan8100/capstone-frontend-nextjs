@@ -1,83 +1,52 @@
-import AdminChatUI from "@/components/admin-components/admin-chat"
-import { CommandShortcut } from "@/components/ui/command"
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from "@/components/ui/command";
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
-import { Calendar, Smile, Calculator, User, CreditCard, Settings } from "lucide-react"
-import Link from "next/link";
+'use client';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { api2 } from '@/lib/api';
 
-export default function Page() {
+export default function ChatList() {
+  const [conversations, setConversations] = useState([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await api2.get<any>('/api/get-conversations/admin');
+        setConversations(response.data);
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      }
+    };
+    fetchConversations();
+  }, []);
+
   return (
-    <>
-        <div className="flex flex-col items-center justify-center p-4 grid grid-cols-3 border">
-            <div className="col-span-2">
-                <AdminChatUI/>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Chats</h1>
+      <div className="space-y-2">
+        {conversations.map((conv) => (
+          <div 
+            key={conv.id}
+            className="p-3 border rounded hover:bg-gray-100 cursor-pointer"
+            onClick={() => router.push(`/admin/chat/${conv.id}`)}
+          >
+            <div className="flex items-center gap-3">
+              <img
+                src={conv.user.profile_path || '/default-profile.png'}
+                alt={conv.user.first_name}
+                className="w-10 h-10 rounded-full"
+              />
+              <div>
+                <p className="font-medium">
+                  {conv.user.first_name} {conv.user.last_name} (Batch {conv.user.batch})
+                </p>
+                <p className="text-sm text-gray-500">
+                  Last updated: {conv.updated_at} {/* RAW DATE FROM API */}
+                </p>
+              </div>
             </div>
-            <div className="border border-red-500 h-[calc(100vh-200px)] p-4">
-                <Command className="rounded-lg border shadow-md">
-                    <CommandInput placeholder="Search users..." />
-                    <CommandList>
-                        <CommandEmpty>No users found.</CommandEmpty>
-
-                        {/* John Doe */}
-                        <CommandItem asChild>
-                        <Link
-                            href="/admin/chat/john"
-                            className="flex items-center gap-4 p-2 w-full hover:bg-accent transition rounded-md"
-                        >
-                            <Avatar>
-                            <AvatarImage src="/user-profile.png" alt="John" />
-                            <AvatarFallback>JD</AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col">
-                            <span className="font-medium">John Doe</span>
-                            <span className="text-xs text-muted-foreground truncate">
-                                Hey, how are you?
-                            </span>
-                            </div>
-                        </Link>
-                        </CommandItem>
-
-                        {/* Jane Alvarez */}
-                        <CommandItem asChild>
-                        <Link
-                            href="/admin/chat/jane"
-                            className="flex items-center gap-4 p-2 w-full hover:bg-accent transition rounded-md"
-                        >
-                            <Avatar>
-                            <AvatarImage src="/jane-profile.png" alt="Jane" />
-                            <AvatarFallback>JA</AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col">
-                            <span className="font-medium">Jane Alvarez</span>
-                            <span className="text-xs text-muted-foreground truncate">
-                                Let’s meet later today!
-                            </span>
-                            </div>
-                        </Link>
-                        </CommandItem>
-
-                        {/* Michael Green */}
-                        <CommandItem asChild>
-                        <Link
-                            href="/admin/chat/michael"
-                            className="flex items-center gap-4 p-2 w-full hover:bg-accent transition rounded-md"
-                        >
-                            <Avatar>
-                            <AvatarImage src="/michael-profile.png" alt="Michael" />
-                            <AvatarFallback>MG</AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col">
-                            <span className="font-medium">Michael Green</span>
-                            <span className="text-xs text-muted-foreground truncate">
-                                Got your message!
-                            </span>
-                            </div>
-                        </Link>
-                        </CommandItem>
-                    </CommandList>
-                </Command>
-            </div>
-        </div>
-    </>
-  )
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
