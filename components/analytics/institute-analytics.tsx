@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recha
 import { api2 } from "@/lib/api"
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import { Separator } from "@/components/ui/separator"
 
 export default function InstituteAnalytics() {
   const [stats, setStats] = useState<any>(null)
@@ -29,8 +30,12 @@ export default function InstituteAnalytics() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-3xl font-bold">Institute Analytics</h1>
+    <div className="container mx-auto py-4 space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold">Institute Analytics</h1>
+        <p className="text-muted-foreground">Manage institutes and programs</p>
+      </div>
+      <Separator/>
 
       {/* Top Institutes */}
       <Card>
@@ -101,7 +106,7 @@ export default function InstituteAnalytics() {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stats.active_institutes}>
               <XAxis dataKey="name" />
-              <YAxis />
+              <YAxis allowDecimals={false} domain={[0, 'dataMax']} />
               <Tooltip />
               <Bar 
                 dataKey="active_courses" 

@@ -8,6 +8,7 @@ import { Search, FileText, Calendar } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
 
 interface Survey {
   id: number
@@ -22,58 +23,99 @@ interface Course {
   id: number
   name: string
 }
+
+interface PaginatedResponse<T> {
+  data: T[]
+  current_page: number
+  last_page: number
+  total: number
+}
+
 export default function SurveysListUser() {
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [status, setStatus] = useState("all") // all | responded | not_responded
+  const [page, setPage] = useState(1)
+  const [lastPage, setLastPage] = useState(1)
   const { user } = useAuth()
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    const fetchSurveys = async () => {
-      try {
-        const response = await api2.get<Survey[]>("/api/surveys")
-        setSurveys(response.data)
-      } catch (error) {
-        console.error("Failed to fetch surveys:", error)
-      }
+  const fetchSurveys = async () => {
+    try {
+      const res = await api2.get<PaginatedResponse<Survey>>("/api/surveys-alumni", {
+        params: {
+          search: searchTerm,
+          status,
+          page,
+          per_page: 8
+        }
+      })
+
+      const filtered = res.data.data.filter(survey => 
+        !survey.course || survey.course.id === user?.course_id
+      )
+
+      setSurveys(filtered)
+      setLastPage(res.data.last_page)
+    } catch (error) {
+      console.error("Failed to fetch surveys:", error)
     }
+  }
 
+  // Fetch on status/page change
+  useEffect(() => {
     fetchSurveys()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, page])
 
-  const filteredSurveys = surveys.filter(survey => {
-    const matchesSearch = survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (survey.description?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-    
-    //NEW MODIFIED: Add course validation
-    const hasAccess = !survey.course || survey.course.id === user?.course_id
-    
-    return matchesSearch && hasAccess
-  })
+  // Debounced search effect
+  useEffect(() => {
+    if (debounceTimer) clearTimeout(debounceTimer)
+    const timer = setTimeout(() => {
+      setPage(1) // reset to first page on search
+      fetchSurveys()
+    }, 500) // 0.5s debounce
+    setDebounceTimer(timer)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm])
 
   return (
     <div className="min-h-screen w-full">
       {/* Header */}
       <div className="border-b">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-xl font-semibold">Surveys</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 h-auto sm:h-16 py-3">
+            
+            {/* Title */}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-white" />
               </div>
+              <h1 className="text-xl font-semibold">Surveys</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
+
+            {/* Search + Filter */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:items-center">
+              <div className="relative w-full sm:w-64">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Search surveys"
-                  className="pl-10 w-64"
+                  className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
+              <select
+                value={status}
+                onChange={(e) => { setStatus(e.target.value); setPage(1) }}
+                className="border rounded-md px-2 py-1 text-sm w-full sm:w-auto"
+              >
+                <option value="all">All</option>
+                <option value="responded">Responded</option>
+                <option value="not_responded">Not Responded</option>
+              </select>
             </div>
           </div>
         </div>
@@ -81,17 +123,7 @@ export default function SurveysListUser() {
 
       {/* Main Content */}
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Available Surveys</h2>
-          <p className="text-gray-600 mt-1">
-            {searchTerm
-              ? `${filteredSurveys.length} result(s) for "${searchTerm}"`
-              : "Participate in surveys relevant to you"}
-          </p>
-        </div>
-
-        {/* No Results */}
-        {searchTerm && filteredSurveys.length === 0 && (
+        {searchTerm && surveys.length === 0 && (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No surveys found</h3>
@@ -99,9 +131,8 @@ export default function SurveysListUser() {
           </div>
         )}
 
-        {/* Surveys Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredSurveys.map((survey) => (
+          {surveys.map((survey) => (
             <Link key={survey.id} href={`/alumni/surveys/${survey.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                 <CardHeader className="pb-3">
@@ -121,11 +152,10 @@ export default function SurveysListUser() {
                     </div>
                   </div>
                   {!survey.has_responded && (
-                      <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">
-                        Pending
-                      </Badge>
-                    )}
-
+                    <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">
+                      Pending
+                    </Badge>
+                  )}
                   {survey.course && (
                     <Badge variant="default" className="mt-2">
                       <span className="text-white">{survey.course.name}</span>
@@ -135,6 +165,29 @@ export default function SurveysListUser() {
               </Card>
             </Link>
           ))}
+        </div>
+
+        {/* Pagination */}
+        <div className="flex justify-center space-x-2 mt-8">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Prev
+          </Button>
+          <span className="px-2 py-1 text-sm">
+            Page {page} of {lastPage}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === lastPage}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
         </div>
       </div>
     </div>

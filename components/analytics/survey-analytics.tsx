@@ -4,6 +4,7 @@ import { api2 } from "@/lib/api"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 
 export default function SurveyAnalytics() {
   const [stats, setStats] = useState<any>(null)
@@ -12,33 +13,41 @@ export default function SurveyAnalytics() {
     api2.get("/api/survey/analytics").then(res => setStats(res.data))
   }, [])
 
-  if (!stats) return <div className="p-4">Loading survey management data...</div>
+  if (!stats) return 
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p>Loading dashboard...</p>
+      </div>
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="container mx-auto py-4 space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold">Survey Analytics</h1>
+        <p className="text-muted-foreground">Manage responses and edit surveys</p>
+      </div>
+      <Separator/>
 
       {/* Survey data */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-primary/10 border border-primary/20">
+        <Card className="border">
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-primary">Total Surveys</p>
             <p className="text-3xl font-bold">{stats.survey_counts?.total_surveys}</p>
           </CardHeader>
         </Card>
 
-        <Card className="bg-emerald-500/10 border border-emerald-500/20">
+        <Card className="border">
           <CardHeader className="pb-2">
-            <p className="text-sm font-medium text-emerald-500">Active Surveys</p>
+            <p className="text-sm font-medium">Active Surveys</p>
             <p className="text-3xl font-bold">{stats.survey_counts?.active_surveys}</p>
-            <p className="text-xs text-emerald-500/80">With questions</p>
+            <p className="text-xs">With questions</p>
           </CardHeader>
         </Card>
 
-        <Card className="bg-amber-500/10 border border-amber-500/20">
+        <Card className="border">
           <CardHeader className="pb-2">
-            <p className="text-sm font-medium text-amber-500">Draft Surveys</p>
+            <p className="text-sm font-medium">Draft Surveys</p>
             <p className="text-3xl font-bold">{stats.survey_counts?.draft_surveys}</p>
-            <p className="text-xs text-amber-500/80">No questions yet</p>
+            <p className="text-xs">No questions yet</p>
           </CardHeader>
         </Card>
       </div>

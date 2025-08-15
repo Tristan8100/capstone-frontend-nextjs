@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 
 export default function PostAnalytics() {
   const [stats, setStats] = useState<any>(null)
@@ -34,33 +35,37 @@ export default function PostAnalytics() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+    <div className="container mx-auto py-4 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Content Analytics</h1>
+        <p className="text-muted-foreground">Manage alumni posts and view trends</p>
+      </div>
+      <Separator/>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Pending Posts */}
-      <Card className="bg-rose-500/10 border border-rose-500/20">
+      <Card className="border">
         <CardHeader className="pb-2">
-          <p className="text-sm font-medium text-rose-500">Pending Posts</p>
+          <p className="text-sm font-medium">Pending Posts</p>
           <p className="text-3xl font-bold">{stats.pending_posts_count}</p>
-          <p className="text-xs text-rose-500/80">
+          <p className="text-xs">
             {stats.pending_ratio?.toFixed(1)}% of total posts
           </p>
         </CardHeader>
       </Card>
 
       {/* Top Poster */}
-      <Card className="bg-emerald-500/10 border border-emerald-500/20">
+      <Card className="border">
         <CardHeader className="pb-2">
-          <p className="text-sm font-medium text-emerald-500">Top Poster</p>
+          <p className="text-sm font-medium">Top Poster</p>
           {stats.top_users?.length > 0 && (
             <>
-              <p className="text-3xl font-bold">
+              <p className="text-2xl">
                 {stats.top_users[0].first_name} {stats.top_users[0].last_name}
               </p>
-              <p className="text-xs text-emerald-500/80">
-                {stats.top_users[0].posts_count} posts
+              <p className="text-xs">
+                {stats.top_users[0].posts_count} posts and {stats.top_users.length} more
               </p>
             </>
           )}
@@ -68,16 +73,16 @@ export default function PostAnalytics() {
       </Card>
 
       {/* Common Words */}
-      <Card className="bg-indigo-500/10 border border-indigo-500/20">
+      <Card className="bg-shade-lighter-10 border border-shade-lighter-20">
         <CardHeader className="pb-2">
-          <p className="text-sm font-medium text-indigo-500">Common Words</p>
+          <p className="text-sm font-medium text-shade-lighter">Common Words</p>
           <div className="flex flex-wrap gap-2 mt-2">
             {Object.entries(stats.common_words || {})
               .slice(0, 5)
               .map(([word, count]) => (
                 <span 
                   key={word} 
-                  className="bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded text-xs"
+                  className="bg-primary/20 dark:text-indigo-300 px-2 py-1 rounded text-xs"
                 >
                   {word} ({String(count)})
                 </span>
@@ -97,7 +102,7 @@ export default function PostAnalytics() {
             <BarChart data={stats.posts_trend || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
-              <YAxis />
+              <YAxis allowDecimals={false} domain={[0, 'dataMax']} />
               <Tooltip />
               <Bar dataKey="total" fill="#8884d8" />
             </BarChart>

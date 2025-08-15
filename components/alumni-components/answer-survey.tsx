@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
+import { toast } from 'sonner'
 
 interface Choice {
   id: number
@@ -148,13 +149,13 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
     console.log('Payload to submit:', payload)
 
     try {
-      const res = await api2.post('/api/responses', payload)
+      const res = await api2.post<any>('/api/responses', payload)
       console.log('Submission response:', res.data)
-      alert('Survey submitted successfully!')
+      toast.success(res.data.message)
       router.refresh()
     } catch (error) {
       console.error('Submission error:', error)
-      alert('Failed to submit survey.')
+      toast.error(error.response?.data?.message)
     }
   }
 

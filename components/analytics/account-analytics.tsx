@@ -5,9 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import { api2 } from "@/lib/api"
 import { useEffect, useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 
 // Color palette for the pie chart
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -37,12 +35,16 @@ export default function AccountAnalytics() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-3xl font-bold">Alumni Analytics</h1>
+    <div className="container mx-auto py-4 space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold">Account Analytics</h1>
+        <p className="text-muted-foreground">Manage Alumni accounts</p>
+      </div>
+      <Separator/>
 
-      {/* Stats Cards - Same as before */}
+      {/* Stats Cards*/}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-primary/10 border border-primary/20">
+        <Card className="border border-primary/20">
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-primary">Total Alumni</p>
             <p className="text-3xl font-bold">{stats.total_users}</p>
@@ -50,15 +52,15 @@ export default function AccountAnalytics() {
           </CardHeader>
         </Card>
 
-        <Card className="bg-emerald-500/10 border border-emerald-500/20">
+        <Card className="border">
           <CardHeader className="pb-2">
-            <p className="text-sm font-medium text-emerald-500">Most Popular Course</p>
+            <p className="text-sm font-medium">Most Popular Course</p>
             {stats.course_distribution?.length > 0 && (
               <>
                 <p className="text-3xl font-bold">
                   {stats.course_distribution[0].course}
                 </p>
-                <p className="text-xs text-emerald-500/80">
+                <p className="text-xs">
                   {stats.course_distribution[0].user_count} alumni
                 </p>
               </>
@@ -66,20 +68,20 @@ export default function AccountAnalytics() {
           </CardHeader>
         </Card>
 
-        <Card className="bg-amber-500/10 border border-amber-500/20">
+        <Card className="border">
           <CardHeader className="pb-2">
-            <p className="text-sm font-medium text-amber-500">Recent Registrations</p>
+            <p className="text-sm font-medium">Recent Registrations</p>
             <p className="text-3xl font-bold">
               {stats.created_at_trend?.slice(-1)[0]?.total || 0}
             </p>
-            <p className="text-xs text-amber-500/80">
-              Last registration on {stats.created_at_trend?.slice(-1)[0]?.date}
+            <p className="text-xs">
+              Last registration on {new Date(stats.created_at_trend?.slice(-1)[0]?.date).toLocaleDateString()}
             </p>
           </CardHeader>
         </Card>
       </div>
 
-      {/* Registration Trend Chart - Same as before */}
+      {/* Registration Trend Chart */}
       <Card>
         <CardHeader>
           <CardTitle>Registration Trend</CardTitle>
@@ -89,7 +91,7 @@ export default function AccountAnalytics() {
             <BarChart data={stats.created_at_trend || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
-              <YAxis />
+              <YAxis allowDecimals={false} domain={[0, 'dataMax']} />
               <Tooltip />
               <Bar dataKey="total" fill="#8884d8" />
             </BarChart>

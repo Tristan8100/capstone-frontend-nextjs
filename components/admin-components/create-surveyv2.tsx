@@ -24,6 +24,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Badge } from "../ui/badge";
 
 interface Choice {
   id?: number;
@@ -57,14 +58,22 @@ export default function AdminSurveyEditPage2() {
   const [choices, setChoices] = useState<Choice[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [hasResponded, setHasResponded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
+    checkResponse(params.id as string);
     api2
       .get<Survey>(`/api/surveys/${id}`)
       .then((res) => setSurvey(res.data))
       .catch((err) => console.error("Error fetching survey:", err));
   }, [id]);
+
+  const checkResponse = async (id: string) => {
+    const res = await api2.get<any>(`/api/surveys/check-response/${id}`);
+    console.log("Response datasss:", res);
+    setHasResponded(res.data.has_responded);
+  }
 
   const handleAdd = () => {
     setQuestionText("");
@@ -97,6 +106,10 @@ export default function AdminSurveyEditPage2() {
   };
 
   const handleSubmit = async () => {
+    if (hasResponded) {
+      toast.error("Cannot modify options after responses have been submitted.");
+      return;
+    }
     if (!questionText.trim()) {
       toast.error("Question text is required.");
       return;
@@ -174,6 +187,10 @@ export default function AdminSurveyEditPage2() {
   };
 
   const handleDeleteQuestion = async (questionId: number) => {
+    if (hasResponded) {
+      toast.error("Cannot modify options after responses have been submitted.");
+      return;
+    }
     if (!confirm("Are you sure you want to delete this question?")) return;
 
     try {
@@ -197,6 +214,11 @@ export default function AdminSurveyEditPage2() {
       <header className="mb-8">
         <h1 className="text-2xl font-semibold mb-1">{survey.title}</h1>
         <p className="text-sm text-gray-600">{survey.description}</p>
+        {hasResponded && (
+          <div className="mt-4">
+            <Badge>Survey has responses, editing is now disabled</Badge>
+          </div>
+        )}
       </header>
 
       {/* Add Question Button */}
