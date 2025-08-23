@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { Heart, MessageCircle, MoreHorizontal, Send, Loader2 } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Send, Loader2, Trash2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -49,6 +49,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   const [repliesLoading, setRepliesLoading] = useState<any>({})
   const [repliesPage, setRepliesPage] = useState<any>({})
   const [repliesHasMore, setRepliesHasMore] = useState<any>({})
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
 
   // Compose state
   const [newComment, setNewComment] = useState("")
@@ -155,11 +156,32 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
       if (hasMore) {
         setRepliesPage((prev: any) => ({ ...prev, [commentId]: page + 1 }))
       }
+      
+      // Mark this comment as expanded
+      setExpandedComments(prev => new Set(prev.add(String(commentId))));
     } catch (err) {
       console.error("Error fetching replies:", err)
       toast.error("Failed to load replies")
     } finally {
       setRepliesLoading((prev: any) => ({ ...prev, [commentId]: false }))
+    }
+  }
+
+  // Delete comment
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await api2.delete(`/api/posts/comments/${commentId}`)
+      setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
+      const deleted = comments.find(c => String(c.id) === String(commentId))
+      console.log("deleted", deleted?.replies_count)
+      setPosts((prev: any) => ({
+        ...prev,
+        comments_count: prev?.comments_count - deleted?.replies_count - 1,
+      }))
+      toast.success("Comment deleted successfully")
+    } catch (error) {
+      console.error("Error deleting comment:", error)
+      toast.error("Failed to delete comment")
     }
   }
 
@@ -210,15 +232,29 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
       setComments(prev =>
         prev.map(c => {
           if (sameId(c.id, commentId)) {
+            const updatedReplies = [...(c.replies || []), replyWithUser];
             return {
               ...c,
-              replies: [...(c.replies || []), replyWithUser],
-              replies_count: Math.max((c.replies_count || 0) - 1, 0),
+              replies: updatedReplies,
+              replies_count: (c.replies_count || 0) + 1,
             }
           }
           return c
         })
       )
+
+      setPosts((prev: any) => ({
+        ...prev,
+        comments_count: (prev?.comments_count || 0) + 1,
+      }))
+      
+      // Mark the comment as expanded if it wasn't already
+      setExpandedComments(prev => {
+        const newSet = new Set(prev);
+        newSet.add(String(commentId));
+        return newSet;
+      });
+      
       setNewReply("")
       setReplyingTo(null)
       toast.success("Reply added")
@@ -427,30 +463,32 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
               <Separator />
 
               <div className="w-full space-y-3">
-                {/* Add comment */}
-                <div className="flex space-x-3">
-                  <Avatar className="h-8 w-8">
-                    {user?.profile_path ? (
-                      <AvatarImage src={`${user.profile_path}`} alt={user?.name || "Your avatar"} />
-                    ) : (
-                      <AvatarFallback>{user?.name?.[0] || "Y"}</AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="flex-1 space-y-2">
-                    <Textarea
-                      placeholder="Write a comment..."
-                      value={newComment}
-                      onChange={e => setNewComment(e.target.value)}
-                      className="min-h-[60px] resize-none"
-                    />
-                    <div className="flex justify-end">
-                      <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || commentsLoading}>
-                        <Send className="h-4 w-4 mr-1" />
-                        Post
-                      </Button>
+                {/* Add comment - only show for non-admin users */}
+                {!isAdmin && (
+                  <div className="flex space-x-3">
+                    <Avatar className="h-8 w-8">
+                      {user?.profile_path ? (
+                        <AvatarImage src={`${user.profile_path}`} alt={user?.name || "Your avatar"} />
+                      ) : (
+                        <AvatarFallback>{user?.name?.[0] || "Y"}</AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex-1 space-y-2">
+                      <Textarea
+                        placeholder="Write a comment..."
+                        value={newComment}
+                        onChange={e => setNewComment(e.target.value)}
+                        className="min-h-[60px] resize-none"
+                      />
+                      <div className="flex justify-end">
+                        <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || commentsLoading}>
+                          <Send className="h-4 w-4 mr-1" />
+                          Post
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Comments list */}
                 <div className="w-full space-y-4">
@@ -475,27 +513,43 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                           </Avatar>
                           <div className="flex-1 space-y-1">
                             <div className="bg-muted rounded-lg px-3 py-2">
-                              <p className="font-semibold text-sm">
-                                {comment.user?.first_name} {comment.user?.middle_name} {comment.user?.last_name}
-                              </p>
+                              <div className="flex justify-between items-start">
+                                <p className="font-semibold text-sm">
+                                  {comment.user?.first_name} {comment.user?.middle_name} {comment.user?.last_name}
+                                </p>
+                                {/* Delete button for admin */}
+                                {isAdmin && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleDeleteComment(String(comment.id))}
+                                    title="Delete comment"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
                               <p className="text-sm">{comment.content}</p>
                             </div>
                             <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                               <span>{new Date(comment.created_at).toLocaleString()}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
-                                onClick={() => setReplyingTo(replyingTo === String(comment.id) ? null : String(comment.id))}
-                              >
-                                Reply
-                              </Button>
+                              {!isAdmin && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
+                                  onClick={() => setReplyingTo(replyingTo === String(comment.id) ? null : String(comment.id))}
+                                >
+                                  Reply
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </div>
 
-                        {/* Reply form (indented) */}
-                        {replyingTo === String(comment.id) && (
+                        {/* Reply form (indented) - only show for non-admin users */}
+                        {!isAdmin && replyingTo === String(comment.id) && (
                           <div className="ml-10 pl-4 flex space-x-3 border-l border-muted-foreground/20">
                             <Avatar className="h-6 w-6">
                               {user?.profile_path ? (
@@ -554,9 +608,23 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                                 </Avatar>
                                 <div className="flex-1 space-y-1">
                                   <div className="bg-muted rounded-lg px-3 py-2">
-                                    <p className="font-semibold text-sm">
-                                      {reply.user?.first_name} {reply.user?.last_name}
-                                    </p>
+                                    <div className="flex justify-between items-start">
+                                      <p className="font-semibold text-sm">
+                                        {reply.user?.first_name} {reply.user?.last_name}
+                                      </p>
+                                      {/* Delete button for admin */}
+                                      {isAdmin && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                                          onClick={() => handleDeleteComment(String(reply.id))}
+                                          title="Delete reply"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                    </div>
                                     <p className="text-sm">{reply.content}</p>
                                   </div>
                                   <div className="flex items-center space-x-4 text-xs text-muted-foreground">
@@ -568,25 +636,23 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                           </div>
                         )}
 
-                        {(repliesHasMore[String(comment.id)] ?? (comment.replies_count > 0)) && (
+                        {/* Show replies button - only show if there are replies that haven't been loaded yet */}
+                        {((comment.replies_count > 0 && comment.replies.length < comment.replies_count) || 
+                          (repliesHasMore[String(comment.id)] && !expandedComments.has(String(comment.id)))) && (
                           <div className="ml-10 pl-4">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => fetchReplies(String(comment.id))}
-                              disabled={repliesLoading[String(comment.id)] || repliesHasMore[String(comment.id)] === false}
+                              disabled={repliesLoading[String(comment.id)]}
                             >
                               {repliesLoading[String(comment.id)] ? (
                                 <span className="inline-flex items-center">
                                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                   Loading replies...
                                 </span>
-                              ) : repliesHasMore[String(comment.id)] === false ? (
-                                "No more replies"
-                              ) : comment.replies?.length ? (
-                                "Show more replies"
                               ) : (
-                                `Show replies (${comment.replies_count})`
+                                `Show ${comment.replies_count - comment.replies.length} more replies`
                               )}
                             </Button>
                           </div>

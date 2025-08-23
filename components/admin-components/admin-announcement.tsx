@@ -32,6 +32,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
 import { Input } from "../ui/input"
+import { toast } from "sonner" // Import toast from sonner
 
 function getUserDisplayName(user: any) {
   if (user?.full_name) return user.full_name
@@ -50,6 +51,7 @@ export default function AdminAnnouncementComponent({
   announcement,
   onUpdateSuccess = () => {},
   onDeleteSuccess = () => {},
+  isAdmin = true, // Add isAdmin prop
 }: any) {
   const {
     id,
@@ -131,6 +133,7 @@ export default function AdminAnnouncementComponent({
       setCommentsNextUrl(res.data?.pagination?.next_page_url || null)
     } catch (err) {
       console.error("Error fetching comments:", err)
+      toast.error("Failed to load comments")
     } finally {
       setCommentsLoading(false)
     }
@@ -164,36 +167,57 @@ export default function AdminAnnouncementComponent({
       setRepliesNextUrl((p: any) => ({ ...p, [key]: next }))
     } catch (err) {
       console.error("Error fetching replies:", err)
+      toast.error("Failed to load replies")
     } finally {
       setRepliesLoading((p: any) => ({ ...p, [key]: false }))
     }
   }
 
-  // Add comment
-  const handleAddComment = async () => {
-    if (!newComment.trim() || !CURRENT_USER.id) return
+  // Delete comment
+  const handleDeleteComment = async (commentId: string | number) => {
     try {
-      const payload = {
-        announcement_id: id,
-        user_id: CURRENT_USER.id,
-        content: newComment,
-      }
-      const res = await api2.post<any>("/api/comments", payload)
-      const added = {
-        ...res.data,
-        user: CURRENT_USER,
-        replies: [],
-        replies_count: 0,
-      }
-      // Prepend newest so admins see it immediately
-      setComments(prev => [added, ...prev])
-      setNewComment("")
-      setCurrentCommentsCount((n: number) => n + 1)
-      // Optionally scroll to it or toast
+      await api2.delete(`/api/comments/${commentId}`)
+      
+      const deletedComment = comments.find(c => String(c.id) === String(commentId))
+      const repliesCount = deletedComment?.replies_count || 0;
+
+      console.log("repliesCount", repliesCount)
+      
+      setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
+      setCurrentCommentsCount((n: number) => Math.max(n - 1 - repliesCount, 0))
+      
+      toast.success("Comment deleted successfully")
     } catch (error) {
-      console.error("Failed to add comment:", error)
+      console.error("Failed to delete comment:", error)
+      toast.error("Failed to delete comment")
     }
   }
+
+  // Delete reply
+  const handleDeleteReply = async (replyId: string | number, commentId: string | number) => {
+    try {
+      await api2.delete(`/api/comments/${replyId}`)
+      setComments(prev =>
+        prev.map(c => {
+          if (String(c.id) === String(commentId)) {
+            const updatedReplies = Array.isArray(c.replies) 
+              ? c.replies.filter((r: any) => String(r.id) !== String(replyId))
+              : [];
+            return {
+              ...c,
+              replies: updatedReplies,
+            };
+          }
+          return c;
+        })
+      );
+      toast.success("Reply deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete reply:", error);
+      toast.error("Failed to delete reply");
+    }
+  };
+
 
   // Add reply
   const handleAddReply = async (commentId: string | number) => {
@@ -223,8 +247,10 @@ export default function AdminAnnouncementComponent({
       )
       setNewReply("")
       setReplyingTo(null)
+      toast.success("Reply added successfully")
     } catch (error) {
       console.error("Failed to add reply:", error)
+      toast.error("Failed to add reply")
     }
   }
 
@@ -242,8 +268,10 @@ export default function AdminAnnouncementComponent({
       })
       setIsEditDialogOpen(false)
       onUpdateSuccess()
+      toast.success("Announcement updated successfully")
     } catch (error) {
       console.error("Failed to update announcement:", error)
+      toast.error("Failed to update announcement")
     }
   }
 
@@ -253,8 +281,10 @@ export default function AdminAnnouncementComponent({
       await api2.delete(`/api/announcements/${id}`)
       setIsDeleteDialogOpen(false)
       onDeleteSuccess()
+      toast.success("Announcement deleted successfully")
     } catch (error) {
       console.error("Failed to delete announcement:", error)
+      toast.error("Failed to delete announcement")
     }
   }
 
@@ -292,25 +322,25 @@ export default function AdminAnnouncementComponent({
               </p>
             </div>
           </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">More options</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleEditPost}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">More options</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleEditPost}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </CardHeader>
 
@@ -400,7 +430,7 @@ export default function AdminAnnouncementComponent({
       {/* Footer: Comments */}
       <CardFooter className="flex flex-col space-y-3 pt-0">
         <div className="flex items-center justify-between w-full text-sm text-muted-foreground px-2">
-          <span>{currentCommentsCount} comments</span>
+          <span>{currentCommentsCount} commentsss</span>
         </div>
 
         <Separator />
@@ -423,45 +453,6 @@ export default function AdminAnnouncementComponent({
 
         {showComments && (
           <>
-            <Separator />
-
-            {/* Add New Comment */}
-            <div className="w-full space-y-3">
-              <div className="flex space-x-3">
-                <Avatar className="h-8 w-8 relative">
-                  {CURRENT_USER.profile_path ? (
-                    <Image
-                      src={`${CURRENT_USER.profile_path}`}
-                      alt={CURRENT_USER.full_name || "Your avatar"}
-                      fill
-                      style={{ objectFit: "cover", borderRadius: "50%" }}
-                      sizes="32px"
-                    />
-                  ) : (
-                    <AvatarFallback>{getUserInitials(CURRENT_USER)}</AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="flex-1 space-y-2">
-                  <Textarea
-                    placeholder="Write a comment..."
-                    value={newComment}
-                    onChange={e => setNewComment(e.target.value)}
-                    className="min-h-[60px] resize-none"
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      size="sm"
-                      onClick={handleAddComment}
-                      disabled={!newComment.trim() || commentsLoading}
-                    >
-                      <Send className="h-4 w-4 mr-1" />
-                      Post
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <Separator />
 
             {/* Comments list */}
@@ -496,27 +487,43 @@ export default function AdminAnnouncementComponent({
                         </Avatar>
                         <div className="flex-1 space-y-1">
                           <div className="bg-muted rounded-lg px-3 py-2">
-                            <p className="font-semibold text-sm">{displayName}</p>
+                            <div className="flex justify-between items-start">
+                              <p className="font-semibold text-sm">{displayName}</p>
+                              {/* Delete button for admin */}
+                              {isAdmin && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  title="Delete comment"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
                             <p className="text-sm">{comment.content}</p>
                           </div>
                           <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                             <span>{new Date(comment.created_at).toLocaleString()}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
-                              onClick={() =>
-                                setReplyingTo(replyingTo === key ? null : key)
-                              }
-                            >
-                              Reply
-                            </Button>
+                            {!isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
+                                onClick={() =>
+                                  setReplyingTo(replyingTo === key ? null : key)
+                                }
+                              >
+                                Reply
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
 
-                      {/* Reply Input */}
-                      {replyingTo === key && (
+                      {/* Reply Input - Only show for non-admin users */}
+                      {!isAdmin && replyingTo === key && (
                         <div className="ml-10 pl-4 flex space-x-3 border-l border-muted-foreground/20">
                           <Avatar className="h-6 w-6">
                             {CURRENT_USER.profile_path ? (
@@ -595,7 +602,21 @@ export default function AdminAnnouncementComponent({
                                 </Avatar>
                                 <div className="flex-1 space-y-1">
                                   <div className="bg-muted rounded-lg px-3 py-2">
-                                    <p className="font-semibold text-sm">{replyDisplayName}</p>
+                                    <div className="flex justify-between items-start">
+                                      <p className="font-semibold text-sm">{replyDisplayName}</p>
+                                      {/* Delete button for admin */}
+                                      {isAdmin && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                                          onClick={() => handleDeleteReply(reply.id, comment.id)}
+                                          title="Delete reply"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                    </div>
                                     <p className="text-sm">{reply.content}</p>
                                   </div>
                                   <div className="text-xs text-muted-foreground">
