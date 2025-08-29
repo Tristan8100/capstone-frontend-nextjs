@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { Heart, MessageCircle, MoreHorizontal, Send, Loader2, Trash2 } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Send, Loader2, Trash2, Edit } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -35,7 +35,7 @@ import { api2 } from "@/lib/api"
 import { useRouter } from "next/navigation";
 
 
-export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialIsLiked, status, fetchPosts }: any) {
+export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialIsLiked, status, fetchPosts, onPostDeleted }: any) {
   const [posts, setPosts] = useState<any>(post)
   const [isLiked, setIsLiked] = useState<boolean>(initialIsLiked)
   const router = useRouter();
@@ -50,6 +50,15 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   const [repliesPage, setRepliesPage] = useState<any>({})
   const [repliesHasMore, setRepliesHasMore] = useState<any>({})
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+
+  // NEW: Loading states for various API interactions
+  const [isAddingComment, setIsAddingComment] = useState(false)
+  const [isAddingReply, setIsAddingReply] = useState(false)
+  const [isTogglingLike, setIsTogglingLike] = useState(false)
+  const [isEditingPost, setIsEditingPost] = useState(false)
+  const [isDeletingPost, setIsDeletingPost] = useState(false)
+  const [isChangingStatus, setIsChangingStatus] = useState(false)
+
 
   // Compose state
   const [newComment, setNewComment] = useState("")
@@ -97,10 +106,9 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     if (!hasMoreComments || commentsLoading) return
     setCommentsLoading(true)
     try {
-      const res = await api2.get<any>(`/api/posts-only/comments/${posts.id}?page=${commentsPage}`)// Any for now
+      const res = await api2.get<any>(`/api/posts-only/comments/${posts.id}?page=${commentsPage}`)
       const newComments = res.data?.data ?? []
 
-      // Ensure replies array exists and replies_count set
       const normalized = newComments.map((c: any) => ({
         ...c,
         replies: Array.isArray(c.replies) ? c.replies : [],
@@ -129,7 +137,6 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
       const page = repliesPage[commentId] || 1
       const res = await api2.get<any>(`/api/posts-only/replies/${commentId}?page=${page}`)
       const newReplies = res.data?.data ?? []
-      // Optional: oldest-first per page
       newReplies.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
       setComments(prev =>
@@ -157,7 +164,6 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
         setRepliesPage((prev: any) => ({ ...prev, [commentId]: page + 1 }))
       }
       
-      // Mark this comment as expanded
       setExpandedComments(prev => new Set(prev.add(String(commentId))));
     } catch (err) {
       console.error("Error fetching replies:", err)
@@ -169,6 +175,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
 
   // Delete comment
   const handleDeleteComment = async (commentId: string) => {
+    // NEW: No loading state implemented here for brevity, but would be good practice
     try {
       await api2.delete(`/api/posts/comments/${commentId}`)
       setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
@@ -196,6 +203,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   // Add comment
   const handleAddComment = async () => {
     if (!newComment.trim()) return
+    setIsAddingComment(true) // NEW: Start loading state
     try {
       const payload = { post_id: posts.id, content: newComment }
       const response = await api2.post<any>("/api/posts/comments", payload)
@@ -215,12 +223,15 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     } catch (error) {
       console.error("Error adding comment:", error)
       toast.error("Failed to add comment")
+    } finally {
+      setIsAddingComment(false) // NEW: End loading state
     }
   }
 
   // Add reply
   const handleAddReply = async (commentId: string) => {
     if (!newReply.trim()) return
+    setIsAddingReply(true) // NEW: Start loading state
     try {
       const response = await api2.post<any>("/api/posts/comments", {
         post_id: posts.id,
@@ -248,7 +259,6 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
         comments_count: (prev?.comments_count || 0) + 1,
       }))
       
-      // Mark the comment as expanded if it wasn't already
       setExpandedComments(prev => {
         const newSet = new Set(prev);
         newSet.add(String(commentId));
@@ -261,11 +271,15 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     } catch (error) {
       console.error("Error adding reply:", error)
       toast.error("Failed to add reply")
+    } finally {
+      setIsAddingReply(false) // NEW: End loading state
     }
   }
 
   // Like/unlike
   const handleLike = async () => {
+    if (isTogglingLike) return // NEW: Prevent multiple clicks
+    setIsTogglingLike(true) // NEW: Start loading state
     try {
       const response = await api2.put<any>(`/api/posts/like/${posts.id}`)
       setIsLiked(v => !v)
@@ -276,24 +290,31 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     } catch (error) {
       console.error("Error toggling like:", error)
       toast.error("Failed to update like")
+      // NEW: In a real app, you might revert the optimistic UI change here
+    } finally {
+      setIsTogglingLike(false) // NEW: End loading state
     }
   }
 
   // Admin change status
   const handleChangeStatus = async (newStatus: "accepted" | "declined") => {
+    setIsChangingStatus(true) // NEW: Start loading state
     try {
       const res = await api2.put<any>(`/api/posts/change-status/${posts.id}`, { status: newStatus })
       toast.success(res.data?.message)
       console.log("Status changed:", res.data)
-      fetchPosts() // Refresh the page to reflect changes
+      fetchPosts()
     } catch (error) {
       console.error(error)
       toast.error("Failed to change status")
+    } finally {
+      setIsChangingStatus(false) // NEW: End loading state
     }
   }
 
   // Edit post
   const handleEditPost = async () => {
+    setIsEditingPost(true) // NEW: Start loading state
     try {
       await api2.put(`/api/posts/${posts.id}`, { title: editedTitle, content: editedContent })
       setPosts((prev: any) => ({ ...prev, title: editedTitle, content: editedContent }))
@@ -302,19 +323,25 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     } catch (error) {
       console.error(error)
       toast.error("Failed to update post")
+    } finally {
+      setIsEditingPost(false) // NEW: End loading state
     }
   }
 
   // Delete post
   const handleDeletePost = async () => {
-    try {
-      await api2.delete(`/api/posts/${posts.id}`)
-      toast.success("Post deleted successfully")
-      setIsDeleteDialogOpen(false)
-    } catch (error) {
-      console.error(error)
-      toast.error("Failed to delete post")
-    }
+      setIsDeletingPost(true) 
+      try {
+          await api2.delete(`/api/posts/${posts.id}`)
+          toast.success("Post deleted successfully")
+          setIsDeleteDialogOpen(false)
+          onPostDeleted(posts.id); // NEW: Call the prop to update the parent state
+      } catch (error) {
+          console.error(error)
+          toast.error("Failed to delete post")
+      } finally {
+          setIsDeletingPost(false) // NEW: End loading state
+      }
   }
 
   const postUser = posts.user
@@ -353,8 +380,8 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
             {isAdmin ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="p-1 rounded-full" aria-label="Admin actions">
-                    <MoreHorizontal className="h-5 w-5" />
+                  <Button variant="ghost" className="p-1 rounded-full" aria-label="Admin actions" disabled={isChangingStatus}>
+                    {isChangingStatus ? <Loader2 className="h-5 w-5 animate-spin" /> : <MoreHorizontal className="h-5 w-5" />}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={5} className="w-32">
@@ -375,13 +402,13 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={5} className="w-32">
                   <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)} className="capitalize">
-                    Edit
+                    <Edit className="mr-2 h-4 w-4" /> Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setIsDeleteDialogOpen(true)}
                     className="capitalize text-destructive"
                   >
-                    Delete
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -436,9 +463,14 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
               size="sm"
               className={`flex-1 hover:bg-muted/50 ${isLiked ? "text-blue-500" : "text-muted-foreground"}`}
               onClick={handleLike}
+              disabled={isTogglingLike} // NEW: Disable during API call
             >
               <div className="flex items-center">
-                <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-blue-500" : "fill-none"}`} />
+                {isTogglingLike ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                ) : (
+                  <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-blue-500" : "fill-none"}`} />
+                )}
                 {typeof posts?.likes_count === "number" && posts.likes_count > 0 ? (
                   <span className="text-xs ml-1">{posts.likes_count}</span>
                 ) : (
@@ -481,9 +513,9 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                         className="min-h-[60px] resize-none"
                       />
                       <div className="flex justify-end">
-                        <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || commentsLoading}>
-                          <Send className="h-4 w-4 mr-1" />
-                          Post
+                        <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || isAddingComment}>
+                          {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
+                          {isAddingComment ? "Posting..." : "Post"}
                         </Button>
                       </div>
                     </div>
@@ -579,9 +611,10 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                                 <Button
                                   size="sm"
                                   onClick={() => handleAddReply(String(comment.id))}
-                                  disabled={!newReply.trim() || repliesLoading[String(comment.id)]}
+                                  disabled={!newReply.trim() || isAddingReply} // NEW: Disable during API call
                                 >
-                                  Reply
+                                  {isAddingReply ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                                  {isAddingReply ? "Replying..." : "Reply"}
                                 </Button>
                               </div>
                             </div>
@@ -637,26 +670,26 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                         )}
 
                         {/* Show replies button - only show if there are replies that haven't been loaded yet */}
-                        {((comment.replies_count > 0 && comment.replies.length < comment.replies_count) || 
+                        {((comment.replies_count > 0 && comment.replies.length < comment.replies_count) ||
                           (repliesHasMore[String(comment.id)] && !expandedComments.has(String(comment.id)))) && (
-                          <div className="ml-10 pl-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => fetchReplies(String(comment.id))}
-                              disabled={repliesLoading[String(comment.id)]}
-                            >
-                              {repliesLoading[String(comment.id)] ? (
-                                <span className="inline-flex items-center">
-                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                  Loading replies...
-                                </span>
-                              ) : (
-                                `Show ${comment.replies_count - comment.replies.length} more replies`
-                              )}
-                            </Button>
-                          </div>
-                        )}
+                            <div className="ml-10 pl-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => fetchReplies(String(comment.id))}
+                                disabled={repliesLoading[String(comment.id)]}
+                              >
+                                {repliesLoading[String(comment.id)] ? (
+                                  <span className="inline-flex items-center">
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    Loading replies...
+                                  </span>
+                                ) : (
+                                  `Show ${comment.replies_count - comment.replies.length} more replies`
+                                )}
+                              </Button>
+                            </div>
+                          )}
                       </div>
                     ))}
 
@@ -711,10 +744,13 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isEditingPost}>
               Cancel
             </Button>
-            <Button onClick={handleEditPost}>Save Changes</Button>
+            <Button onClick={handleEditPost} disabled={isEditingPost}>
+              {isEditingPost ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isEditingPost ? "Saving..." : "Save Changes"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -729,11 +765,12 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
             <p>Are you sure you want to delete this post? This action cannot be undone.</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeletingPost}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeletePost}>
-              Delete
+            <Button variant="destructive" onClick={handleDeletePost} disabled={isDeletingPost}>
+              {isDeletingPost ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isDeletingPost ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

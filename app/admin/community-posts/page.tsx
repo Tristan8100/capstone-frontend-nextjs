@@ -66,6 +66,7 @@ export default function Page() {
                 isAdmin={true} 
                 key={post.id} 
                 post={post} 
+                fetchPosts={() => fetchPosts(status, 1, true)}
               />
             ))}
             

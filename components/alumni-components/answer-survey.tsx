@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { Loader2 } from "lucide-react"
 
 interface Choice {
   id: number
@@ -55,6 +56,7 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
   const router = useRouter()
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [answers, setAnswers] = useState<Record<number, string | number | number[]>>({})
+  const [loading, setLoading] = useState(false)
 
 
   useEffect(() => {
@@ -149,9 +151,11 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
     console.log('Payload to submit:', payload)
 
     try {
+      setLoading(true)
       const res = await api2.post<any>('/api/responses', payload)
       console.log('Submission response:', res.data)
       toast.success(res.data.message)
+      setLoading(false)
       router.refresh()
     } catch (error) {
       console.error('Submission error:', error)
@@ -212,8 +216,15 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
         </Card>
       ))}
 
-      <Button onClick={handleSubmit} className="mt-4">
-        Submit
+      <Button onClick={handleSubmit} className="mt-4" disabled={loading}>
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Submitting...
+          </>
+        ) : (
+          "Submit"
+        )}
       </Button>
     </div>
   )

@@ -27,9 +27,9 @@ import {
 
 interface Response {
   message: string;
-  token: string; // Optional token for password reset
-  error: string; // Optional error message
-  email: string; // Optional email for verification
+  token: string;
+  error: string;
+  email: string;
 }
 
 export function ForgotPasswordForm({
@@ -52,6 +52,7 @@ export function ForgotPasswordForm({
   const [otp, setOtp] = useState(''); // OTP will be a single string from InputOTP
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleNextStep = async () => {
     setIsLoading(true);
@@ -113,7 +114,7 @@ export function ForgotPasswordForm({
       const response = await api.post<Response>('/api/forgot-password', { email });
       if (response.data.message === 'OTP sent to your email.') {
         // Show success message
-        setError('OTP resent successfully!');
+        setSuccess('OTP sent to your email.');
       } else {
         setError('Failed to resend OTP. Please try again.');
       }
@@ -164,6 +165,11 @@ export function ForgotPasswordForm({
       {error && (
         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+      {success && (
+        <div className="rounded-md bg-green-200 p-3 text-sm text-green-900">
+          {success}
         </div>
       )}
 

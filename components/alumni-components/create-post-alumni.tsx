@@ -14,47 +14,51 @@ export default function PostCreatorAlumni() {
   
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!title.trim() || !content.trim()) {
-      toast.error('Title and content are required.');
-      return;
-    }
+  if (!title.trim() || !content.trim()) {
+    toast.error('Title and content are required.');
+    return;
+  }
 
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('content', content);
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('content', content);
 
-    images.forEach((image) => {
-      formData.append('images[]', image);
-    });
+  images.forEach((image) => {
+    formData.append('images[]', image);
+  });
 
-    try {
-      await toast.promise(
-        new Promise((resolve, reject) => {
-            api2.post('/api/posts', formData, {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            }).then(resolve).catch(reject);
-          }),
-        {
-          loading: 'Creating announcement...',
-          success: 'Post created!',
-          error: (err) =>
-            err?.response?.data?.message || 'Failed to create announcement.',
-        }
-      );
+  try {
+    await toast.promise(
+    Promise.resolve(
+      api2.post('/api/posts', formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+    ).then((res) => {
+      // ✅ only runs if successful
       setTitle('');
       setContent('');
       setImages([]);
       router.push('/alumni/my-posts');
-    } catch (error: any) {
-      console.error(error);
-      const message = error.response?.data?.message || 'Failed to create announcement.';
-      toast.error(message);
+      return res;
+    }),
+    {
+      loading: 'Creating announcement...',
+      success: 'Post created!',
+      error: (err) =>
+        err?.response?.data?.message || 'Failed to create announcement.',
     }
-  };
+  );
+  } catch (error: any) {
+    console.error(error);
+    const message = error.response?.data?.message || 'Failed to create announcement.';
+    toast.error(message);
+  }
+};
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

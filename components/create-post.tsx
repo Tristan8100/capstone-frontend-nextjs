@@ -17,6 +17,7 @@ export default function PostCreator({ onSuccess }: { onSuccess?: () => void }) {
 
     if (!title.trim() || !content.trim()) {
       toast.error('Title and content are required.');
+      setLoading(false);
       return;
     }
 
@@ -25,37 +26,34 @@ export default function PostCreator({ onSuccess }: { onSuccess?: () => void }) {
     formData.append('content', content);
 
     images.forEach((image) => {
-      formData.append('images[]', image); // <-- Important: images[] with brackets
+      formData.append('images[]', image);
     });
 
     try {
-      await toast.promise(
-        new Promise((resolve, reject) => {
-          api2
-            .post('/api/announcements', formData, {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-              },
-            })
-            .then(resolve)
-            .catch(reject);
-        }),
-        {
-          loading: 'Creating announcement...',
-          success: 'Announcement created!',
-          error: (err) =>
-            err?.response?.data?.message || 'Failed to create announcement.',
-        }
-      );
+      // Wait for the API call to complete and get the response
+      const response = await api2.post('/api/announcements', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Show success toast
+      toast.success('Announcement created!');
+      
+      // Reset form
       setTitle('');
       setContent('');
       setImages([]);
-      setLoading(false);
+      
+      // Call onSuccess only after everything is complete
       onSuccess?.();
+      
     } catch (error: any) {
       console.error(error);
       const message = error.response?.data?.message || 'Failed to create announcement.';
       toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,7 +84,9 @@ export default function PostCreator({ onSuccess }: { onSuccess?: () => void }) {
         onChange={(e) => setImages(Array.from(e.target.files || []))}
         className="block"
       />
-      <Button disabled={loading} type="submit">Create Announcement</Button>
+      <Button disabled={loading} type="submit">
+        {loading ? 'Creating...' : 'Create Announcement'}
+      </Button>
     </form>
   );
 }

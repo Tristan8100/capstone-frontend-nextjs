@@ -35,28 +35,28 @@ export default function UserProfilePage({ userData }: { userData: any }) {
     : "Unknown date"
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       <Card className="rounded-xl shadow-lg">
-        <CardHeader className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-2 border-primary/10">
+        <CardHeader className="flex flex-col sm:flex-row gap-4 sm:gap-6 md:flex-row md:items-start md:gap-8">
+          <div className="flex items-center gap-4 md:w-1/3">
+            <Avatar className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 border-2 border-primary/10">
               <AvatarImage src={safeProfilePath} />
               <AvatarFallback className="bg-muted text-2xl font-medium">
                 {fallbackInitials}
               </AvatarFallback>
             </Avatar>
-            <div className="space-y-1.5">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{fullName}</h2>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <CalendarDays className="h-4 w-4" />
-                  <span>Joined {joinDate}</span>
-                </div>
-                <Separator orientation="vertical" className="h-4" />
-                <div className="flex items-center gap-1.5">
-                  <Mail className="h-4 w-4" />
-                  <span>{safeEmail}</span>
-                </div>
+          </div>
+          <div className="space-y-1.5 md:w-2/3">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">{fullName}</h2>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4" />
+                <span>Joined {joinDate}</span>
+              </div>
+              <Separator orientation="vertical" className="h-4" />
+              <div className="flex items-center gap-1.5">
+                <Mail className="h-4 w-4" />
+                <span>{safeEmail}</span>
               </div>
             </div>
           </div>

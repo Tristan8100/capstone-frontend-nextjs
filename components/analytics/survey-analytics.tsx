@@ -13,10 +13,13 @@ export default function SurveyAnalytics() {
     api2.get("/api/survey/analytics").then(res => setStats(res.data))
   }, [])
 
-  if (!stats) return 
+  if (!stats) {
+    return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <p>Loading dashboard...</p>
       </div>
+    )
+  }
 
   return (
     <div className="container mx-auto py-4 space-y-4">

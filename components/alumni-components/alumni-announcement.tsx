@@ -63,6 +63,7 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
   // Likes
   const [currentLikes, setCurrentLikes] = useState(likes_count)
   const [currentIsLiked, setCurrentIsLiked] = useState(!!is_liked)
+  const [likeLoading, setLikeLoading] = useState(false)
 
   const [currentCommentsCount, setCurrentCommentsCount] = useState(
     typeof comments_count === "number"
@@ -74,23 +75,29 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState<any[]>([])
   const [commentsLoading, setCommentsLoading] = useState(false)
-  const [commentsNextUrl, setCommentsNextUrl] = useState<string | null>(`/api/announcements-only/${id}?page=1`)
+  const [commentsNextUrl, setCommentsNextUrl] = useState<string | null>(null)
+  const [showCommentsLoading, setShowCommentsLoading] = useState(false)
 
   // Compose
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [newReply, setNewReply] = useState("")
+  const [commentSubmitting, setCommentSubmitting] = useState(false)
+  const [replySubmitting, setReplySubmitting] = useState<any>({})
 
   // Replies (per comment pagination)
   const [repliesLoading, setRepliesLoading] = useState<any>({})
   const [repliesNextUrl, setRepliesNextUrl] = useState<any>({})
 
   // Comments fetch
-  const fetchComments = async () => {
-    if (!commentsNextUrl || commentsLoading) return
+  const fetchComments = async (page = 1) => {
+    if (commentsLoading) return
     setCommentsLoading(true)
     try {
-      const res = await api2.get<any>(commentsNextUrl)
+      // Use relative URL to avoid CORS issues
+      const res = await api2.get<any>(`/api/announcements-only/${id}`, {
+        params: { page }
+      })
       const data = res.data?.data ?? []
       setComments(prev => {
         const existing = new Set(prev.map((c: any) => String(c.id)))
@@ -102,18 +109,21 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
       console.error("Error fetching comments:", e)
     } finally {
       setCommentsLoading(false)
+      setShowCommentsLoading(false)
     }
   }
 
   // Replies fetch (by comment)
-  const fetchReplies = async (commentId: string | number) => {
+  const fetchReplies = async (commentId: string | number, page = 1) => {
     const key = String(commentId)
     if (repliesLoading[key]) return
-    const nextUrl = repliesNextUrl[key] ?? `/api/announcements-only/replies/${key}?page=1`
 
     setRepliesLoading((prev: any) => ({ ...prev, [key]: true }))
     try {
-      const res = await api2.get<any>(nextUrl)
+      // Use relative URL to avoid CORS issues
+      const res = await api2.get<any>(`/api/announcements-only/replies/${key}`, {
+        params: { page }
+      })
       const incoming = res.data?.data ?? []
 
       setComments(prev =>
@@ -142,7 +152,8 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
 
   // Add comment
   const handleAddComment = async () => {
-    if (!newComment.trim() || !CURRENT_USER.id) return
+    if (!newComment.trim() || !CURRENT_USER.id || commentSubmitting) return
+    setCommentSubmitting(true)
     try {
       const res = await api2.post<any>("/api/comments", {
         announcement_id: id,
@@ -161,12 +172,17 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
       setCurrentCommentsCount((prev: number) => prev + 1)
     } catch (e) {
       console.error("Failed to add comment:", e)
+    } finally {
+      setCommentSubmitting(false)
     }
   }
 
   // Add reply
   const handleAddReply = async (commentId: string | number) => {
-    if (!newReply.trim() || !CURRENT_USER.id) return
+    const key = String(commentId)
+    if (!newReply.trim() || !CURRENT_USER.id || replySubmitting[key]) return
+    
+    setReplySubmitting((prev: any) => ({ ...prev, [key]: true }))
     try {
       const res = await api2.post<any>("/api/comments", {
         announcement_id: id,
@@ -177,7 +193,7 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
       const newReplyItem = { ...res.data, user: CURRENT_USER }
       setComments(prev =>
         prev.map(c => {
-          if (String(c.id) === String(commentId)) {
+          if (String(c.id) === key) {
             const currentReplies = Array.isArray(c.replies) ? c.replies : []
             const replies_count = typeof c.replies_count === "number" ? c.replies_count : 0
             return {
@@ -194,17 +210,23 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
       setReplyingTo(null)
     } catch (e) {
       console.error("Failed to add reply:", e)
+    } finally {
+      setReplySubmitting((prev: any) => ({ ...prev, [key]: false }))
     }
   }
 
   // Like
   const handleLike = async () => {
+    if (likeLoading) return
+    setLikeLoading(true)
     try {
       const res = await api2.put<any>(`/api/announcements/${id}/like`)
       setCurrentIsLiked(!!res.data?.is_liked)
       setCurrentLikes(res.data?.likes_count ?? 0)
     } catch (e) {
       console.error("Error toggling like:", e)
+    } finally {
+      setLikeLoading(false)
     }
   }
 
@@ -212,7 +234,21 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
   const handleToggleComments = () => {
     const next = !showComments
     setShowComments(next)
-    if (next && comments.length === 0) fetchComments()
+    if (next && comments.length === 0) {
+      setShowCommentsLoading(true)
+      fetchComments(1)
+    }
+  }
+
+  // Load more comments
+  const handleLoadMoreComments = () => {
+    if (!commentsNextUrl || commentsLoading) return
+    
+    // Extract page number from next URL or calculate it
+    const pageMatch = commentsNextUrl.match(/page=(\d+)/)
+    const nextPage = pageMatch ? parseInt(pageMatch[1]) : Math.ceil(comments.length / 10) + 1
+    
+    fetchComments(nextPage)
   }
 
   const totalCommentsDisplay = currentCommentsCount
@@ -286,15 +322,30 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
             size="sm"
             className={`flex-1 hover:bg-muted/50 ${currentIsLiked ? "text-blue-500" : "text-muted-foreground"}`}
             onClick={handleLike}
+            disabled={likeLoading}
           >
             <div className="flex items-center">
-              <Heart className={`h-4 w-4 mr-1 ${currentIsLiked ? "fill-blue-500" : "fill-none"}`} />
+              {likeLoading ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Heart className={`h-4 w-4 mr-1 ${currentIsLiked ? "fill-blue-500" : "fill-none"}`} />
+              )}
               {currentLikes > 0 && <span className="text-xs ml-1">{currentLikes}</span>}
             </div>
           </Button>
 
-          <Button variant="ghost" size="sm" className="flex-1 hover:bg-muted/50" onClick={handleToggleComments}>
-            <MessageCircle className="h-4 w-4 mr-2" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex-1 hover:bg-muted/50" 
+            onClick={handleToggleComments}
+            disabled={showCommentsLoading}
+          >
+            {showCommentsLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <MessageCircle className="h-4 w-4 mr-2" />
+            )}
             Comment
           </Button>
         </div>
@@ -325,10 +376,19 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
                     value={newComment}
                     onChange={e => setNewComment(e.target.value)}
                     className="min-h-[60px] resize-none"
+                    disabled={commentSubmitting}
                   />
                   <div className="flex justify-end">
-                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || commentsLoading}>
-                      <Send className="h-4 w-4 mr-1" />
+                    <Button 
+                      size="sm" 
+                      onClick={handleAddComment} 
+                      disabled={!newComment.trim() || commentSubmitting}
+                    >
+                      {commentSubmitting ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-1" />
+                      )}
                       Post
                     </Button>
                   </div>
@@ -340,159 +400,181 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
 
             {/* Comments list */}
             <div className="w-full space-y-4">
-              {comments
-                .filter((c: any) => !c.parent_id)
-                .map((comment: any) => {
-                  const displayName = getUserDisplayName(comment.user)
-                  const initials = getUserInitials(comment.user)
-                  const avatarSrc = comment.user?.profile_path ? `${comment.user.profile_path}` : null
-                  const key = String(comment.id)
-                  const repliesCount = typeof comment.replies_count === "number" ? comment.replies_count : 0
-                  const hasMoreReplies = !!repliesNextUrl[key] || repliesCount > 0
+              {comments.length === 0 && commentsLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                comments
+                  .filter((c: any) => !c.parent_id)
+                  .map((comment: any) => {
+                    const displayName = getUserDisplayName(comment.user)
+                    const initials = getUserInitials(comment.user)
+                    const avatarSrc = comment.user?.profile_path ? `${comment.user.profile_path}` : null
+                    const key = String(comment.id)
+                    const repliesCount = typeof comment.replies_count === "number" ? comment.replies_count : 0
+                    const hasMoreReplies = !!repliesNextUrl[key] || repliesCount > 0
+                    const isReplying = replyingTo === key
+                    const isSubmittingReply = replySubmitting[key]
 
-                  return (
-                    <div key={comment.id} className="space-y-3">
-                      <div className="flex space-x-3">
-                        <Avatar className="h-8 w-8 relative">
-                          {avatarSrc ? (
-                            <Image
-                              src={avatarSrc || "/placeholder.svg"}
-                              alt={displayName}
-                              fill
-                              style={{ objectFit: "cover", borderRadius: "50%" }}
-                              sizes="32px"
-                            />
-                          ) : (
-                            <AvatarFallback>{initials}</AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div className="flex-1 space-y-1">
-                          <div className="bg-muted rounded-lg px-3 py-2">
-                            <p className="font-semibold text-sm">{displayName}</p>
-                            <p className="text-sm">{comment.content}</p>
-                          </div>
-                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                            <span>{new Date(comment.created_at).toLocaleString()}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
-                              onClick={() => setReplyingTo(replyingTo === key ? null : key)}
-                            >
-                              Reply
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Reply input */}
-                      {replyingTo === key && (
-                        <div className="ml-10 pl-4 flex space-x-3 border-l border-muted-foreground/20">
-                          <Avatar className="h-6 w-6">
-                            {CURRENT_USER.profile_path ? (
+                    return (
+                      <div key={comment.id} className="space-y-3">
+                        <div className="flex space-x-3">
+                          <Avatar className="h-8 w-8 relative">
+                            {avatarSrc ? (
                               <Image
-                                src={`${CURRENT_USER.profile_path}`}
-                                alt={CURRENT_USER.full_name || "Your avatar"}
+                                src={avatarSrc || "/placeholder.svg"}
+                                alt={displayName}
                                 fill
                                 style={{ objectFit: "cover", borderRadius: "50%" }}
-                                sizes="24px"
+                                sizes="32px"
                               />
                             ) : (
-                              <AvatarFallback className="text-xs">{getUserInitials(CURRENT_USER)}</AvatarFallback>
+                              <AvatarFallback>{initials}</AvatarFallback>
                             )}
                           </Avatar>
-                          <div className="flex-1 space-y-2">
-                            <Textarea
-                              placeholder={`Reply to ${displayName}...`}
-                              value={newReply}
-                              onChange={e => setNewReply(e.target.value)}
-                              className="min-h-[50px] resize-none text-sm"
-                            />
-                            <div className="flex justify-end space-x-2">
+                          <div className="flex-1 space-y-1">
+                            <div className="bg-muted rounded-lg px-3 py-2">
+                              <p className="font-semibold text-sm">{displayName}</p>
+                              <p className="text-sm">{comment.content}</p>
+                            </div>
+                            <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                              <span>{new Date(comment.created_at).toLocaleString()}</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  setReplyingTo(null)
-                                  setNewReply("")
-                                }}
+                                className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
+                                onClick={() => setReplyingTo(isReplying ? null : key)}
+                                disabled={isSubmittingReply}
                               >
-                                Cancel
-                              </Button>
-                              <Button size="sm" onClick={() => handleAddReply(comment.id)} disabled={!newReply.trim() || repliesLoading[key]}>
                                 Reply
                               </Button>
                             </div>
                           </div>
                         </div>
-                      )}
 
-                      {/* Replies list */}
-                      {Array.isArray(comment.replies) && comment.replies.length > 0 && (
-                        <div className="ml-10 pl-4 space-y-3 border-l border-muted-foreground/20">
-                          {comment.replies.map((reply: any) => {
-                            const replyName = getUserDisplayName(reply.user)
-                            const replyInitials = getUserInitials(reply.user)
-                            const replyAvatar = reply.user?.profile_path ? `${reply.user.profile_path}` : null
-                            return (
-                              <div key={`${reply.id}-${reply.created_at || ""}`} className="flex space-x-3">
-                                <Avatar className="h-6 w-6">
-                                  {replyAvatar ? (
-                                    <Image
-                                      src={replyAvatar || "/placeholder.svg"}
-                                      alt={replyName}
-                                      fill
-                                      style={{ objectFit: "cover", borderRadius: "50%" }}
-                                      sizes="24px"
-                                    />
-                                  ) : (
-                                    <AvatarFallback className="text-xs">{replyInitials}</AvatarFallback>
-                                  )}
-                                </Avatar>
-                                <div className="flex-1 space-y-1">
-                                  <div className="bg-muted rounded-lg px-3 py-2">
-                                    <p className="font-semibold text-sm">{replyName}</p>
-                                    <p className="text-sm">{reply.content}</p>
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    <span>{new Date(reply.created_at).toLocaleString()}</span>
+                        {/* Reply input */}
+                        {isReplying && (
+                          <div className="ml-10 pl-4 flex space-x-3 border-l border-muted-foreground/20">
+                            <Avatar className="h-6 w-6">
+                              {CURRENT_USER.profile_path ? (
+                                <Image
+                                  src={`${CURRENT_USER.profile_path}`}
+                                  alt={CURRENT_USER.full_name || "Your avatar"}
+                                  fill
+                                  style={{ objectFit: "cover", borderRadius: "50%" }}
+                                  sizes="24px"
+                                />
+                              ) : (
+                                <AvatarFallback className="text-xs">{getUserInitials(CURRENT_USER)}</AvatarFallback>
+                              )}
+                            </Avatar>
+                            <div className="flex-1 space-y-2">
+                              <Textarea
+                                placeholder={`Reply to ${displayName}...`}
+                                value={newReply}
+                                onChange={e => setNewReply(e.target.value)}
+                                className="min-h-[50px] resize-none text-sm"
+                                disabled={isSubmittingReply}
+                              />
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setReplyingTo(null)
+                                    setNewReply("")
+                                  }}
+                                  disabled={isSubmittingReply}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleAddReply(comment.id)} 
+                                  disabled={!newReply.trim() || isSubmittingReply}
+                                >
+                                  {isSubmittingReply ? (
+                                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                  ) : null}
+                                  Reply
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Replies list */}
+                        {Array.isArray(comment.replies) && comment.replies.length > 0 && (
+                          <div className="ml-10 pl-4 space-y-3 border-l border-muted-foreground/20">
+                            {comment.replies.map((reply: any) => {
+                              const replyName = getUserDisplayName(reply.user)
+                              const replyInitials = getUserInitials(reply.user)
+                              const replyAvatar = reply.user?.profile_path ? `${reply.user.profile_path}` : null
+                              return (
+                                <div key={`${reply.id}-${reply.created_at || ""}`} className="flex space-x-3">
+                                  <Avatar className="h-6 w-6">
+                                    {replyAvatar ? (
+                                      <Image
+                                        src={replyAvatar || "/placeholder.svg"}
+                                        alt={replyName}
+                                        fill
+                                        style={{ objectFit: "cover", borderRadius: "50%" }}
+                                        sizes="24px"
+                                      />
+                                    ) : (
+                                      <AvatarFallback className="text-xs">{replyInitials}</AvatarFallback>
+                                    )}
+                                  </Avatar>
+                                  <div className="flex-1 space-y-1">
+                                    <div className="bg-muted rounded-lg px-3 py-2">
+                                      <p className="font-semibold text-sm">{replyName}</p>
+                                      <p className="text-sm">{reply.content}</p>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      <span>{new Date(reply.created_at).toLocaleString()}</span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
+                              )
+                            })}
+                          </div>
+                        )}
 
-                      {/* Load more replies */}
-                      {hasMoreReplies && (
-                        <div className="ml-10 pl-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => fetchReplies(comment.id)}
-                            disabled={!!repliesLoading[key]}
-                          >
-                            {repliesLoading[key] ? (
-                              <span className="inline-flex items-center">
-                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                Loading replies...
-                              </span>
-                            ) : Array.isArray(comment.replies) && comment.replies.length ? (
-                              repliesNextUrl[key] ? "Show more replies" : "Replies loaded"
-                            ) : (
-                              `Show replies (${repliesCount})`
-                            )}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
+                        {/* Load more replies */}
+                        {hasMoreReplies && (
+                          <div className="ml-10 pl-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const pageMatch = repliesNextUrl[key]?.match(/page=(\d+)/)
+                                const nextPage = pageMatch ? parseInt(pageMatch[1]) : 1
+                                fetchReplies(comment.id, nextPage)
+                              }}
+                              disabled={!!repliesLoading[key]}
+                            >
+                              {repliesLoading[key] ? (
+                                <span className="inline-flex items-center">
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  Loading replies...
+                                </span>
+                              ) : Array.isArray(comment.replies) && comment.replies.length ? (
+                                repliesNextUrl[key] ? "Show more replies" : "Replies loaded"
+                              ) : (
+                                `Show replies (${repliesCount})`
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+              )}
 
               {/* Load more comments */}
               {commentsNextUrl && (
-                <Button variant="outline" onClick={fetchComments} disabled={commentsLoading} className="w-full">
+                <Button variant="outline" onClick={handleLoadMoreComments} disabled={commentsLoading} className="w-full">
                   {commentsLoading ? (
                     <span className="inline-flex items-center">
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />

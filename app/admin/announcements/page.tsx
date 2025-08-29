@@ -83,6 +83,7 @@ export default function Page() {
       const newAnnouncements = response.data.data || []
       setAnnouncements(prev => reset ? newAnnouncements : [...prev, ...newAnnouncements])
       setPage(reset ? 2 : prev => prev + 1)
+      setPage(prev => reset ? 2 : prev + 1)
       setHasMore(!!response.data.pagination?.next_page_url)
     } catch (error) {
       console.error("Failed to fetch announcements:", error)

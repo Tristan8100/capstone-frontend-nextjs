@@ -121,7 +121,7 @@ export default function ViewAlumniAdmin() {
                         key={post.id}
                         status={'accepted'} 
                         is_liked={post.is_liked} 
-                        isAdmin={false} 
+                        isAdmin={true} 
                         post={post}
                     />
                 ))}

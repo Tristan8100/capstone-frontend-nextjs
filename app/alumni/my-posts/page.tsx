@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useEffect, useState, useCallback } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
@@ -13,19 +13,21 @@ export default function Page() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
-  const [initialLoad, setInitialLoad] = useState(true)
 
   const fetchPosts = useCallback(async (status: string, pageNum: number = 1, reset: boolean = false) => {
-    if ((!hasMore && !reset) || loading) return
+    // Return early if we are already loading
+    if (loading) return
     
+    // Set loading to true immediately to show the spinner
     setLoading(true)
+    
     try {
       const response = await api2.get<any>(`/api/my-posts/status/${status}?page=${pageNum}`)
       const newPosts = response.data.data
       
       if (reset) {
         setPosts(newPosts)
-        setPage(2) // Next page will be 2 after reset
+        setPage(2)
       } else {
         setPosts(prev => [...prev, ...newPosts])
         setPage(prev => prev + 1)
@@ -34,25 +36,36 @@ export default function Page() {
       setHasMore(pageNum < response.data.last_page)
     } catch (err) {
       console.error("Error fetching posts:", err)
+      setHasMore(false)
     } finally {
+      // Set loading to false once the fetch is complete
       setLoading(false)
-      if (initialLoad) setInitialLoad(false)
     }
-  }, [hasMore, loading, initialLoad])
+  }, [loading])
 
   // Handle tab change
-  useEffect(() => {
-    setPosts([])
+  const handleTabChange = useCallback((newStatus: string) => {
+    setStatus(newStatus)
+    setPosts([]) // Clear posts immediately
     setPage(1)
     setHasMore(true)
+    // The fetch will be triggered by the new status in useEffect
+  }, [])
+
+  useEffect(() => {
     fetchPosts(status, 1, true)
   }, [status])
+
+
+  const handlePostDeleted = useCallback((postId) => {
+    setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+  }, []);
 
   return (
     <div className="flex justify-center w-full">
       <Tabs
         value={status}
-        onValueChange={setStatus}
+        onValueChange={handleTabChange}
         className="w-full max-w-4xl"
       >
         <TabsList className="grid w-full grid-cols-3 rounded-lg shadow-md bg-muted mb-6">
@@ -84,41 +97,42 @@ export default function Page() {
 
         {["accepted", "pending", "declined"].map((tab) => (
           <TabsContent key={tab} className="flex justify-center" value={tab}>
-            <div className="space-y-4 flex flex-col justify-center items-center"> {/* NOTICE IF w-full BECOMES NOT ALIGNED */}
+            <div className="space-y-4 flex flex-col justify-center items-center">
               <h2 className="text-xl font-semibold text-foreground capitalize">
                 {tab} Posts
               </h2>
               
-              {status === tab && (
+              {loading && posts.length === 0 ? (
+                <div className="flex justify-center p-4">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : posts.length === 0 ? (
+                <p className="text-center text-muted-foreground">No posts available.</p>
+              ) : (
                 <>
-                  {posts.length === 0 && !initialLoad ? (
-                    <p className="text-center text-muted-foreground">No posts available.</p>
-                  ) : (
-                    <>
-                      {posts.map((post) => (
-                        <PostComponentsAlumni 
-                          status={status} 
-                          is_liked={post.is_liked} 
-                          isAdmin={false} 
-                          key={post.id} 
-                          post={post} 
-                        />
-                      ))}
-                      
-                      <InfiniteScroll
-                        hasMore={hasMore}
-                        isLoading={loading}
-                        next={() => fetchPosts(status, page)}
-                        threshold={0.8}
-                      >
-                        {hasMore && (
-                          <div className="flex justify-center p-4 w-full">
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                          </div>
-                        )}
-                      </InfiniteScroll>
-                    </>
-                  )}
+                  {posts.map((post) => (
+                    <PostComponentsAlumni 
+                      status={status} 
+                      is_liked={post.is_liked} 
+                      isAdmin={false} 
+                      key={post.id} 
+                      post={post} 
+                      onPostDeleted={handlePostDeleted}
+                    />
+                  ))}
+                  
+                  <InfiniteScroll
+                    hasMore={hasMore}
+                    isLoading={loading}
+                    next={() => fetchPosts(status, page)}
+                    threshold={0.8}
+                  >
+                    {hasMore && (
+                      <div className="flex justify-center p-4 w-full">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    )}
+                  </InfiniteScroll>
                 </>
               )}
             </div>
