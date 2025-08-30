@@ -15,7 +15,6 @@ function Home() {
       <HeroSection/>
       <Features/>
       <InViewImagesGrid/>
-      <TeamSection/>
       <ContentSection/>
       <FAQsTwo/>
       <FooterSection/>
