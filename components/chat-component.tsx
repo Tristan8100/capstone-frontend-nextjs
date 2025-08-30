@@ -1,4 +1,5 @@
 'use client'
+
 import { useParams } from "next/navigation";
 import { database } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
@@ -16,35 +17,58 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [chatDisabled, setChatDisabled] = useState(false);
   const scrollAreaRef = useRef(null);
   const bottomRef = useRef(null);
   const { user } = useAuth();
 
-  // Fetch messages in real-time
   useEffect(() => {
     if (!params.id) return;
 
-    setLoading(true);
-    const messagesRef = collection(database, `conversations/${params.id}/messages`);
-    const q = query(messagesRef, orderBy("timestamp", "asc"));
-
-    const unsubscribe = onSnapshot(q, 
-      (snapshot) => {
-        const msgs = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setMessages(msgs);
+    const checkConversation = async () => {
+      try {
+        const res = await api2.get(`/api/conversations/${params.id}`);
+        if (res.status === 200) {
+          // Conversation exists
+          const messagesRef = collection(database, `conversations/${params.id}/messages`);
+          const q = query(messagesRef, orderBy("timestamp", "asc"));
+  
+          const unsubscribe = onSnapshot(q, 
+            (snapshot) => {
+              const msgs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+              setMessages(msgs);
+              setLoading(false);
+            },
+            (err) => {
+              setError("Failed to load messages");
+              setLoading(false);
+              console.error("Firestore error:", err);
+            }
+          );
+  
+          return unsubscribe;
+        } else {
+          setError("Conversation not found");
+          setChatDisabled(true);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("API error:", err);
+        setError("Conversation not found");
+        setChatDisabled(true);
         setLoading(false);
-      },
-      (err) => {
-        setError("Failed to load messages");
-        setLoading(false);
-        console.error("Firestore error:", err);
       }
-    );
+    };
 
-    return unsubscribe;
+    const unsubscribePromise = checkConversation();
+
+    // Cleanup function for Firebase subscription
+    return () => {
+      unsubscribePromise.then(unsub => unsub && unsub());
+    }
   }, [params.id]);
 
   // Auto-scroll to bottom when messages change
@@ -53,17 +77,14 @@ export default function ChatPage() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToBottom()
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [messages])
+    const timer = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timer);
+  }, [messages]);
 
   // Send new message
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || chatDisabled) return;
 
     try {
       await addDoc(collection(database, `conversations/${params.id}/messages`), {
@@ -74,26 +95,28 @@ export default function ChatPage() {
         timestamp: serverTimestamp()
       });
       setNewMessage("");
-      lastMessage(e); // Update last message in conversation
+      lastMessage(); // Update last message in conversation
     } catch (err) {
       setError("Failed to send message");
       console.error("Send message error:", err);
     }
   };
 
-  const lastMessage = async (e) => {
-    e.preventDefault();
+  const lastMessage = async () => {
     if (!newMessage.trim()) return;
 
-    const res = await api2.put(`/api/conversations-last-message/${params.id}`, {
-      last_message: newMessage,
-    });
+    try {
+      const res = await api2.put(`/api/conversations-last-message/${params.id}`, {
+        last_message: newMessage,
+      });
 
-    if (res.status === 200) {
-      console.log("Last message updated successfully");
-    } else {
-      //setError("Failed to update last message");
-      console.error("Update last message error:", res.data);
+      if (res.status === 200) {
+        console.log("Last message updated successfully");
+      } else {
+        console.error("Update last message error:", res.data);
+      }
+    } catch (err) {
+      console.error("Update last message API error:", err);
     }
   }
 
@@ -110,35 +133,22 @@ export default function ChatPage() {
           {messages.map((msg) => (
             <div 
               key={msg.id} 
-              className={`flex items-start gap-3 ${
-                msg.senderId === user.id ? "justify-end" : ""
-              }`}
+              className={`flex items-start gap-3 ${msg.senderId === user.id ? "justify-end" : ""}`}
             >
               {msg.senderId !== user.id && (
                 <Avatar>
                   <AvatarImage src={msg.profilePath || "/default-profile.png"} alt={msg.senderName} />
-                  <AvatarFallback>
-                    {msg.senderName?.charAt(0) || "U"}
-                  </AvatarFallback>
+                  <AvatarFallback>{msg.senderName?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
               )}
               
               <div className={msg.senderId === user.id ? "text-right" : ""}>
-                <div className={`
-                  rounded-lg p-3 text-sm
-                  ${msg.senderId === user.id 
-                    ? "bg-primary text-primary-foreground" 
-                    : "bg-muted"}
-                `}>
+                <div className={`rounded-lg p-3 text-sm ${msg.senderId === user.id ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                   {msg.text}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {msg.senderId !== user.id && (
-                    <span className="mr-2">{msg.senderName}</span>
-                  )}
-                  {msg.timestamp?.toDate
-                    ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    : ""}
+                  {msg.senderId !== user.id && <span className="mr-2">{msg.senderName}</span>}
+                  {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
                 </div>
               </div>
 
@@ -161,8 +171,9 @@ export default function ChatPage() {
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message..." 
           className="flex-1"
+          disabled={chatDisabled}
         />
-        <Button type="submit">Send</Button>
+        <Button type="submit" disabled={chatDisabled}>Send</Button>
       </form>
     </div>
   );
