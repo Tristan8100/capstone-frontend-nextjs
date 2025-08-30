@@ -106,14 +106,14 @@ export default function Page() {
 
         {/* Latest Announcements Tab */}
         <TabsContent value="latest" className="space-y-4">
-          <div className="rounded-lg border bg-card">
-            <div className="border-b p-4">
+          <div className="rounded-lg">
+            <div className="border-b py-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" />
                 <span>Latest posts from your network</span>
               </div>
             </div>
-            <div className="p-4 space-y-6">
+            <div className="py-4 space-y-6">
               {announcements.length === 0 && !loading ? (
                 <p>No announcements found.</p>
               ) : (

@@ -7,6 +7,7 @@ import FooterSection from '@/components/footer';
 import { InViewImagesGrid } from '@/components/scroll-view';
 import TeamSection from '@/components/team';
 import FAQsTwo from '@/components/faq';
+import { HowToJoin } from '@/components/how-to-join';
 function Home() {
 
   return (
@@ -16,6 +17,7 @@ function Home() {
       <Features/>
       <InViewImagesGrid/>
       <ContentSection/>
+      <HowToJoin/>
       <FAQsTwo/>
       <FooterSection/>
     </>

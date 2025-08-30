@@ -10,8 +10,8 @@ import Image from 'next/image'
 
 const menuItems = [
     { name: 'Features', href: '#features' },
-    { name: 'Officers', href: '#officers' },
     { name: 'About', href: '#about' },
+    { name: 'How to join', href: '#how-to-join' },
     { name: 'FAQs', href: '#faqs' },
 ]
 
@@ -57,7 +57,7 @@ export const HeroHeader = () => {
                                     <li key={index}>
                                         <a
                                             href={item.href}
-                                            className="text-muted-foreground hover:text-accent-foreground block duration-150">
+                                            className="text-muted-foreground hover:text-primary block duration-150">
                                             <span>{item.name}</span>
                                         </a>
                                     </li>
@@ -72,7 +72,7 @@ export const HeroHeader = () => {
                                         <li key={index}>
                                             <a
                                                 href={item.href}
-                                                className="text-muted-foreground hover:text-accent-foreground block duration-150">
+                                                className="text-muted-foreground hover:text-primary block duration-150">
                                                 <span>{item.name}</span>
                                             </a>
                                         </li>

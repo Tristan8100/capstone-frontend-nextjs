@@ -93,7 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Alumni Portal</span>
-                  <span className="text-xs">SystemName</span>
+                  <span className="text-xs">BTECHLINK</span>
                 </div>
               </Link>
             </SidebarMenuButton>

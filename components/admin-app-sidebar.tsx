@@ -215,7 +215,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-semibold">Account</span>
-                    <span className="text-xs text-sidebar-foreground/70">ADMIN-001</span>
+                    <span className="text-xs text-sidebar-foreground/70">Admin Account</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

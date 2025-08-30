@@ -37,7 +37,10 @@ export function InViewImagesGrid() {
                 'static/alumni3.jpg',
                 'static/alumni4.jpg',
                 'static/alumni5.jpg',
-                'static/alumni4.png',
+                'static/DSC_0039.jpg',
+                'static/DSC_0075.jpg',
+                'static/DSC_0109.jpg',
+                'static/DSC_0117.jpg',
             ].map((imgSrc, index) => {
               return (
                 <motion.div

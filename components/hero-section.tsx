@@ -25,7 +25,7 @@ export default function HeroSection() {
                                         asChild
                                         size="lg"
                                         className="px-5 text-base">
-                                        <Link href="#link">
+                                        <Link href="/register">
                                             <span className="text-nowrap">Find My Profile</span>
                                         </Link>
                                     </Button>
