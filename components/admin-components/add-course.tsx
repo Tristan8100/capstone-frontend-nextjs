@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -66,7 +65,7 @@ export function AddCourse({ institutes, onSuccess }: AddCourseProps) {
       <DialogTrigger asChild>
         <Button>Add Course</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add Course</DialogTitle>
@@ -74,35 +73,43 @@ export function AddCourse({ institutes, onSuccess }: AddCourseProps) {
               Enter the Course name and Institute. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 mt-4">
-            <div className="grid gap-3">
-              <Label htmlFor="name">Name</Label>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name" className="text-left">
+                Name
+              </Label>
               <Input
                 id="name"
                 name="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                className="w-full"
               />
             </div>
-            <div className="grid gap-3">
-              <Label htmlFor="fullName">Full Name</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="fullName" className="text-left">
+                Full Name
+              </Label>
               <Input
                 id="fullName"
                 name="full_name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
+                className="w-full"
               />
             </div>
-            <div className="grid gap-3">
-              <Label htmlFor="institute">Institute</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="institute" className="text-left">
+                Institute
+              </Label>
               <select
                 id="institute"
                 name="institute_id"
                 value={instituteId}
                 onChange={(e) => setInstituteId(e.target.value)}
-                className="input border rounded-md px-3 py-2"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 required
               >
                 <option value="">Select Institute</option>
@@ -114,13 +121,22 @@ export function AddCourse({ institutes, onSuccess }: AddCourseProps) {
               </select>
             </div>
           </div>
-          <DialogFooter className="mt-4">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
             <DialogClose asChild>
-              <Button variant="outline" type="button" disabled={isSubmitting}>
+              <Button 
+                variant="outline" 
+                type="button" 
+                disabled={isSubmitting}
+                className="w-full sm:w-auto"
+              >
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
               {isSubmitting ? "Saving..." : "Add Course"}
             </Button>
           </DialogFooter>

@@ -13,31 +13,22 @@ export default function AlumniLayoutComponent({ children }: { children: React.Re
   const { user, setUser, logout } = useAuth();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    
-    if (!token) {
-      router.push("/login");
-      return;
-    }
 
     const verifyUser = async () => {
       try {
-        const res = await api.get<{ user_info: User }>("/api/verify-user", { //RETURN THE IMAGE PATH IF EXIST AH
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get<{ user_info: User }>("/api/verify-user");
         
         setUser(res.data.user_info);
         console.log("User set:", res.data.user_info); // por debugging again
       } catch (error) {
         console.error("Verification failed:", error);
-        localStorage.removeItem("token");
         setUser(null);
         router.push("/login");
       }
     };
 
     verifyUser();
-  }, [router, setUser]);
+  }, [pathname, router, setUser]);
 
   // Por debugging
   useEffect(() => {

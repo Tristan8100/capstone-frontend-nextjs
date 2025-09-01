@@ -53,7 +53,6 @@ export function LoginForm({
 
       if (data.status === 'success') {
         login(data.user_info, data.token);
-        api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
         toast.success(data.message || 'Login successful!');
         router.push('/alumni/announcement');
         return;
@@ -82,7 +81,6 @@ export function LoginForm({
 
         if (adminData.status === 'success') {
           login(adminData.user_info, adminData.token);
-          api.defaults.headers.common['Authorization'] = `Bearer ${adminData.token}`;
           toast.success(adminData.message || 'Admin login successful!');
           router.push('/admin/dashboard');
           return;

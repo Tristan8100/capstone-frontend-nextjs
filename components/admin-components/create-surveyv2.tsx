@@ -25,6 +25,16 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Badge } from "../ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Choice {
   id?: number;
@@ -52,6 +62,8 @@ export default function AdminSurveyEditPage2() {
 
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState<number | null>(null);
 
   const [questionText, setQuestionText] = useState("");
   const [questionType, setQuestionType] = useState("text");
@@ -73,7 +85,7 @@ export default function AdminSurveyEditPage2() {
     const res = await api2.get<any>(`/api/surveys/check-response/${id}`);
     console.log("Response datasss:", res);
     setHasResponded(res.data.has_responded);
-  }
+  };
 
   const handleAdd = () => {
     setQuestionText("");
@@ -136,14 +148,11 @@ export default function AdminSurveyEditPage2() {
 
         // Add new choices if needed
         if ((questionType === "radio" || questionType === "checkbox") && choices.length > 0) {
-          await Promise.all(
-            choices.map((choice) =>
-              api2.post("/api/choices", {
-                question_id: questionId,
-                choice_text: choice.choice_text,
-              })
-            )
-          );
+          console.log("Adding choices in bulk for update:", choices.map((c) => c.choice_text));
+          await api2.post("/api/choices/bulk", {
+            question_id: questionId,
+            choices: choices.map((c) => c.choice_text),
+          });
         }
       } else {
         // Add new question
@@ -155,14 +164,11 @@ export default function AdminSurveyEditPage2() {
         questionId = res.data.id;
 
         if ((questionType === "radio" || questionType === "checkbox") && choices.length > 0) {
-          await Promise.all(
-            choices.map((choice) =>
-              api2.post("/api/choices", {
-                question_id: questionId,
-                choice_text: choice.choice_text,
-              })
-            )
-          );
+          console.log("Adding choices in bulk2 for add:", choices.map((c) => c.choice_text));
+          await api2.post("/api/choices/bulk", {
+            question_id: questionId,
+            choices: choices.map((c) => c.choice_text),
+          });
         }
       }
 
@@ -186,15 +192,20 @@ export default function AdminSurveyEditPage2() {
     }
   };
 
-  const handleDeleteQuestion = async (questionId: number) => {
+  const handleDeleteQuestion = (questionId: number) => {
     if (hasResponded) {
       toast.error("Cannot modify options after responses have been submitted.");
       return;
     }
-    if (!confirm("Are you sure you want to delete this question?")) return;
+    setQuestionToDelete(questionId);
+    setIsAlertOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!questionToDelete) return;
 
     try {
-      await api2.delete(`/api/questions/${questionId}`);
+      await api2.delete(`/api/questions/${questionToDelete}`);
       toast.success("Question deleted!");
 
       // Refresh survey data
@@ -203,17 +214,20 @@ export default function AdminSurveyEditPage2() {
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete question.");
+    } finally {
+      setIsAlertOpen(false);
+      setQuestionToDelete(null);
     }
   };
 
-  if (!survey) return <div className="text-center py-20 text-gray-500">Loading survey...</div>;
+  if (!survey) return <div className="text-center py-20 text-muted-foreground">Loading survey...</div>;
 
   return (
-    <main className="max-w-4xl mx-auto p-6 font-sans text-gray-800">
+    <main className="max-w-4xl mx-auto p-6 font-sans text-foreground bg-background min-h-screen">
       {/* Title & Description */}
       <header className="mb-8">
         <h1 className="text-2xl font-semibold mb-1">{survey.title}</h1>
-        <p className="text-sm text-gray-600">{survey.description}</p>
+        <p className="text-sm text-muted-foreground">{survey.description}</p>
         {hasResponded && (
           <div className="mt-4">
             <Badge>Survey has responses, editing is now disabled</Badge>
@@ -223,7 +237,7 @@ export default function AdminSurveyEditPage2() {
 
       {/* Add Question Button */}
       <div className="mb-6 flex justify-end">
-        <Button onClick={handleAdd} variant="outline" >
+        <Button onClick={handleAdd} variant="outline">
           + Add Question
         </Button>
       </div>
@@ -231,10 +245,10 @@ export default function AdminSurveyEditPage2() {
       {/* Questions List */}
       <section className="space-y-6">
         {survey.questions.length === 0 && (
-          <p className="text-center text-gray-500 italic">No questions added yet.</p>
+          <p className="text-center text-muted-foreground italic">No questions added yet.</p>
         )}
         {survey.questions.map((q) => (
-          <Card key={q.id} className="shadow-sm border border-gray-200 rounded-md">
+          <Card key={q.id} className="shadow-sm border">
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <h3 className="font-medium text-base">{q.question_text}</h3>
@@ -259,11 +273,11 @@ export default function AdminSurveyEditPage2() {
               </div>
 
               {q.question_type === "text" && (
-                <p className="mt-2 text-sm text-gray-600 italic">Text input question</p>
+                <p className="mt-2 text-sm text-muted-foreground italic">Text input question</p>
               )}
 
               {(q.question_type === "radio" || q.question_type === "checkbox") && (
-                <ul className="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1 max-w-md">
+                <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1 max-w-md">
                   {q.choices.map((c) => (
                     <li key={c.id}>{c.choice_text}</li>
                   ))}
@@ -360,6 +374,23 @@ export default function AdminSurveyEditPage2() {
           </form>
         </DialogContent>
       </Dialog>
+      
+      {/* Delete Confirmation Alert Dialog */}
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the question and all
+              associated data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
