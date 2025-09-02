@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { Loader2 } from "lucide-react"
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface Choice {
   id: number
@@ -57,29 +59,29 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [answers, setAnswers] = useState<Record<number, string | number | number[]>>({})
   const [loading, setLoading] = useState(false)
-
+  const [fetching, setFetching] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!surveyId) return
-    console.log('Fetching survey with ID:', surveyId)
 
-    api2.get<Survey>(`/api/surveys/${surveyId}`)
-      .then(res => {
-        console.log('Survey fetched:', res.data)
-        setSurvey(res.data)
+    const fetchSurveyData = async () => {
+      try {
+        setFetching(true)
+        setError(null)
+        
+        const surveyResponse = await api2.get<Survey>(`/api/surveys/${surveyId}`)
+        setSurvey(surveyResponse.data)
 
-        return api2.get<ResponseType | ResponseType[]>(`/api/responses/survey/${surveyId}`)
-      })
-      .then(resResp => {
-        console.log('User response fetched:', resResp.data)
-        const userResponse = Array.isArray(resResp.data) ? resResp.data[0] : resResp.data
+        const responseResp = await api2.get<ResponseType | ResponseType[]>(`/api/responses/survey/${surveyId}`)
+        
+        const userResponse = Array.isArray(responseResp.data) ? responseResp.data[0] : responseResp.data
         if (!userResponse || !userResponse.answers) {
           setAnswers({})
           return
         }
 
         const mappedAnswers: Record<number, string | number[]> = {}
-
         userResponse.answers.forEach(ans => {
           if (ans.answer_choices && ans.answer_choices.length > 0) {
             mappedAnswers[ans.question_id] = ans.answer_choices.map(ac => ac.choice_id)
@@ -88,17 +90,20 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
           }
         })
 
-        console.log('Mapped answers:', mappedAnswers)
         setAnswers(mappedAnswers)
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('Failed to fetch survey or response:', err)
-        setAnswers({})
-      })
+        setError('Failed to load survey. Please try again.')
+        toast.error('Failed to load survey')
+      } finally {
+        setFetching(false)
+      }
+    }
+
+    fetchSurveyData()
   }, [surveyId])
 
   const handleChange = (questionId: number, value: string | number, type: string) => {
-    console.log(`Answer changed for question ${questionId}:`, value, 'type:', type)
     if (type === 'checkbox') {
       setAnswers(prev => {
         const current = (prev[questionId] as number[]) || []
@@ -115,8 +120,6 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
 
   const handleSubmit = async () => {
     if (!survey) return
-
-    console.log('Submitting answers:', answers)
 
     const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => {
       const qid = Number(questionId)
@@ -148,39 +151,104 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
       answers: formattedAnswers,
     }
 
-    console.log('Payload to submit:', payload)
-
     try {
       setLoading(true)
       const res = await api2.post<any>('/api/responses', payload)
-      console.log('Submission response:', res.data)
-      toast.success(res.data.message)
-      setLoading(false)
+      toast.success(res.data.message || 'Response submitted successfully!')
       router.refresh()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Submission error:', error)
-      toast.error(error.response?.data?.message)
+      toast.error(error.response?.data?.message || 'Failed to submit response. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
-  if (!survey) return <p>Loading survey...</p>
+  const retryFetch = () => {
+    setError(null)
+    setFetching(true)
+    // Trigger the useEffect again by updating a state that will re-run the fetch
+    setSurvey(null)
+    setTimeout(() => {
+      const fetchSurveyData = async () => {
+        try {
+          const surveyResponse = await api2.get<Survey>(`/api/surveys/${surveyId}`)
+          setSurvey(surveyResponse.data)
+          setError(null)
+        } catch (err) {
+          setError('Failed to load survey. Please try again.')
+        } finally {
+          setFetching(false)
+        }
+      }
+      fetchSurveyData()
+    }, 0)
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-3xl mx-auto p-6 space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={retryFetch} className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Try Again
+        </Button>
+      </div>
+    )
+  }
+
+  if (fetching || !survey) {
+    return (
+      <div className="max-w-3xl mx-auto p-6 space-y-6">
+        <Skeleton className="h-10 w-3/4" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-6 w-2/3" />
+        
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="border-border">
+            <CardContent className="space-y-4 p-6">
+              <Skeleton className="h-6 w-2/3" />
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+        
+        <Skeleton className="h-10 w-32" />
+      </div>
+    )
+  }
 
   return (
-    <div className="max-w-3xl mx-auto p-4 space-y-6">
-      <h1 className="text-3xl font-bold">{survey.title}</h1>
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <h1 className="text-3xl font-bold text-foreground">{survey.title}</h1>
       <p className="text-muted-foreground">{survey.description}</p>
-      {survey.has_responded && <p className="text-green-500 dark:text-blue-400">Your previous response has been save</p>}
+      
+      {survey.has_responded && (
+        <Alert className="bg-primary/10 border-primary text-foreground">
+          <AlertTitle>Response Saved</AlertTitle>
+          <AlertDescription>
+            Your previous response has been saved. You can update your answers below.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {survey.questions.map(q => (
-        <Card key={q.id}>
-          <CardContent className="space-y-2 p-4">
-            <p className="font-medium">{q.question_text}</p>
+        <Card key={q.id} className="border-border">
+          <CardContent className="space-y-4 p-6">
+            <p className="font-medium text-foreground">{q.question_text}</p>
 
             {q.question_type === 'text' && (
               <Input
                 type="text"
                 value={(answers[q.id] as string) || ''}
                 onChange={e => handleChange(q.id, e.target.value, 'text')}
+                className="border-border bg-background text-foreground"
               />
             )}
 
@@ -188,26 +256,42 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
               <RadioGroup
                 onValueChange={val => handleChange(q.id, val, 'radio')}
                 value={answers[q.id] ? String(answers[q.id]) : ''}
+                className="space-y-3"
               >
                 {q.choices.map(choice => (
-                  <div key={choice.id} className="flex items-center space-x-2">
-                    <RadioGroupItem value={String(choice.id)} id={`q${q.id}-c${choice.id}`} />
-                    <label htmlFor={`q${q.id}-c${choice.id}`}>{choice.choice_text}</label>
+                  <div key={choice.id} className="flex items-center space-x-3">
+                    <RadioGroupItem 
+                      value={String(choice.id)} 
+                      id={`q${q.id}-c${choice.id}`}
+                      className="text-primary border-border"
+                    />
+                    <label 
+                      htmlFor={`q${q.id}-c${choice.id}`}
+                      className="text-foreground cursor-pointer"
+                    >
+                      {choice.choice_text}
+                    </label>
                   </div>
                 ))}
               </RadioGroup>
             )}
 
             {q.question_type === 'checkbox' && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {q.choices.map(choice => (
-                  <div key={choice.id} className="flex items-center space-x-2">
+                  <div key={choice.id} className="flex items-center space-x-3">
                     <Checkbox
                       id={`q${q.id}-c${choice.id}`}
                       checked={Array.isArray(answers[q.id]) && (answers[q.id] as number[]).includes(choice.id)}
                       onCheckedChange={() => handleChange(q.id, choice.id, 'checkbox')}
+                      className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                     />
-                    <label htmlFor={`q${q.id}-c${choice.id}`}>{choice.choice_text}</label>
+                    <label 
+                      htmlFor={`q${q.id}-c${choice.id}`}
+                      className="text-foreground cursor-pointer"
+                    >
+                      {choice.choice_text}
+                    </label>
                   </div>
                 ))}
               </div>
@@ -216,14 +300,18 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
         </Card>
       ))}
 
-      <Button onClick={handleSubmit} className="mt-4" disabled={loading}>
+      <Button 
+        onClick={handleSubmit} 
+        disabled={loading}
+        className="bg-primary text-primary-foreground hover:bg-primary/90"
+      >
         {loading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Submitting...
           </>
         ) : (
-          "Submit"
+          "Submit Response"
         )}
       </Button>
     </div>
