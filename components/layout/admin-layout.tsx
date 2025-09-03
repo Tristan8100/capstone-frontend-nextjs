@@ -1,20 +1,23 @@
-
-import { AppSidebar } from "@/components/admin-app-sidebar"
+import { AppSidebar } from "@/components/admin-app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { ModeToggle } from "@/components/mode-toggle"
-import { SearchAlumni } from "../search-alumni"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { ModeToggle } from "@/components/mode-toggle";
+import { SearchAlumni } from "../search-alumni";
 
-
-export default function AdminLayout({children, currentPage}: {children: React.ReactNode, currentPage: string}) {
+export default function AdminLayout({
+  children,
+  currentPage,
+}: {
+  children: React.ReactNode;
+  currentPage: string[]; // now an array
+}) {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -26,11 +29,13 @@ export default function AdminLayout({children, currentPage}: {children: React.Re
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Alumni Portal</BreadcrumbLink>
+                  <BreadcrumbLink href="/admin/dashboard">BTECHLINK</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{currentPage}</BreadcrumbPage>
+                  <BreadcrumbLink href={`/admin/${currentPage[1]}`}>
+                    {currentPage[0]}
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -41,10 +46,8 @@ export default function AdminLayout({children, currentPage}: {children: React.Re
           </div>
         </header>
 
-        <main className="flex-1 space-y-6 p-6">
-          {children}
-        </main>
+        <main className="flex-1 space-y-6 p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

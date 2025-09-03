@@ -135,7 +135,7 @@ export default function AddSurvey({ onSuccess }: AddSurveyProps) {
                   <SelectValue placeholder="Select a course (leave blank for general survey)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="general">General Survey (All Courses)</SelectItem>
+                  <SelectItem value={null}>General Survey (All Courses)</SelectItem>
                   {courses.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.full_name} ({course.name})

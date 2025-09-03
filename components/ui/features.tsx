@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { IdCard, Megaphone, MessageSquareText } from 'lucide-react'
 import type { ReactNode } from 'react'
+import Image from 'next/image'
 
 export default function Features() {
     return (
@@ -20,7 +21,13 @@ export default function Features() {
                     <Card className="group shadow-zinc-950/5">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <IdCard className="size-6" aria-hidden />
+                                <Image
+                                    width={48}
+                                    height={48}
+                                    src="https://img.icons8.com/color/48/checked-identification-documents.png"
+                                    alt="checked-identification-documents"
+                                    unoptimized
+                                />
                             </CardDecorator>
                             <h3 className="mt-6 font-medium">Alumni ID System</h3>
                         </CardHeader>
@@ -35,7 +42,12 @@ export default function Features() {
                     <Card className="group shadow-zinc-950/5">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <Megaphone className="size-6" aria-hidden />
+                                <Image
+                                    width={48}
+                                    height={48}
+                                    src="https://img.icons8.com/fluency/48/commercial--v1.png" alt="commercial--v1"
+                                    unoptimized
+                                />
                             </CardDecorator>
                             <h3 className="mt-6 font-medium">Stay Informed</h3>
                         </CardHeader>
@@ -50,7 +62,12 @@ export default function Features() {
                     <Card className="group shadow-zinc-950/5">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <MessageSquareText className="size-6" aria-hidden />
+                                <Image
+                                    width={48}
+                                    height={48}
+                                    src="https://img.icons8.com/color/48/people-working-together.png" alt="people-working-together"
+                                    unoptimized
+                                />
                             </CardDecorator>
                             <h3 className="mt-6 font-medium">Alumni Feed</h3>
                         </CardHeader>

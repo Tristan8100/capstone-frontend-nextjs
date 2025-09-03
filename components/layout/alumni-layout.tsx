@@ -1,19 +1,23 @@
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { ModeToggle } from "@/components/mode-toggle"
-import { SearchAlumni } from "../search-alumni"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { ModeToggle } from "@/components/mode-toggle";
+import { SearchAlumni } from "../search-alumni";
 
-
-export default function AlumniLayout({children, currentPage}: {children: React.ReactNode, currentPage: string}) {
+export default function AlumniLayout({
+  children,
+  currentPage,
+}: {
+  children: React.ReactNode;
+  currentPage: [string, string]; // tuple [DisplayName, identifier]
+}) {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -29,7 +33,9 @@ export default function AlumniLayout({children, currentPage}: {children: React.R
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                    <BreadcrumbPage className="sm:text-sm md:text-md">{currentPage}</BreadcrumbPage>
+                  <BreadcrumbLink href={`/alumni/${currentPage[1]}`}>
+                    {currentPage[0]}
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -40,10 +46,8 @@ export default function AlumniLayout({children, currentPage}: {children: React.R
           </div>
         </header>
 
-        <main className="flex-1 space-y-6 p-6">
-          {children}
-        </main>
+        <main className="flex-1 space-y-6 p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

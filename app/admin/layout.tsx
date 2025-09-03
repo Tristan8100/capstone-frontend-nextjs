@@ -7,56 +7,48 @@ import { useEffect, useState } from "react";
 
 export default function AdminLayoutComponent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-  
-  const router = useRouter();
+    const router = useRouter();
     const { user, setUser, logout } = useAuth();
-  
+
     useEffect(() => {
-  
-      const verifyUser = async () => {
-        try {
-          const res = await api.get<{ user_info: User }>("/api/verify-admin");
-          
-          setUser(res.data.user_info);
-          console.log("User set:", res.data.user_info); // por debugging again
-        } catch (error) {
-          console.error("Verification failed:", error);
-          setUser(null);
-          router.push("/login");
-        }
-      };
-  
-      verifyUser();
+        const verifyUser = async () => {
+            try {
+                const res = await api.get<{ user_info: User }>("/api/verify-admin");
+                setUser(res.data.user_info);
+                console.log("User set:", res.data.user_info); // for debugging
+            } catch (error) {
+                console.error("Verification failed:", error);
+                setUser(null);
+                router.push("/login");
+            }
+        };
+        verifyUser();
     }, [pathname, router, setUser]);
-  
-    // Por debugging
+
     useEffect(() => {
-      console.log("User state updated:", user);
+        console.log("User state updated:", user);
     }, [user]);
-  
-    if (!user) {
-      // This will trigger if verification fails
-      return null;
-    }
 
-  const currentPage = (() => {
-    if (pathname.includes('/admin/dashboard')) return 'Dashboard';
-    if (pathname.includes('/admin/settings')) return 'Settings';
-    if (pathname.includes('/admin/surveys')) return 'Surveys';
-    if (pathname.includes('/admin/alumni')) return 'Alumni List';
-    if (pathname.includes('/admin/accounts')) return 'Accounts';
-    if (pathname.includes('/admin/general')) return 'Programs and Institutes';
-    if (pathname.includes('/admin/announcement')) return 'Announcements';
-    if (pathname.includes('/admin/community-posts')) return 'Community Posts';
-    if (pathname.includes('/admin/community-pending')) return 'Posts Pending Approval';
-    if (pathname.includes('/admin/community-chat')) return 'Chat Support';
-    return 'Admin';
-  })();
-  return (
-    <AdminLayout currentPage={currentPage}>
-      {children}
-    </AdminLayout>
-  );
+    if (!user) return null;
+
+    const currentPage = (() => {
+        if (pathname.includes('/admin/dashboard')) return ['Dashboard', 'dashboard'];
+        if (pathname.includes('/admin/settings')) return ['Settings', 'settings'];
+        if (pathname.includes('/admin/surveys')) return ['Surveys', 'surveys'];
+        if (pathname.includes('/admin/surveys/{id}')) return ['Surveys', 'surveys'];
+        if (pathname.includes('/admin/alumni')) return ['Alumni List', 'alumni'];
+        if (pathname.includes('/admin/accounts')) return ['Accounts', 'accounts'];
+        if (pathname.includes('/admin/general')) return ['Programs and Institutes', 'general'];
+        if (pathname.includes('/admin/announcement')) return ['Announcements', 'announcement'];
+        if (pathname.includes('/admin/community-posts')) return ['Community Posts', 'community-posts'];
+        if (pathname.includes('/admin/community-pending')) return ['Posts Pending Approval', 'community-pending'];
+        if (pathname.includes('/admin/community-chat')) return ['Chat Support', 'community-chat'];
+        return ['Admin', 'dashboard'];
+    })();
+
+    return (
+        <AdminLayout currentPage={currentPage}>
+            {children}
+        </AdminLayout>
+    );
 }
-
-

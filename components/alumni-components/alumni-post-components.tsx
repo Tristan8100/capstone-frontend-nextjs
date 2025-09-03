@@ -98,7 +98,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     // console.log("Post updated:", posts)
   }, [post])
 
-  // Helpers
+  // Helpers something
   const sameId = (a: any, b: any) => String(a) === String(b)
 
   // Fetch comments (paginated)
@@ -173,9 +173,9 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     }
   }
 
-  // Delete comment
+  // Delete commentsss
   const handleDeleteComment = async (commentId: string) => {
-    // NEW: No loading state implemented here for brevity, but would be good practice
+    // NEW: No loading state as of now
     try {
       await api2.delete(`/api/posts/comments/${commentId}`)
       setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
@@ -197,7 +197,6 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     if (showComments && comments.length === 0) {
       fetchComments()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showComments])
 
   // Add comment
@@ -278,8 +277,12 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
 
   // Like/unlike
   const handleLike = async () => {
-    if (isTogglingLike) return // NEW: Prevent multiple clicks
-    setIsTogglingLike(true) // NEW: Start loading state
+    if(isAdmin) {
+      toast.error("Admins cannot like posts")
+      return
+    }
+    if (isTogglingLike) return
+    setIsTogglingLike(true)
     try {
       const response = await api2.put<any>(`/api/posts/like/${posts.id}`)
       setIsLiked(v => !v)
@@ -290,7 +293,6 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     } catch (error) {
       console.error("Error toggling like:", error)
       toast.error("Failed to update like")
-      // NEW: In a real app, you might revert the optimistic UI change here
     } finally {
       setIsTogglingLike(false) // NEW: End loading state
     }
@@ -335,12 +337,12 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
           await api2.delete(`/api/posts/${posts.id}`)
           toast.success("Post deleted successfully")
           setIsDeleteDialogOpen(false)
-          onPostDeleted(posts.id); // NEW: Call the prop to update the parent state
+          onPostDeleted(posts.id); //Notify parent
       } catch (error) {
           console.error(error)
           toast.error("Failed to delete post")
       } finally {
-          setIsDeletingPost(false) // NEW: End loading state
+          setIsDeletingPost(false)
       }
   }
 
@@ -495,7 +497,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
               <Separator />
 
               <div className="w-full space-y-3">
-                {/* Add comment - only show for non-admin users */}
+                {/* Add comment - prevent admin ah */}
                 {!isAdmin && (
                   <div className="flex space-x-3">
                     <Avatar className="h-8 w-8">

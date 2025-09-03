@@ -81,7 +81,7 @@ export default function SurveysList() {
     try {
       await api2.delete(`/api/surveys/${deleteId}`)
       setSurveys((prev) => prev.filter((s) => s.id !== deleteId))
-      // optionally refetch page for pagination consistency
+      // just refresh
       const response = await api2.get<PaginatedResponse>(
         `/api/surveys-admin?page=${currentPage}&search=${searchTerm}`
       )

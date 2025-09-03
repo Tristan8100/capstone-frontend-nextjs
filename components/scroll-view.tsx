@@ -11,10 +11,19 @@ import { XIcon } from 'lucide-react';
 import { InView } from '@/components/ui/in-view';
 import { motion } from 'motion/react';
 import { Tilt } from '@/components/ui/tilt';
+import { ChevronsDown } from 'lucide-react';
+
 export function InViewImagesGrid() {
   return (
     <div className='h-full w-full overflow-auto'>
-      <div className='mb-20 py-12 text-center text-sm'>Scroll down</div>
+      <div className='text-center text-sm'>Scroll down</div>
+      <motion.div
+        className="mb-40 py-4 flex items-center justify-center"
+        animate={{ opacity: [0, 1, 0] }} // fade in and out
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        <ChevronsDown />
+      </motion.div>
       <div className='flex items-end justify-center'>
         <InView
           viewOptions={{ once: true, margin: '0px 0px -250px 0px' }}

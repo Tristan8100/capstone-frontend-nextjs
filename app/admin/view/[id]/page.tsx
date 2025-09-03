@@ -123,6 +123,7 @@ export default function ViewAlumniAdmin() {
                         is_liked={post.is_liked} 
                         isAdmin={true} 
                         post={post}
+                        fetchPosts={fetchPosts}
                     />
                 ))}
 

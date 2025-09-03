@@ -26,11 +26,21 @@ export default function Page() {
     <>
       <Tabs defaultValue="posts">
         <TabsList>
-          <TabsTrigger value="posts">Posts</TabsTrigger>
-          <TabsTrigger value="alumni-List">Alumni-List</TabsTrigger>
-          <TabsTrigger value="account">Accounts</TabsTrigger>
-          <TabsTrigger value="institutes">Institutes</TabsTrigger>
-          <TabsTrigger value="surveys">Surveys</TabsTrigger>
+          <TabsTrigger className="text-xs md:text-sm" value="posts">
+            Posts
+          </TabsTrigger>
+          <TabsTrigger className="text-xs md:text-sm" value="alumni-List">
+            Alumni-List
+          </TabsTrigger>
+          <TabsTrigger className="text-xs md:text-sm" value="account">
+            Accounts
+          </TabsTrigger>
+          <TabsTrigger className="text-xs md:text-sm" value="institutes">
+            Institutes
+          </TabsTrigger>
+          <TabsTrigger className="text-xs md:text-sm" value="surveys">
+            Surveys
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="posts">
           <PostAnalytics />

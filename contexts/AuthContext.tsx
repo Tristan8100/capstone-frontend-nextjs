@@ -3,6 +3,7 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { api2 } from "@/lib/api";
 
 export type User = {
   id: number;
@@ -34,9 +35,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log(token);
   };
 
-  const logout = () => {
-    setUser(null);
-    router.push("/login");
+  const logout = async () => {
+  setUser(null);
+
+    // Try ALUMNI logout first
+    try {
+      const res = await api2.post("/api/logout", {}, { withCredentials: true });
+      if (res.status === 200) {
+        console.log("Logged out successfully");
+        router.push("/login");
+      }
+    } catch (err) {
+      console.log("Logout failed:", err.response?.status);
+
+      // Try ADMIN logout next
+      try {
+        const res2 = await api2.post("/api/admin-logout", {}, { withCredentials: true });
+        if (res2.status === 200) {
+          console.log("Admin Logged out successfully");
+          router.push("/login");
+        }
+      } catch (err2) {
+        console.log("Admin Logout failed:", err2.response?.status);
+      }
+    }
   };
 
   return (

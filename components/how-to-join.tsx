@@ -81,7 +81,7 @@ export function HowToJoin() {
           <Badge variant="secondary" className="mb-4">
             Alumni Account Registration
           </Badge>
-          <h2 className="text-3xl font-bold mb-4">How to Join Btechlink</h2>
+          <h2 className="text-3xl font-bold mb-4">How to Join BTECHLINK</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Connect with fellow graduates, access exclusive resources, and stay updated with your alma mater.
             Registration takes just a few minutes!

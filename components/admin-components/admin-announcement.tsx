@@ -51,7 +51,7 @@ export default function AdminAnnouncementComponent({
   announcement,
   onUpdateSuccess = () => {},
   onDeleteSuccess = () => {},
-  isAdmin = true, // Add isAdmin prop
+  isAdmin = true, // Add isAdmin prop, nah nonesense now, just separated alumni to not be a mess
 }: any) {
   const {
     id,
@@ -430,7 +430,7 @@ export default function AdminAnnouncementComponent({
       {/* Footer: Comments */}
       <CardFooter className="flex flex-col space-y-3 pt-0">
         <div className="flex items-center justify-between w-full text-sm text-muted-foreground px-2">
-          <span>{currentCommentsCount} commentsss</span>
+          <span>{currentCommentsCount} comments</span>
         </div>
 
         <Separator />
