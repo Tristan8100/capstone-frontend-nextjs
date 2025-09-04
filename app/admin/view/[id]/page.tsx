@@ -43,6 +43,7 @@ export default function ViewAlumniAdmin() {
 
     // Fetch posts with infinite scroll
     const fetchPosts = useCallback(async (reset = false) => {
+        console.log('Fetching posts...');
         if ((!hasMore && !reset) || loading.posts) return
         
         setLoading(prev => ({...prev, posts: true}))
@@ -123,7 +124,7 @@ export default function ViewAlumniAdmin() {
                         is_liked={post.is_liked} 
                         isAdmin={true} 
                         post={post}
-                        fetchPosts={fetchPosts}
+                        fetchPosts={() => fetchPosts(true)}
                     />
                 ))}
 

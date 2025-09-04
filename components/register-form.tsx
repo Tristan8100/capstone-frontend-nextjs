@@ -113,7 +113,7 @@ export function RegisterForm({
 
           setVerificationEmail(email);
           setCurrentStep(3); // Jump to OTP verification step
-          setOtpResendTimer(60); // Start resend timer
+          setOtpResendTimer(10); // Start resend timer
           toast.info('Please verify your email to continue');
 
           // Clean up the URL without reloading
@@ -183,9 +183,9 @@ export function RegisterForm({
 
       setVerificationEmail(response.data.email)
       setCurrentStep(3)
-      setOtpResendTimer(60)
+      setOtpResendTimer(10)
       toast.success('Registration successful! Check your email for OTP')
-    } catch (error: any) {
+    } catch (error: any) { 
       if (error.response?.status === 422) {
         toast.error('Validation error: ' + Object.values(error.response.data.errors).join(', '))
       } else if (error.response?.status === 403) {
@@ -220,12 +220,16 @@ export function RegisterForm({
   }
 
   const handleResendOtp = async () => {
+    console.log('Resending OTP to:', verificationEmail);
+    setIsLoading(true)
     try {
-      await api.post('/api/resend-otp', { email: verificationEmail })
+      await api.post('/api/send-otp', { email: verificationEmail })
       setOtpResendTimer(60)
       toast.success('New OTP sent to your email')
+      setIsLoading(false)
     } catch (error) {
       toast.error('Failed to resend OTP')
+      setIsLoading(false)
     }
   }
 
@@ -403,10 +407,11 @@ export function RegisterForm({
                 </InputOTP>
               </div>
               <Button 
+                type="button"
                 variant="link" 
                 className="mt-2" 
                 onClick={handleResendOtp}
-                disabled={otpResendTimer > 0}
+                disabled={otpResendTimer > 0 || isLoading}
               >
                 {otpResendTimer > 0 ? `Resend in ${otpResendTimer}s` : 'Resend Code'}
               </Button>
