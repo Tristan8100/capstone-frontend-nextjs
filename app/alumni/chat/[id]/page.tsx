@@ -1,3 +1,5 @@
+'use client'
+
 import ChatPage from "@/components/chat-component";
 
 
