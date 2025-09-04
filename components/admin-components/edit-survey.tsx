@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useEffect } from "react"
 import { api2 } from "@/lib/api"
@@ -19,6 +19,7 @@ interface Survey {
   description: string | null
   created_at: string
   course: Course | null
+  status?: string
 }
 
 interface Course {
@@ -35,6 +36,7 @@ export default function EditSurvey({ survey, onSuccess }: EditSurveyProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [status, setStatus] = useState("pending")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,6 +44,7 @@ export default function EditSurvey({ survey, onSuccess }: EditSurveyProps) {
     if (open) {
       setTitle(survey.title)
       setDescription(survey.description || "")
+      setStatus(survey.status || "pending")
       setError(null)
     }
   }, [open, survey])
@@ -59,8 +62,14 @@ export default function EditSurvey({ survey, onSuccess }: EditSurveyProps) {
       const response = await api2.put(`/api/surveys/${survey.id}`, {
         title: title.trim(),
         description: description.trim() || null,
+        status,
       })
-      onSuccess({ ...survey, title: title.trim(), description: description.trim() || null })
+      onSuccess({
+        ...survey,
+        title: title.trim(),
+        description: description.trim() || null,
+        status,
+      })
       setOpen(false)
     } catch (e: any) {
       setError(e.response?.data?.message || "Failed to update survey")
@@ -101,6 +110,19 @@ export default function EditSurvey({ survey, onSuccess }: EditSurveyProps) {
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={loading}
               />
+            </div>
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                disabled={loading}
+                className="border rounded-md px-3 py-2 w-full"
+              >
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+              </select>
             </div>
             {error && <p className="text-red-600">{error}</p>}
           </div>

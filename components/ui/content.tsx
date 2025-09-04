@@ -15,7 +15,7 @@ export default function ContentSection() {
 
                 <div className="grid gap-6 md:grid-cols-2 md:gap-12">
                     <div>
-                        <div className="text-4xl font-medium">The <span className='text-primary font-bold'>BTECHLINK</span> community brings together our <span className='text-primary font-bold'>BTECH</span> alumnis </div>
+                        <div className="text-4xl font-medium">The <span className='text-primary font-bold'>BTECHLINK</span> community brings together our <span className='text-primary font-bold'>BTECH</span> alumni</div>
                         <div className="space-y-6 mt-4">
                         <p>
                             BTECHLINK is a digital bridge connecting graduates of BTECH with each other and with the institution that shaped their journey. Whether you&rsquo;re here to update your alumni ID, read announcements, participate in surveys, or share your latest achievement &mdash; we&rsquo;ve built this platform to keep you involved, informed, and inspired.

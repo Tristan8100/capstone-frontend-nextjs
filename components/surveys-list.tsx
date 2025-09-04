@@ -21,6 +21,7 @@ interface Survey {
   created_at: string
   course: Course | null
   has_responded?: boolean
+  status?: string
 }
 
 interface Course {
@@ -56,6 +57,7 @@ export default function SurveysList() {
         )
         setSurveys(response.data.data)
         setLastPage(response.data.last_page)
+        console.log(response.data)
       } catch (error) {
         console.error("Failed to fetch surveys:", error)
       } finally {
@@ -216,6 +218,11 @@ export default function SurveysList() {
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar className="w-4 h-4 mr-2" />
                         <span>{new Date(survey.created_at).toLocaleDateString()}</span>
+                        {survey.status && (
+                          <Badge variant="secondary" className="ml-2">
+                            <span className="truncate">{survey.status}</span>
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center space-x-2">
                         <EditSurvey
