@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { api2 } from "@/lib/api";
+import Image from "next/image";
 
 export default function ChatPage() {
   const params = useParams();
@@ -21,13 +22,24 @@ export default function ChatPage() {
   const scrollAreaRef = useRef(null);
   const bottomRef = useRef(null);
   const { user } = useAuth();
+  const [otherUser, setOtherUser] = useState("");
 
   useEffect(() => {
     if (!params.id) return;
 
     const checkConversation = async () => {
       try {
-        const res = await api2.get(`/api/conversations/${params.id}`);
+        const res = await api2.get<any>(`/api/conversations/${params.id}`);
+        if (res.data) {
+          if (res.data.admin.id === user.id) {
+            console.log('THE ADMIN');
+            setOtherUser(res.data.user.profile_path);
+          } else { 
+            console.log('THE OTHER');
+            setOtherUser(res.data.admin.profile_path); 
+          }
+        }
+        console.log(res.data);
         if (res.status === 200) {
           // Conversation exists
           const messagesRef = collection(database, `conversations/${params.id}/messages`);
@@ -136,13 +148,20 @@ export default function ChatPage() {
               className={`flex items-start gap-3 ${msg.senderId === user.id ? "justify-end" : ""}`}
             >
               {msg.senderId !== user.id && (
-                <Avatar>
-                  <AvatarImage src={msg.profilePath || "/default-profile.png"} alt={msg.senderName} />
-                  <AvatarFallback>{msg.senderName?.charAt(0) || "U"}</AvatarFallback>
+                <Avatar className="w-12 h-12 rounded-full">
+                  <AvatarImage
+                    src={otherUser || msg.profilePath}
+                    alt={msg.senderName}
+                    width={48}
+                    height={48}
+                  />
+                  <AvatarFallback>
+                    {msg.senderName?.[0]?.toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
               )}
               
-              <div className={msg.senderId === user.id ? "text-right" : ""}>
+              <div className={msg.senderId === user.id ? "text-left" : ""}>
                 <div className={`rounded-lg p-3 text-sm ${msg.senderId === user.id ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                   {msg.text}
                 </div>
@@ -154,7 +173,7 @@ export default function ChatPage() {
 
               {msg.senderId === user.id && (
                 <Avatar>
-                  <AvatarImage src={user.profile_path || "/default-profile.png"} alt="You" />
+                  <AvatarImage src={user.profile_path} alt="You" />
                   <AvatarFallback>Me</AvatarFallback>
                 </Avatar>
               )}
