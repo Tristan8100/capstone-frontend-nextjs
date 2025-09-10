@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { Eye } from "lucide-react"
 
-
+// Assuming these components are available in your project
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -18,7 +18,10 @@ interface Alumni {
   lastName: string;
   course: string;
   institute: string;
-  data: any;
+}
+
+interface AlumniResponse {
+  data: Alumni[];
   total: number;
   current_page: number;
   last_page: number;
@@ -35,15 +38,31 @@ interface Course {
   name: string;
   institute_id: string;
 }
-interface AddInstituteProps {
-  onSuccess: () => Promise<void>;
+
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 }
+
 export function AccountTable() {
   const [alumni, setAlumni] = useState<Alumni[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500); // 500ms debounce delay
   const [selectedInstituteId, setSelectedInstituteId] = useState<string | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
 
@@ -54,8 +73,6 @@ export function AccountTable() {
 
   const [institutes, setInstitutes] = useState<Institute[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-
-
 
   // 1. Fetch Institutes
   useEffect(() => {
@@ -97,15 +114,16 @@ export function AccountTable() {
   }, [selectedInstituteId]);
 
 
-  // 3. Fetch Alumni data
+  // 3. Fetch Alumni data - using useCallback for memoization
   const fetchAlumni = useCallback(async () => {
     setLoading(true);
+    setAlumni([]); // Clear alumni data immediately to show loading state
     setError(null);
     try {
       const params = {
         page: currentPage,
         per_page: itemsPerPage,
-        search: searchTerm,
+        search: debouncedSearchTerm, // Use the debounced value here
         institute: selectedInstituteId ? institutes.find(inst => inst.id === selectedInstituteId)?.name : null,
         course: selectedCourseId ? courses.find(c => c.id === selectedCourseId)?.name : null,
       };
@@ -113,38 +131,42 @@ export function AccountTable() {
         Object.entries(params).filter(([_, value]) => value !== null && value !== "")
       );
 
-      const response = await api2.get<Alumni>('/api/alumni', { params: filteredParams });
+      const response = await api2.get<AlumniResponse>('/api/alumni', { params: filteredParams });
+      
       setAlumni(response.data.data); 
       setTotalItems(response.data.total);
       setLastPage(response.data.last_page);
-      setCurrentPage(response.data.current_page);
     } catch (err: any) {
       console.error("Error fetching alumni:", err.response?.data || err);
       setError(err.response?.data?.message || "Failed to load alumni data.");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, selectedInstituteId, selectedCourseId, institutes, courses]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, selectedInstituteId, selectedCourseId]);
 
+
+  // Effect to trigger data fetching when dependencies change
   useEffect(() => {
     fetchAlumni();
   }, [fetchAlumni]);
 
-  // Handlers
+  // Reset to first page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, selectedInstituteId, selectedCourseId]);
+
+  // Handlers for user interactions
   const handleInstituteChange = (value: string) => {
     setSelectedInstituteId(value === "all" ? null : value);
-    setSelectedCourseId(null); // Reset course when institute changes
-    setCurrentPage(1); // Reset to first page on filter change
+    setSelectedCourseId(null);
   };
 
   const handleCourseChange = (value: string) => {
     setSelectedCourseId(value === "all" ? null : value);
-    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page on search change
   };
 
   const handlePageChange = (pageNumber: number) => {

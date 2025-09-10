@@ -43,6 +43,7 @@ export default function AdminLayoutComponent({ children }: { children: React.Rea
         if (pathname.includes('/admin/community-posts')) return ['Community Posts', 'community-posts'];
         if (pathname.includes('/admin/community-pending')) return ['Posts Pending Approval', 'community-pending'];
         if (pathname.includes('/admin/community-chat')) return ['Chat Support', 'community-chat'];
+        if (pathname.includes('/admin/jobfit')) return ['Job-fit Analysis', 'jobfit'];
         return ['Admin', 'dashboard'];
     })();
 

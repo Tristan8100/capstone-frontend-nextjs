@@ -13,6 +13,7 @@ import {
   BookOpen,
   Mail,
   MessageSquare,
+  ChartNoAxesCombined,
 } from "lucide-react"
 
 import {
@@ -46,6 +47,11 @@ const dashboardNavigation = [
     title: "Dashboard",
     url: "/admin/dashboard",
     icon: Home,
+  },
+  {
+    title: "Job-Fit Analysis",
+    url: "/admin/jobfit",
+    icon: ChartNoAxesCombined,
   },
   {
     title: "View Surveys",
