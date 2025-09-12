@@ -7,10 +7,11 @@ import PostComponentsAlumni from "@/components/alumni-components/alumni-post-com
 import { useParams } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import InfiniteScroll from "@/components/infinite-scroll"
-import { Loader2 } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 export default function ViewAlumni() {
     const [userData, setUserData] = useState<any>(null)
@@ -25,7 +26,15 @@ export default function ViewAlumni() {
     const params = useParams()
     const userId = params.id as string
 
-    // Fetch user profile data (only once)
+    const formatDate = (date: string | null) => {
+        if (!date) return "Present"
+        return new Date(date).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+        })
+    }
+
+    // Fetch user profile data
     useEffect(() => {
         setLoading(prev => ({...prev, profile: true}))
         setError(null)
@@ -64,7 +73,6 @@ export default function ViewAlumni() {
         }
     }, [userId, page, hasMore, loading.posts])
 
-    // Initial posts load
     useEffect(() => {
         fetchPosts(true)
     }, [userId])
@@ -102,15 +110,75 @@ export default function ViewAlumni() {
             <div className="max-w-4xl mx-auto p-4 space-y-6">
                 {/* Profile Section */}
                 <UserProfilePage userData={userData} />
-                
-                {/* Posts Section with Title */}
-                <div className="space-y-4">
-                    <div className="space-y-2 max-w-3xl mx-auto">
-                        <h2 className="text-2xl font-bold tracking-tight">
-                            {posts.length > 0 ? 'Recent Posts' : 'No Posts Yet'}
-                        </h2>
-                        <Separator className="w-full" />
+
+                {/* Careers in Dialog */}
+                {userData.careers?.length > 0 && (
+                    <div className="max-w-3xl mx-auto">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full rounded-xl font-medium shadow-sm hover:shadow-md transition"
+                                >
+                                    View Career History ({userData.careers.length})
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto rounded-2xl shadow-xl p-6">
+                                <DialogHeader className="border-b pb-4">
+                                    <DialogTitle className="text-2xl font-bold text-gray-800">
+                                        Career History
+                                    </DialogTitle>
+                                </DialogHeader>
+
+                                <div className="space-y-6 mt-4">
+                                    {userData.careers.map((career: any) => (
+                                        <div 
+                                            key={career.id} 
+                                            className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="font-semibold text-lg text-gray-900">
+                                                    {career.title}
+                                                </h3>
+                                                <span className="text-xs text-gray-500">
+                                                    {formatDate(career.start_date)} – {formatDate(career.end_date)}
+                                                </span>
+                                            </div>
+
+                                            <p className="text-sm text-muted-foreground">{career.company}</p>
+
+                                            {career.description && (
+                                                <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+                                                    {career.description}
+                                                </p>
+                                            )}
+
+                                            {career.skills_used?.length > 0 && (
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    {career.skills_used.map((skill: string, i: number) => (
+                                                        <span 
+                                                            key={i} 
+                                                            className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium"
+                                                        >
+                                                            {skill}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
+                )}
+
+                {/* Posts Section with Title */}
+                <div className="space-y-4 max-w-3xl mx-auto">
+                    <h2 className="text-2xl font-bold tracking-tight">
+                        {posts.length > 0 ? 'Recent Posts' : 'No Posts Yet'}
+                    </h2>
+                    <Separator className="w-full" />
                 </div>
             </div>
 
