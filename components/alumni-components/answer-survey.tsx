@@ -12,6 +12,13 @@ import { toast } from 'sonner'
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 interface Choice {
   id: number
@@ -62,6 +69,10 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // ✅ Terms & Conditions state
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [openTerms, setOpenTerms] = useState(false) // modal state
+
   useEffect(() => {
     if (!surveyId) return
 
@@ -72,6 +83,9 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
         
         const surveyResponse = await api2.get<Survey>(`/api/surveys/${surveyId}`)
         setSurvey(surveyResponse.data)
+
+        // ✅ auto-check terms if user already responded
+        setTermsAccepted(surveyResponse.data.has_responded)
 
         const responseResp = await api2.get<ResponseType | ResponseType[]>(`/api/responses/survey/${surveyId}`)
         
@@ -121,10 +135,14 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
   const handleSubmit = async () => {
     if (!survey) return
 
+    if (!termsAccepted) {
+      toast.error("You must accept the Terms and Conditions before submitting.")
+      return
+    }
+
     const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => {
       const qid = Number(questionId)
       const question = survey.questions.find(q => q.id === qid)
-
       if (!question) return null
 
       if (question.question_type === 'checkbox' || question.question_type === 'radio') {
@@ -134,22 +152,13 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
         } else {
           choiceIds = [Number(answer)]
         }
-        return {
-          question_id: qid,
-          choice_ids: choiceIds,
-        }
+        return { question_id: qid, choice_ids: choiceIds }
       } else {
-        return {
-          question_id: qid,
-          answer_text: String(answer),
-        }
+        return { question_id: qid, answer_text: String(answer) }
       }
     }).filter(Boolean)
 
-    const payload = {
-      survey_id: survey.id,
-      answers: formattedAnswers,
-    }
+    const payload = { survey_id: survey.id, answers: formattedAnswers }
 
     try {
       setLoading(true)
@@ -167,13 +176,13 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
   const retryFetch = () => {
     setError(null)
     setFetching(true)
-    // Trigger the useEffect again by updating a state that will re-run the fetch
     setSurvey(null)
     setTimeout(() => {
       const fetchSurveyData = async () => {
         try {
           const surveyResponse = await api2.get<Survey>(`/api/surveys/${surveyId}`)
           setSurvey(surveyResponse.data)
+          setTermsAccepted(surveyResponse.data.has_responded)
           setError(null)
         } catch (err) {
           setError('Failed to load survey. Please try again.')
@@ -191,9 +200,7 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {error}
-          </AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
         <Button onClick={retryFetch} className="gap-2">
           <RefreshCw className="h-4 w-4" />
@@ -209,7 +216,6 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
         <Skeleton className="h-10 w-3/4" />
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-2/3" />
-        
         {[1, 2, 3].map((i) => (
           <Card key={i} className="border-border">
             <CardContent className="space-y-4 p-6">
@@ -218,7 +224,6 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
             </CardContent>
           </Card>
         ))}
-        
         <Skeleton className="h-10 w-32" />
       </div>
     )
@@ -265,10 +270,7 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
                       id={`q${q.id}-c${choice.id}`}
                       className="text-primary border-border"
                     />
-                    <label 
-                      htmlFor={`q${q.id}-c${choice.id}`}
-                      className="text-foreground cursor-pointer"
-                    >
+                    <label htmlFor={`q${q.id}-c${choice.id}`} className="text-foreground cursor-pointer">
                       {choice.choice_text}
                     </label>
                   </div>
@@ -286,10 +288,7 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
                       onCheckedChange={() => handleChange(q.id, choice.id, 'checkbox')}
                       className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                     />
-                    <label 
-                      htmlFor={`q${q.id}-c${choice.id}`}
-                      className="text-foreground cursor-pointer"
-                    >
+                    <label htmlFor={`q${q.id}-c${choice.id}`} className="text-foreground cursor-pointer">
                       {choice.choice_text}
                     </label>
                   </div>
@@ -300,9 +299,29 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
         </Card>
       ))}
 
+      {/* ✅ Terms & Conditions */}
+      <div className="flex items-center space-x-3">
+        <Checkbox
+          id="terms"
+          checked={termsAccepted}
+          onCheckedChange={(val) => setTermsAccepted(!!val)}
+          className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+        />
+        <label htmlFor="terms" className="text-foreground cursor-pointer">
+          I agree to the{" "}
+          <button
+            type="button"
+            className="text-primary underline"
+            onClick={() => setOpenTerms(true)}
+          >
+            Terms and Conditions
+          </button>
+        </label>
+      </div>
+
       <Button 
         onClick={handleSubmit} 
-        disabled={loading}
+        disabled={loading || !termsAccepted}
         className="bg-primary text-primary-foreground hover:bg-primary/90"
       >
         {loading ? (
@@ -314,6 +333,39 @@ export function SurveyAnswerPage({ surveyId }: { surveyId: string | number }) {
           "Submit Response"
         )}
       </Button>
+
+      {/* Terms thingy Modal */}
+      <Dialog open={openTerms} onOpenChange={setOpenTerms}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Terms & Conditions</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              By participating in the <span className='text-primary font-bold'>BTECHLINK</span> survey, you agree to the following:
+            </p>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                Your responses will be used by the institute to gain insights and
+                improve academic programs, services, and alumni engagement
+                initiatives.
+              </li>
+              <li>
+                All information you provide will remain confidential and will only
+                be used for institutional research and development purposes.
+              </li>
+              <li>
+                By submitting your responses, you confirm that the information you
+                provide is accurate to the best of your knowledge and that you
+                consent to its use for the purposes described above.
+              </li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setOpenTerms(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
