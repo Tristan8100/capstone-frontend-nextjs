@@ -364,6 +364,11 @@ export default function JobFitAnalysis() {
   const currentYear = new Date().getFullYear()
   const yearOptions = Array.from({ length: currentYear - 2019 }, (_, i) => currentYear - i)
 
+  const entries = Object.entries(data.overall.avg_time_to_first_job_months)
+const [lastBatch, lastMonths] = entries[entries.length - 1] || ["N/A", 0]
+
+const lastYears = data.overall.avg_time_to_first_job_years[lastBatch] || 0
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border/50 bg-muted/20">
@@ -481,9 +486,9 @@ export default function JobFitAnalysis() {
             />
             <MetricCard
               title="Avg. Time to Job"
-              value={`${Object.values(data.overall.avg_time_to_first_job_years)[0] || 0} yrs`}
+              value={`${lastMonths} months`}
               icon={Clock}
-              description="Years to first employment"
+              description={`Latest batch: ${lastBatch} (${lastYears} years to first employment)`}
               variant="default"
             />
           </div>
@@ -542,7 +547,7 @@ export default function JobFitAnalysis() {
                 <div className="p-2 bg-blue-100 dark:bg-blue-950 rounded-lg">
                   <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                Top Career Recommendations
+                Top Career Recommendations by (AI)
               </CardTitle>
               <p className="text-sm text-muted-foreground">Most frequently recommended job roles for graduates</p>
             </CardHeader>
@@ -616,10 +621,10 @@ export default function JobFitAnalysis() {
                     </div>
                     <div className="flex gap-6 text-sm mb-3">
                       <span className="text-green-600 dark:text-green-400 font-medium">
-                        ✓ {courseData.fit_distribution.related}% Match
+                        ✓ {courseData.fit_distribution.related}% Related
                       </span>
                       <span className="text-red-600 dark:text-red-400 font-medium">
-                        ✗ {courseData.fit_distribution.not_related}% Mismatch
+                        ✗ {courseData.fit_distribution.not_related}% Not Related
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{courseData.insight_sentence}</p>
@@ -643,10 +648,10 @@ export default function JobFitAnalysis() {
                     </div>
                     <div className="flex gap-6 text-sm mb-3">
                       <span className="text-green-600 dark:text-green-400 font-medium">
-                        ✓ {instituteData.fit_distribution.related}% Match
+                        ✓ {instituteData.fit_distribution.related}% Related
                       </span>
                       <span className="text-red-600 dark:text-red-400 font-medium">
-                        ✗ {instituteData.fit_distribution.not_related}% Mismatch
+                        ✗ {instituteData.fit_distribution.not_related}% Not Related
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{instituteData.insight_sentence}</p>

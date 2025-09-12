@@ -22,6 +22,11 @@ interface Survey {
   course: Course | null
   has_responded?: boolean
   status?: string
+  limits?: {
+    courses?: string[]
+    institutes?: string[]
+    readable?: string
+  }
 }
 
 interface Course {
@@ -214,34 +219,48 @@ export default function SurveysList() {
                     <CardDescription className="line-clamp-2">{survey.description || "No description"}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-col space-y-2">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <span>{new Date(survey.created_at).toLocaleDateString()}</span>
-                        {survey.status && (
-                          <Badge variant="secondary" className="ml-2">
-                            <span className="truncate">{survey.status}</span>
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <EditSurvey
-                          survey={survey}
-                          onSuccess={(updatedSurvey) =>
-                            setSurveys((prev) =>
-                              prev.map((s) => (s.id === updatedSurvey.id ? updatedSurvey : s))
-                            )
-                          }
-                        />
-                        {survey.course && (
-                          <Badge variant="secondary" className="bg-purple-500 hover:bg-purple-600">
-                            <Users className="w-4 h-4 mr-1" />
-                            <span className="truncate">{survey.course.name}</span>
-                          </Badge>
-                        )}
-                      </div>
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <span>{new Date(survey.created_at).toLocaleDateString()}</span>
+                      {survey.status && (
+                        <Badge variant="secondary" className="ml-2">
+                          <span className="truncate">{survey.status}</span>
+                        </Badge>
+                      )}
                     </div>
-                  </CardContent>
+                    <div className="flex items-center space-x-2">
+                      <EditSurvey
+                        survey={survey}
+                        onSuccess={(updatedSurvey) =>
+                          setSurveys((prev) =>
+                            prev.map((s) => (s.id === updatedSurvey.id ? updatedSurvey : s))
+                          )
+                        }
+                      />
+
+                      {survey.limits && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {/* Courses add limits? if not defined */}
+                          {survey.limits?.courses?.map((courseName: string, i: number) => (
+                            <Badge key={`course-${i}`} variant="secondary" className="bg-purple-500 hover:bg-purple-600">
+                              <Users className="w-4 h-4 mr-1" />
+                              <span className="truncate">{courseName}</span>
+                            </Badge>
+                          ))}
+
+                          {/* Institutes */}
+                          {survey.limits?.institutes?.map((instName: string, i: number) => (
+                            <Badge key={`inst-${i}`} variant="secondary" className="bg-green-500 hover:bg-green-600">
+                              <Users className="w-4 h-4 mr-1" />
+                              <span className="truncate">{instName}</span>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
                 </Card>
               ))}
             </div>

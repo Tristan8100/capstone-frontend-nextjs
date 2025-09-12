@@ -35,7 +35,7 @@ export default function AlumniLayoutComponent({ children }: { children: React.Re
 
   const currentPage: [string, string] = (() => {
     if (pathname.includes("/alumni/dashboard")) return ["Dashboard", "dashboard"];
-    if (pathname.includes("/alumni/settings")) return ["Settings", "settings"];
+    if (pathname.includes("/alumni/settings")) return ["Profile & Settings", "settings"];
     if (pathname.includes("/alumni/feed")) return ["Community Feed", "feed"];
     if (pathname.includes("/alumni/announcements")) return ["Announcements", "announcements"];
     if (pathname.includes("/alumni/surveys")) return ["Surveys", "surveys"];

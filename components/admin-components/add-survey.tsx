@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useEffect } from "react"
 import { api2 } from "@/lib/api"
@@ -12,21 +12,18 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 interface Survey {
   id: number
   title: string
   description: string | null
-  course_id: string | null
-  created_at: string
   course: Course | null
+  limits?: {
+    courses?: string[]
+    institutes?: string[]
+    readable?: string
+  }
+  created_at: string
 }
 
 interface Course {
@@ -34,6 +31,11 @@ interface Course {
   name: string
   full_name: string
   institute_id: string
+}
+
+interface Institute {
+  id: string
+  name: string
 }
 
 interface AddSurveyProps {
@@ -44,25 +46,39 @@ export default function AddSurvey({ onSuccess }: AddSurveyProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [courseId, setCourseId] = useState<string | null>(null)
+  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([])
+  const [selectedInstituteIds, setSelectedInstituteIds] = useState<string[]>([])
   const [courses, setCourses] = useState<Course[]>([])
+  const [institutes, setInstitutes] = useState<Institute[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    if (!open) return
+
+    const fetchData = async () => {
       try {
-        const response = await api2.get<Course[]>("/api/get-courses-general")
-        setCourses(response.data)
-      } catch (error) {
-        console.error("Failed to fetch courses:", error)
+        const [coursesRes, institutesRes] = await Promise.all([
+          api2.get<Course[]>("/api/get-courses-general"),
+          api2.get<Institute[]>("/api/institutes"),
+        ])
+        setCourses(coursesRes.data)
+        setInstitutes(institutesRes.data)
+      } catch (e) {
+        console.error("Failed to fetch courses or institutes", e)
       }
     }
 
-    if (open) {
-      fetchCourses()
-    }
+    fetchData()
   }, [open])
+
+  const toggleSelection = (id: string, selected: string[], setSelected: (v: string[]) => void) => {
+    if (selected.includes(id)) {
+      setSelected(selected.filter((x) => x !== id))
+    } else {
+      setSelected([...selected, id])
+    }
+  }
 
   const createSurvey = async () => {
     if (!title.trim()) {
@@ -77,13 +93,17 @@ export default function AddSurvey({ onSuccess }: AddSurveyProps) {
       const response = await api2.post<Survey>("/api/surveys", {
         title: title.trim(),
         description: description.trim() || null,
-        course_id: courseId, // null is acceptable for general surveys
+        limits: {
+          courses: selectedCourseIds.length ? selectedCourseIds : undefined,
+          institutes: selectedInstituteIds.length ? selectedInstituteIds : undefined,
+        },
       })
       onSuccess(response.data)
       setOpen(false)
       setTitle("")
       setDescription("")
-      setCourseId(null)
+      setSelectedCourseIds([])
+      setSelectedInstituteIds([])
     } catch (e: any) {
       setError(e.response?.data?.message || "Failed to create survey")
     } finally {
@@ -102,6 +122,7 @@ export default function AddSurvey({ onSuccess }: AddSurveyProps) {
           <DialogHeader>
             <DialogTitle>Create New Survey</DialogTitle>
           </DialogHeader>
+
           <div className="py-4 space-y-4">
             <div>
               <Label htmlFor="title">Title</Label>
@@ -114,6 +135,7 @@ export default function AddSurvey({ onSuccess }: AddSurveyProps) {
                 required
               />
             </div>
+
             <div>
               <Label htmlFor="description">Description (optional)</Label>
               <Input
@@ -124,28 +146,46 @@ export default function AddSurvey({ onSuccess }: AddSurveyProps) {
                 disabled={loading}
               />
             </div>
+
             <div>
-              <Label>Course (optional)</Label>
-              <Select 
-                value={courseId || undefined}
-                onValueChange={(value) => setCourseId(value || null)}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a course (leave blank for general survey)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>General Survey (All Courses)</SelectItem>
-                  {courses.map((course) => (
-                    <SelectItem key={course.id} value={course.id}>
-                      {course.full_name} ({course.name})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Institutes (optional)</Label>
+              <div className="flex flex-col space-y-1 max-h-40 overflow-y-auto border rounded p-2">
+                {institutes.map((inst) => (
+                  <label key={inst.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      value={inst.id}
+                      checked={selectedInstituteIds.includes(inst.id)}
+                      onChange={() => toggleSelection(inst.id, selectedInstituteIds, setSelectedInstituteIds)}
+                      disabled={loading}
+                    />
+                    <span>{inst.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
+
+            <div>
+              <Label>Courses (optional)</Label>
+              <div className="flex flex-col space-y-1 max-h-40 overflow-y-auto border rounded p-2">
+                {courses.map((course) => (
+                  <label key={course.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      value={course.id}
+                      checked={selectedCourseIds.includes(course.id)}
+                      onChange={() => toggleSelection(course.id, selectedCourseIds, setSelectedCourseIds)}
+                      disabled={loading}
+                    />
+                    <span>{course.full_name} ({course.name})</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             {error && <p className="text-red-600">{error}</p>}
           </div>
+
           <DialogFooter>
             <Button variant="secondary" onClick={() => setOpen(false)} disabled={loading}>
               Cancel

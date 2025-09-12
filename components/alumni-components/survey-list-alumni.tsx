@@ -58,6 +58,8 @@ export default function SurveysListUser() {
         !survey.course || survey.course.id === user?.course_id
       )
 
+      console.log(res.data)
+
       setSurveys(filtered)
       setLastPage(res.data.last_page)
     } catch (error) {

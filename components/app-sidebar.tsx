@@ -67,7 +67,7 @@ const communityNavigation = [
 
 const generalNavigation = [
   {
-    title: "Settings",
+    title: "Profile & Settings",
     url: "/alumni/settings",
     icon: Settings,
   },
