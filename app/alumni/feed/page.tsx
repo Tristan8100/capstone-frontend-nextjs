@@ -41,15 +41,16 @@ export default function Page() {
   return (
     <>
       <div>
-        <div className="space-y-8 p-6 max-w-6xl mx-auto">
-          <div className="space-y-0.5">
+        <div className="space-y-2 p-6 max-w-6xl mx-auto">
+          <div className="">
             <h2 className="text-3xl font-bold tracking-tight">Community Feed</h2>
-            <p className="text-muted-foreground">Interact with Alumni Community Members and share your thoughts and experiences</p>
+            <p className="text-muted-foreground">Interact with Alumni Community</p>
           </div>
           <Separator/>
         </div>
+        <CreatePost />
       </div>
-      <CreatePost />
+      
 
       <div className="space-y-4">
         {posts.map((post) => (

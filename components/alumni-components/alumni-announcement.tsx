@@ -293,7 +293,7 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
           </p>
         </div>
         {images.length > 0 && (
-          <Carousel className="flex-1 w-full border border-red-500 lg:w-auto min-w-0">
+          <Carousel className="flex-1 w-full lg:w-auto min-w-0">
             <CarouselContent>
               {images.map((img: any, i: number) => (
                 <CarouselItem key={img.id || i}>
