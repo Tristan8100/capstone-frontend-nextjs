@@ -65,6 +65,7 @@ export function AlumniTable() {
 
   // Fetch alumni data
   useEffect(() => {
+  const debounceTimer = setTimeout(() => {
     const fetchAlumni = async () => {
       try {
         setIsLoading(true)
@@ -72,8 +73,8 @@ export function AlumniTable() {
           params: {
             search: searchTerm,
             page: currentPage,
-            per_page: itemsPerPage
-          }
+            per_page: itemsPerPage,
+          },
         })
         setAlumni(response.data.data)
         setTotalPages(response.data.meta.last_page)
@@ -85,13 +86,16 @@ export function AlumniTable() {
     }
 
     fetchAlumni()
-  }, [searchTerm, currentPage])
+  }, 1000) // wait 1s
+
+  return () => clearTimeout(debounceTimer)
+}, [searchTerm, currentPage])
 
   // Handle search with debounce
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       setCurrentPage(1)
-    }, 500)
+    }, 1000)
 
     return () => clearTimeout(debounceTimer)
   }, [searchTerm])
@@ -101,7 +105,7 @@ export function AlumniTable() {
       const response = await api2.get<Alumni >(`/api/alumni-list/${alumniId}`)
       const alumniData = response.data
       
-      // Pre-fill the form with the selected alumni's data
+      // Pre-fill
       setEditForm({
         id: alumniData.id,
         student_id: alumniData.student_id,
@@ -294,7 +298,7 @@ export function AlumniTable() {
         </Button>
       </div>
 
-      {/* Edit Modal with properly pre-filled forms */}
+      {/* Edit Modal with properly pre-filled forms at the top*/}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>

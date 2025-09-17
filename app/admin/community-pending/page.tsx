@@ -58,10 +58,12 @@ export default function Page() {
 
   return (
     <div className="space-y-6 pb-10">
-      <HeaderCommunity currentPage="Pending Posts" text="View and manage pending posts"/>
+      <div className="p-4 space-y-4">
+        <HeaderCommunity currentPage="Pending Posts" text="View and manage pending posts"/>
+      </div>
 
       <Tabs value={status} onValueChange={setStatus} className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex px-4 items-center justify-between">
           <TabsList className="grid w-full max-w-md grid-cols-3">
             <TabsTrigger value="pending" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />

@@ -89,6 +89,8 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
   const [repliesLoading, setRepliesLoading] = useState<any>({})
   const [repliesNextUrl, setRepliesNextUrl] = useState<any>({})
 
+  const [showFullContent, setShowFullContent] = useState(false)
+
   // Comments fetch
   const fetchComments = async (page = 1) => {
     if (commentsLoading) return
@@ -254,59 +256,67 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
   const totalCommentsDisplay = currentCommentsCount
 
   return (
-    <Card className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
+    <div className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] mb-16 border rounded-md max-w-screen-xl mx-auto">
       {/* Header */}
-      <CardHeader className="pb-3">
-        <div className="flex items-center space-x-3">
-          {admin?.profile_path ? (
-            <Avatar className="h-10 w-10">
-              <Image src={`${admin.profile_path}`} alt={admin?.name || "Admin"} width={600} height={600} />
-            </Avatar>
-          ) : (
-            <Avatar className="h-10 w-10">
-              <AvatarFallback>{(admin?.name?.[0] || "A").toUpperCase()}</AvatarFallback>
-            </Avatar>
-          )}
-          <div>
-            <h3 className="font-semibold text-sm">{admin?.name || "Admin"}</h3>
-            <p className="text-xs text-muted-foreground">{new Date(created_at).toLocaleString()}</p>
-          </div>
+      <div className="flex items-center space-x-3 p-4">
+        {admin?.profile_path ? (
+          <Avatar className="h-10 w-10">
+            <Image src={`${admin.profile_path}`} alt={admin?.name || "Admin"} width={600} height={600} />
+          </Avatar>
+        ) : (
+          <Avatar className="h-10 w-10">
+            <AvatarFallback>{(admin?.name?.[0] || "A").toUpperCase()}</AvatarFallback>
+          </Avatar>
+        )}
+        <div>
+          <h3 className="font-semibold text-sm">{admin?.name || "Admin"}</h3>
+          <p className="text-xs text-muted-foreground">{new Date(created_at).toLocaleString()}</p>
         </div>
-      </CardHeader>
+      </div>
 
       {/* Content */}
-      <CardContent className="px-0 pb-3">
-        <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 px-6 pb-4">
-          <div className="flex-1 w-full md:w-auto min-w-0">
-            <h2 className="text-lg font-semibold mb-2">{title}</h2>
-            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{content}</p>
-          </div>
-          {images.length > 0 && (
-            <Carousel className="flex-1 w-full lg:w-auto min-w-0">
-              <CarouselContent>
-                {images.map((img: any, i: number) => (
-                  <CarouselItem key={img.id || i}>
-                    <div className="relative">
-                      <Image
-                        src={`${img.image_file}`}
-                        alt={img.image_name || `image-${i + 1}`}
-                        width={600}
-                        height={400}
-                        className="w-full h-96 object-cover rounded-md"
-                      />
-                      <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                        {i + 1} / {images.length}
-                      </div>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-4" />
-              <CarouselNext className="right-4" />
-            </Carousel>
-          )}
+      <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 py-4">
+        <div className="flex-1 w-full md:w-auto min-w-0 px-6">
+          <h2 className="text-lg font-semibold mb-2">{title}</h2>
+          <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+            {content.length > 200 && !showFullContent
+                  ? `${content.slice(0, 200)}...`
+                  : content}
+              {content.length > 200 && (
+                  <button
+                  className="ml-1 text-blue-500 font-medium text-sm hover:underline"
+                  onClick={() => setShowFullContent(!showFullContent)}
+                  >
+                  {showFullContent ? "See less" : "See more"}
+                  </button>
+              )}
+          </p>
         </div>
-      </CardContent>
+        {images.length > 0 && (
+          <Carousel className="flex-1 w-full border border-red-500 lg:w-auto min-w-0">
+            <CarouselContent>
+              {images.map((img: any, i: number) => (
+                <CarouselItem key={img.id || i}>
+                  <div className="relative lg:px-6">
+                    <Image
+                      src={`${img.image_file}`}
+                      alt={img.image_name || `image-${i + 1}`}
+                      width={600}
+                      height={400}
+                      className="w-full h-96 object-cover lg:rounded-md"
+                    />
+                    <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                      {i + 1} / {images.length}
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-4" />
+            <CarouselNext className="right-4" />
+          </Carousel>
+        )}
+      </div>
 
       {/* Footer */}
       <CardFooter className="flex flex-col space-y-3 pt-0">
@@ -316,7 +326,7 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
 
         <Separator />
 
-        <div className="flex items-center justify-around w-full">
+        <div className="flex items-center justify-around pb-4 w-full">
           <Button
             variant="ghost"
             size="sm"
@@ -355,7 +365,7 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
             <Separator />
 
             {/* Add comment */}
-            <div className="w-full space-y-3">
+            <div className="w-full">
               <div className="flex space-x-3">
                 <Avatar className="h-8 w-8 relative">
                   {CURRENT_USER.profile_path ? (
@@ -589,6 +599,6 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
           </>
         )}
       </CardFooter>
-    </Card>
+    </div>
   )
 }

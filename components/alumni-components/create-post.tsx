@@ -10,7 +10,7 @@ export default function CreatePost() {
   return (
     <Dialog>
         <DialogTrigger asChild>
-          <Card className="w-[350px] sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl h-[200px] mx-auto rounded-lg shadow-sm border-border/50 hover:border-primary/30 transition-colors group">
+          <Card className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl border rounded-md mb-16 mx-auto text-card-foreground">
             <div className="flex items-center justify-center p-4">
               <div className="flex items-center w-full max-w-4xl px-4"> {/* Even wider */}
                 <Avatar className="mr-4">

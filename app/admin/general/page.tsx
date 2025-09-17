@@ -1,6 +1,7 @@
 
 import { CoursesTable } from "@/components/admin-components/course-table"
 import { InstitutesTable } from "@/components/admin-components/institute-table"
+import { Separator } from "@/components/ui/separator";
 import {
   Tabs,
   TabsContent,
@@ -21,6 +22,8 @@ export default function Page() {
               <TabsTrigger value="institutes">Institutes</TabsTrigger>
             </TabsList>
           </div>
+
+          <Separator />
           
           <TabsContent value="courses"><CoursesTable /></TabsContent>
           <TabsContent value="institutes"><InstitutesTable /></TabsContent>

@@ -105,17 +105,13 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
-      <HeaderCommunity currentPage="Community Posts" text='View and manage announcements' />
-      <CreateAnnouncement onSuccess1={handleRefresh} />
+      <div className="p-4 space-y-6">
+        <HeaderCommunity currentPage="Community Posts" text='View and manage announcements' />
+        <CreateAnnouncement onSuccess1={handleRefresh} />
+      </div>
 
-      <div className="rounded-lg border bg-card">
-        <div className="border-b p-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>Latest announcements</span>
-          </div>
-        </div>
-        <div className="p-4 space-y-6">
+      <div>
+        <div className="space-y-6">
           {announcements.length === 0 && !loading ? (
             <p>No announcements found.</p>
           ) : (

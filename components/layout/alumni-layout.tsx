@@ -46,7 +46,7 @@ export default function AlumniLayout({
           </div>
         </header>
 
-        <main className="flex-1 space-y-6 p-6">{children}</main>
+        <main className="flex-1 space-y-6 py-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

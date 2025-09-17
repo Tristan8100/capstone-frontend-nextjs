@@ -13,7 +13,7 @@ import {
 export default function Page() {
 
   return (
-    <>
+    <div className="p-4">
       <Tabs defaultValue="posts">
         <TabsList>
           <TabsTrigger className="text-xs md:text-sm" value="posts">
@@ -48,6 +48,6 @@ export default function Page() {
           <SurveyAnalytics />
         </TabsContent>
       </Tabs>
-    </>
+    </div>
   )
 }

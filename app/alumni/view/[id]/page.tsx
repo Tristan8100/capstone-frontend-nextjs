@@ -107,7 +107,7 @@ export default function ViewAlumni() {
 
     return (
         <div className="space-y-6">
-            <div className="max-w-4xl mx-auto p-4 space-y-6">
+            <div className="max-w-4xl mx-auto space-y-6">
                 {/* Profile Section */}
                 <UserProfilePage userData={userData} />
 
@@ -174,7 +174,7 @@ export default function ViewAlumni() {
                 )}
 
                 {/* Posts Section with Title */}
-                <div className="space-y-4 max-w-3xl mx-auto">
+                <div className="space-y-4 p-4 max-w-3xl mx-auto">
                     <h2 className="text-2xl font-bold tracking-tight">
                         {posts.length > 0 ? 'Recent Posts' : 'No Posts Yet'}
                     </h2>

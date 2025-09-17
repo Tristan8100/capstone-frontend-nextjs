@@ -7,13 +7,13 @@ import { Heart } from "lucide-react"
 
 
 export default function UserProfilePage({ userData }: { userData: any }) {
-  // Nuclear-grade null checks
+  // checking
   const safeProfilePath = userData.profile_path ?? "/default-avatar.jpg"
   const safeCourses = userData.course ?? []
   const safeBatch = userData.batch ?? "N/A"
   const safeEmail = userData.email ?? "No email provided"
   
-  // Name formatting with fallbacks
+  // checking name
   const fullName = [
     userData.first_name, 
     userData.middle_name, 
@@ -35,7 +35,7 @@ export default function UserProfilePage({ userData }: { userData: any }) {
     : "Unknown date"
 
   return (
-    <div className="mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="mx-auto space-y-4 sm:space-y-6">
       <Card className="rounded-xl shadow-lg">
         <CardHeader className="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 items-center">
   {/* Avatar */}

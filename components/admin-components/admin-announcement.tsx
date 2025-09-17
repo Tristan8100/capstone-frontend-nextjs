@@ -117,6 +117,9 @@ export default function AdminAnnouncementComponent({
   const [repliesLoading, setRepliesLoading] = useState<any>({})
   const [repliesNextUrl, setRepliesNextUrl] = useState<any>({})
 
+  // New: see more
+  const [showFullContent, setShowFullContent] = useState(false)
+
   // Fetch comments
   const fetchComments = async () => {
     if (!commentsNextUrl || commentsLoading) return
@@ -298,7 +301,7 @@ export default function AdminAnnouncementComponent({
   }
 
   return (
-    <Card className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
+    <div className="sm:w-[450px] lg:w-[700px] xl:w-[900px] py-6 2xl:w-[1000px] mb-16 border rounded-md max-w-screen-xl mx-auto">
       {/* Header */}
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -392,11 +395,21 @@ export default function AdminAnnouncementComponent({
 
       {/* Content */}
       <CardContent className="px-0 pb-3">
-        <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 px-6 pb-4">
-          <div className="flex-1 w-full md:w-auto min-w-0">
+        <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 pb-4">
+          <div className="flex-1 w-full md:w-auto min-w-0 px-6">
             <h2 className="text-lg font-semibold mb-2">{title}</h2>
             <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-              {content}
+              {content.length > 200 && !showFullContent
+                  ? `${content.slice(0, 200)}...`
+                  : content}
+              {content.length > 200 && (
+                  <button
+                  className="ml-1 text-blue-500 font-medium text-sm hover:underline"
+                  onClick={() => setShowFullContent(!showFullContent)}
+                  >
+                  {showFullContent ? "See less" : "See more"}
+                  </button>
+              )}
             </p>
           </div>
 
@@ -405,13 +418,13 @@ export default function AdminAnnouncementComponent({
               <CarouselContent>
                 {images.map((img: any, i: number) => (
                   <CarouselItem key={img.id || i}>
-                    <div className="relative">
+                    <div className="relative lg:px-6">
                       <Image
                         src={`${img.image_file}`}
                         alt={img.image_name || `image-${i + 1}`}
                         width={600}
                         height={400}
-                        className="w-full h-96 object-cover rounded-md"
+                        className="w-full h-96 object-cover lg:rounded-md"
                       />
                       <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
                         {i + 1} / {images.length}
@@ -677,6 +690,6 @@ export default function AdminAnnouncementComponent({
           </>
         )}
       </CardFooter>
-    </Card>
+    </div>
   )
 }

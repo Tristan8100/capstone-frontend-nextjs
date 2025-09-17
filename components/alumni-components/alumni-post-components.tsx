@@ -2,43 +2,31 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { Heart, MessageCircle, MoreHorizontal, Send, Loader2, Trash2, Edit } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Send, Loader2, Trash2, Edit } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"
 
-
-export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialIsLiked, status, fetchPosts, onPostDeleted }: any) {
+export default function PostComponentsAlumni({
+  post,
+  isAdmin,
+  is_liked: initialIsLiked,
+  status,
+  fetchPosts,
+  onPostDeleted,
+}: any) {
   const [posts, setPosts] = useState<any>(post)
   const [isLiked, setIsLiked] = useState<boolean>(initialIsLiked)
-  const router = useRouter();
+  const router = useRouter()
 
   // Comments state (paginated)
   const [showComments, setShowComments] = useState(false)
@@ -49,7 +37,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   const [repliesLoading, setRepliesLoading] = useState<any>({})
   const [repliesPage, setRepliesPage] = useState<any>({})
   const [repliesHasMore, setRepliesHasMore] = useState<any>({})
-  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
 
   // NEW: Loading states for various API interactions
   const [isAddingComment, setIsAddingComment] = useState(false)
@@ -58,7 +46,6 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   const [isEditingPost, setIsEditingPost] = useState(false)
   const [isDeletingPost, setIsDeletingPost] = useState(false)
   const [isChangingStatus, setIsChangingStatus] = useState(false)
-
 
   // Compose state
   const [newComment, setNewComment] = useState("")
@@ -70,6 +57,8 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
   const [editedTitle, setEditedTitle] = useState(posts.title)
   const [editedContent, setEditedContent] = useState(posts.content)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+    const [showFullContent, setShowFullContent] = useState(false)
 
   const { user } = useAuth()
 
@@ -112,15 +101,15 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
       const normalized = newComments.map((c: any) => ({
         ...c,
         replies: Array.isArray(c.replies) ? c.replies : [],
-        replies_count: typeof c.replies_count === "number" ? c.replies_count : (c.replies?.length || 0),
+        replies_count: typeof c.replies_count === "number" ? c.replies_count : c.replies?.length || 0,
       }))
 
-      setComments(prev => {
+      setComments((prev) => {
         const combined = [...prev, ...normalized]
-        return combined.filter((c, i, arr) => arr.findIndex(x => String(x.id) === String(c.id)) === i)
+        return combined.filter((c, i, arr) => arr.findIndex((x) => String(x.id) === String(c.id)) === i)
       })
       setHasMoreComments(!!res.data?.next_page_url)
-      setCommentsPage(prev => prev + 1)
+      setCommentsPage((prev) => prev + 1)
     } catch (err) {
       console.error("Error fetching comments:", err)
       toast.error("Failed to load comments")
@@ -139,13 +128,12 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
       const newReplies = res.data?.data ?? []
       newReplies.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
-      setComments(prev =>
+      setComments((prev) =>
         prev.map((c: any) => {
           if (String(c.id) === String(commentId)) {
             const combined = [...(c.replies || []), ...newReplies]
             const deduped = combined.filter(
-              (r: any, i: number, arr: any[]) =>
-                arr.findIndex((x: any) => String(x.id) === String(r.id)) === i
+              (r: any, i: number, arr: any[]) => arr.findIndex((x: any) => String(x.id) === String(r.id)) === i,
             )
             return {
               ...c,
@@ -154,17 +142,16 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
             }
           }
           return c
-        })
+        }),
       )
 
-      const hasMore =
-        !!(res.data?.pagination?.next_page_url || res.data?.next_page_url)
+      const hasMore = !!(res.data?.pagination?.next_page_url || res.data?.next_page_url)
       setRepliesHasMore((prev: any) => ({ ...prev, [commentId]: hasMore }))
       if (hasMore) {
         setRepliesPage((prev: any) => ({ ...prev, [commentId]: page + 1 }))
       }
-      
-      setExpandedComments(prev => new Set(prev.add(String(commentId))));
+
+      setExpandedComments((prev) => new Set(prev.add(String(commentId))))
     } catch (err) {
       console.error("Error fetching replies:", err)
       toast.error("Failed to load replies")
@@ -178,8 +165,8 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     // NEW: No loading state as of now
     try {
       await api2.delete(`/api/posts/comments/${commentId}`)
-      setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
-      const deleted = comments.find(c => String(c.id) === String(commentId))
+      setComments((prev) => prev.filter((c) => String(c.id) !== String(commentId)))
+      const deleted = comments.find((c) => String(c.id) === String(commentId))
       console.log("deleted", deleted?.replies_count)
       setPosts((prev: any) => ({
         ...prev,
@@ -212,7 +199,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
         replies_count: 0,
         replies: [],
       }
-      setComments(prev => [commentWithUser, ...prev])
+      setComments((prev) => [commentWithUser, ...prev])
       setNewComment("")
       setPosts((prev: any) => ({
         ...prev,
@@ -239,10 +226,10 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
       })
       const replyWithUser: any = { ...response.data, user: CURRENT_USER }
 
-      setComments(prev =>
-        prev.map(c => {
+      setComments((prev) =>
+        prev.map((c) => {
           if (sameId(c.id, commentId)) {
-            const updatedReplies = [...(c.replies || []), replyWithUser];
+            const updatedReplies = [...(c.replies || []), replyWithUser]
             return {
               ...c,
               replies: updatedReplies,
@@ -250,20 +237,20 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
             }
           }
           return c
-        })
+        }),
       )
 
       setPosts((prev: any) => ({
         ...prev,
         comments_count: (prev?.comments_count || 0) + 1,
       }))
-      
-      setExpandedComments(prev => {
-        const newSet = new Set(prev);
-        newSet.add(String(commentId));
-        return newSet;
-      });
-      
+
+      setExpandedComments((prev) => {
+        const newSet = new Set(prev)
+        newSet.add(String(commentId))
+        return newSet
+      })
+
       setNewReply("")
       setReplyingTo(null)
       toast.success("Reply added")
@@ -277,7 +264,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
 
   // Like/unlike
   const handleLike = async () => {
-    if(isAdmin) {
+    if (isAdmin) {
       toast.error("Admins cannot like posts")
       return
     }
@@ -285,7 +272,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
     setIsTogglingLike(true)
     try {
       const response = await api2.put<any>(`/api/posts/like/${posts.id}`)
-      setIsLiked(v => !v)
+      setIsLiked((v) => !v)
       setPosts((prev: any) => ({
         ...prev,
         likes_count: response.data?.likes_count,
@@ -332,18 +319,18 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
 
   // Delete post
   const handleDeletePost = async () => {
-      setIsDeletingPost(true) 
-      try {
-          await api2.delete(`/api/posts/${posts.id}`)
-          toast.success("Post deleted successfully")
-          setIsDeleteDialogOpen(false)
-          onPostDeleted(posts.id); //Notify parent
-      } catch (error) {
-          console.error(error)
-          toast.error("Failed to delete post")
-      } finally {
-          setIsDeletingPost(false)
-      }
+    setIsDeletingPost(true)
+    try {
+      await api2.delete(`/api/posts/${posts.id}`)
+      toast.success("Post deleted successfully")
+      setIsDeleteDialogOpen(false)
+      onPostDeleted(posts.id) //Notify parent
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to delete post")
+    } finally {
+      setIsDeletingPost(false)
+    }
   }
 
   const postUser = posts.user
@@ -351,8 +338,9 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
 
   return (
     <>
-      <Card className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] max-w-screen-xl mx-auto">
-        <CardHeader className="pb-3">
+        {/* Post */}
+      <div className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] mb-16 border rounded-md max-w-screen-xl mx-auto">
+        <div className="flex flex-col space-y-1.5 p-6 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10">
@@ -382,8 +370,17 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
             {isAdmin ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="p-1 rounded-full" aria-label="Admin actions" disabled={isChangingStatus}>
-                    {isChangingStatus ? <Loader2 className="h-5 w-5 animate-spin" /> : <MoreHorizontal className="h-5 w-5" />}
+                  <Button
+                    variant="ghost"
+                    className="p-1 rounded-full"
+                    aria-label="Admin actions"
+                    disabled={isChangingStatus}
+                  >
+                    {isChangingStatus ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <MoreHorizontal className="h-5 w-5" />
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={5} className="w-32">
@@ -406,23 +403,34 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                   <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)} className="capitalize">
                     <Edit className="mr-2 h-4 w-4" /> Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="capitalize text-destructive"
-                  >
+                  <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="capitalize text-destructive">
                     <Trash2 className="mr-2 h-4 w-4" /> Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="px-0 pb-3">
-          <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 px-6 pb-4">
-            <div className="flex-1 w-full md:w-auto min-w-0">
-              <h2 className="text-lg font-semibold mb-2">{posts.title}</h2>
-              <p className="text-muted-foreground leading-relaxed">{posts.content}</p>
+        <div className="p-6 px-0 pb-3">
+          <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 pb-4">
+            <div className="flex-1 w-full md:w-auto min-w-0 px-4">
+                <h2 className="text-lg font-semibold mb-2">{posts.title}</h2>
+
+                {/* NEW: see more*/}
+                <p className="text-muted-foreground leading-relaxed">
+                {posts.content.length > 200 && !showFullContent
+                    ? `${posts.content.slice(0, 200)}...`
+                    : posts.content}
+                {posts.content.length > 200 && (
+                    <button
+                    className="ml-1 text-blue-500 font-medium text-sm hover:underline"
+                    onClick={() => setShowFullContent(!showFullContent)}
+                    >
+                    {showFullContent ? "See less" : "See more"}
+                    </button>
+                )}
+                </p>
             </div>
 
             {images.length > 0 && (
@@ -430,13 +438,13 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                 <CarouselContent>
                   {images.map((img: any, index: number) => (
                     <CarouselItem key={img.id || index}>
-                      <div className="relative">
+                      <div className="relative lg:px-6 gap-4">
                         <Image
                           src={`${img.image_file}`}
                           alt={`Post image ${index + 1}`}
                           width={600}
                           height={400}
-                          className="w-full h-96 object-cover"
+                          className="w-full h-96 lg:rounded-md object-cover"
                         />
                         <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
                           {index + 1} / {images.length}
@@ -450,9 +458,9 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
               </Carousel>
             )}
           </div>
-        </CardContent>
+        </div>
 
-        <CardFooter className="flex flex-col space-y-3 pt-0">
+        <div className="flex items-center p-6 pt-0 flex-col space-y-3">
           <div className="flex items-center justify-between w-full text-sm text-muted-foreground px-2">
             <span>{posts?.comments_count ?? 0} comments</span>
           </div>
@@ -485,7 +493,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
               variant="ghost"
               size="sm"
               className="flex-1 hover:bg-muted/50 text-muted-foreground"
-              onClick={() => setShowComments(v => !v)}
+              onClick={() => setShowComments((v) => !v)}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               Comment
@@ -511,12 +519,16 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                       <Textarea
                         placeholder="Write a comment..."
                         value={newComment}
-                        onChange={e => setNewComment(e.target.value)}
+                        onChange={(e) => setNewComment(e.target.value)}
                         className="min-h-[60px] resize-none"
                       />
                       <div className="flex justify-end">
                         <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || isAddingComment}>
-                          {isAddingComment ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
+                          {isAddingComment ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          ) : (
+                            <Send className="h-4 w-4 mr-1" />
+                          )}
                           {isAddingComment ? "Posting..." : "Post"}
                         </Button>
                       </div>
@@ -551,7 +563,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                                 <p className="font-semibold text-sm">
                                   {comment.user?.first_name} {comment.user?.middle_name} {comment.user?.last_name}
                                 </p>
-                                {/* Delete button for admin */}
+                                {/* Delete*/}
                                 {isAdmin && (
                                   <Button
                                     variant="ghost"
@@ -573,7 +585,9 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                                   variant="ghost"
                                   size="sm"
                                   className="h-auto p-0 text-xs font-medium hover:bg-transparent hover:text-primary"
-                                  onClick={() => setReplyingTo(replyingTo === String(comment.id) ? null : String(comment.id))}
+                                  onClick={() =>
+                                    setReplyingTo(replyingTo === String(comment.id) ? null : String(comment.id))
+                                  }
                                 >
                                   Reply
                                 </Button>
@@ -582,7 +596,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                           </div>
                         </div>
 
-                        {/* Reply form (indented) - only show for non-admin users */}
+                        {/* Reply form - remove admin again*/}
                         {!isAdmin && replyingTo === String(comment.id) && (
                           <div className="ml-10 pl-4 flex space-x-3 border-l border-muted-foreground/20">
                             <Avatar className="h-6 w-6">
@@ -596,7 +610,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                               <Textarea
                                 placeholder={`Reply to ${comment.user?.first_name || "user"}...`}
                                 value={newReply}
-                                onChange={e => setNewReply(e.target.value)}
+                                onChange={(e) => setNewReply(e.target.value)}
                                 className="min-h-[50px] resize-none text-sm"
                               />
                               <div className="flex justify-end space-x-2">
@@ -623,7 +637,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                           </div>
                         )}
 
-                        {/* Replies container (indented and at the bottom) */}
+                        {/* Replies */}
                         {Array.isArray(comment.replies) && comment.replies.length > 0 && (
                           <div className="ml-10 pl-4 space-y-3 border-l border-muted-foreground/20">
                             {comment.replies.map((reply: any) => (
@@ -647,7 +661,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                                       <p className="font-semibold text-sm">
                                         {reply.user?.first_name} {reply.user?.last_name}
                                       </p>
-                                      {/* Delete button for admin */}
+                                      {/* Delete button for ADMIN ONLYY */}
                                       {isAdmin && (
                                         <Button
                                           variant="ghost"
@@ -674,24 +688,24 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                         {/* Show replies button - only show if there are replies that haven't been loaded yet */}
                         {((comment.replies_count > 0 && comment.replies.length < comment.replies_count) ||
                           (repliesHasMore[String(comment.id)] && !expandedComments.has(String(comment.id)))) && (
-                            <div className="ml-10 pl-4">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => fetchReplies(String(comment.id))}
-                                disabled={repliesLoading[String(comment.id)]}
-                              >
-                                {repliesLoading[String(comment.id)] ? (
-                                  <span className="inline-flex items-center">
-                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                    Loading replies...
-                                  </span>
-                                ) : (
-                                  `Show ${comment.replies_count - comment.replies.length} more replies`
-                                )}
-                              </Button>
-                            </div>
-                          )}
+                          <div className="ml-10 pl-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => fetchReplies(String(comment.id))}
+                              disabled={repliesLoading[String(comment.id)]}
+                            >
+                              {repliesLoading[String(comment.id)] ? (
+                                <span className="inline-flex items-center">
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  Loading replies...
+                                </span>
+                              ) : (
+                                `Show ${comment.replies_count - comment.replies.length} more replies`
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
 
@@ -701,7 +715,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
                       variant="outline"
                       onClick={fetchComments}
                       disabled={commentsLoading}
-                      className="w-full"
+                      className="w-full bg-transparent"
                     >
                       {commentsLoading ? (
                         <span className="inline-flex items-center">
@@ -717,8 +731,8 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
               </div>
             </>
           )}
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -731,7 +745,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
               <label htmlFor="title" className="text-sm font-medium">
                 Title
               </label>
-              <Input id="title" value={editedTitle} onChange={e => setEditedTitle(e.target.value)} />
+              <Input id="title" value={editedTitle} onChange={(e) => setEditedTitle(e.target.value)} />
             </div>
             <div className="space-y-2">
               <label htmlFor="content" className="text-sm font-medium">
@@ -740,7 +754,7 @@ export default function PostComponentsAlumni({ post, isAdmin, is_liked: initialI
               <Textarea
                 id="content"
                 value={editedContent}
-                onChange={e => setEditedContent(e.target.value)}
+                onChange={(e) => setEditedContent(e.target.value)}
                 className="min-h-[100px] max-h-[300px] overflow-y-auto"
               />
             </div>

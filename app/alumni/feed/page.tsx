@@ -40,14 +40,16 @@ export default function Page() {
 
   return (
     <>
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4">
-        <div className="flex justify-between items-center max-w-screen-xl mb-4 mx-auto">
-          <h1 className="text-2xl font-bold">Community Feed</h1>
+      <div>
+        <div className="space-y-8 p-6 max-w-6xl mx-auto">
+          <div className="space-y-0.5">
+            <h2 className="text-3xl font-bold tracking-tight">Community Feed</h2>
+            <p className="text-muted-foreground">Interact with Alumni Community Members and share your thoughts and experiences</p>
+          </div>
+          <Separator/>
         </div>
-        <Separator/>
       </div>
       <CreatePost />
-      <Separator className="border-border my-6" />
 
       <div className="space-y-4">
         {posts.map((post) => (

@@ -51,7 +51,9 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
-      <HeaderCommunity currentPage="Community Posts" text="View and manage community posts"/>
+      <div className="p-4 space-y-4">
+        <HeaderCommunity currentPage="Community Posts" text="View and manage community posts"/>
+      </div>
 
       {/* Posts list with infinite scroll */}
       <div className="space-y-4 mx-auto">
