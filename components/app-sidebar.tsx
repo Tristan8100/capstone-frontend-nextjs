@@ -1,3 +1,5 @@
+'use client'
+
 import type * as React from "react"
 import {
   BarChart3,
@@ -37,6 +39,9 @@ import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
 import path from "path"
 import { usePathname } from "next/navigation"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { useSidebar } from "@/components/ui/sidebar"
+import { useEffect } from "react"
 
 // Navigation data
 const homeNavigation = [
@@ -81,6 +86,16 @@ const generalNavigation = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth()
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (isMobile) {
+      setOpenMobile(false); // force close sidebar
+    }
+  }, [isMobile, pathname, setOpenMobile]);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

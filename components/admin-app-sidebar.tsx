@@ -116,11 +116,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isMobile = useIsMobile();
   const { toggleSidebar } = useSidebar()
   
+  const { setOpenMobile } = useSidebar();
+
   useEffect(() => {
     if (isMobile) {
-      toggleSidebar()
+      setOpenMobile(false); // force close sidebar
     }
-  }, [isMobile, pathname])
+  }, [isMobile, pathname, setOpenMobile]);
 
   return (
     <Sidebar collapsible="icon" {...props}>
