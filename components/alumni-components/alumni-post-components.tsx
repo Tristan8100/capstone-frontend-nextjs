@@ -15,6 +15,18 @@ import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
 import { useRouter } from "next/navigation"
+import {
+  MorphingDialog,
+  MorphingDialogTrigger,
+  MorphingDialogContent,
+  MorphingDialogClose,
+  MorphingDialogImage,
+  MorphingDialogContainer,
+} from '@/components/ui/morphing-dialog';
+import { motion } from 'motion/react';
+import { Tilt } from '@/components/ui/tilt';
+import { XIcon } from 'lucide-react';
+import { TextEffect } from '@/components/ui/text-effect';
 
 export default function PostComponentsAlumni({
   post,
@@ -339,7 +351,7 @@ export default function PostComponentsAlumni({
   return (
     <>
         {/* Post */}
-      <div className="sm:w-[450px] lg:w-[700px] xl:w-[900px] 2xl:w-[1000px] mb-16 border rounded-md max-w-screen-xl mx-auto">
+      <div className="sm:w-[450px] lg:w-[700px] xl:w-[900px] shadow-sm 2xl:w-[1000px] mb-16 rounded-lg max-w-screen-xl mx-auto">
         <div className="flex flex-col space-y-1.5 p-6 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -414,11 +426,11 @@ export default function PostComponentsAlumni({
 
         <div className="p-6 px-0 pb-3">
           <div className="flex flex-col lg:flex-row items-center md:items-start gap-6 pb-4">
-            <div className="flex-1 w-full md:w-auto min-w-0 px-4">
-                <h2 className="text-lg font-semibold mb-2">{posts.title}</h2>
+            <div className="flex-1 w-full md:w-auto min-w-0 px-6">
+                <div className="text-lg font-semibold mb-2">{posts.title}</div>
 
                 {/* NEW: see more*/}
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
                 {posts.content.length > 200 && !showFullContent
                     ? `${posts.content.slice(0, 200)}...`
                     : posts.content}
@@ -438,19 +450,45 @@ export default function PostComponentsAlumni({
                 <CarouselContent>
                   {images.map((img: any, index: number) => (
                     <CarouselItem key={img.id || index}>
-                      <div className="relative lg:px-6 gap-4">
-                        <Image
-                          src={`${img.image_file}`}
-                          alt={`Post image ${index + 1}`}
-                          width={600}
-                          height={400}
-                          className="w-full h-96 lg:rounded-md object-cover"
-                        />
-                        <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                          {index + 1} / {images.length}
-                        </div>
-                      </div>
-                    </CarouselItem>
+                  <div className="relative lg:px-6 gap-4">
+                    <MorphingDialog
+                        transition={{
+                          duration: 0.3,
+                          ease: 'easeInOut',
+                        }}
+                      >
+                        <MorphingDialogTrigger className="w-full">
+                          <Tilt rotationFactor={2} isRevese className="w-full">
+                            <MorphingDialogImage
+                              src={`${img.image_file}`}
+                              alt="btech alumni"
+                              className="w-full h-96 w-full object-cover rounded-md"
+                            />
+                          </Tilt>
+                        </MorphingDialogTrigger>
+                        <MorphingDialogContainer>
+                        {/* BACKDROP THING */}
+                        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-40" />
+
+                        <MorphingDialogContent className="relative z-50">
+                          <MorphingDialogImage
+                            src={`${img.image_file}`}
+                            alt="btech alumni"
+                            className="h-auto w-full max-w-[90vw] rounded-lg object-contain lg:h-[90vh] border border-white/20 shadow-xl"
+                          />
+                          
+                          {/* PUT INSIDE CLOSE */}
+                          <MorphingDialogClose className="absolute top-3 right-3 rounded-full bg-black/60 p-2 z-50">
+                            <XIcon className="h-5 w-5 text-white" />
+                          </MorphingDialogClose>
+                        </MorphingDialogContent>
+                      </MorphingDialogContainer>
+                      </MorphingDialog>
+                  <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                      {index + 1} / {images.length}
+                  </div>
+                </div>
+                </CarouselItem>
                   ))}
                 </CarouselContent>
                 <CarouselPrevious className="left-4" />

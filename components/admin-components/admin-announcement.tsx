@@ -33,6 +33,18 @@ import { useAuth } from "@/contexts/AuthContext"
 import { api2 } from "@/lib/api"
 import { Input } from "../ui/input"
 import { toast } from "sonner" // Import toast from sonner
+import {
+  MorphingDialog,
+  MorphingDialogTrigger,
+  MorphingDialogContent,
+  MorphingDialogClose,
+  MorphingDialogImage,
+  MorphingDialogContainer,
+} from '@/components/ui/morphing-dialog';
+import { motion } from 'motion/react';
+import { Tilt } from '@/components/ui/tilt';
+import { XIcon } from 'lucide-react';
+import { TextEffect } from '@/components/ui/text-effect';
 
 function getUserDisplayName(user: any) {
   if (user?.full_name) return user.full_name
@@ -301,7 +313,7 @@ export default function AdminAnnouncementComponent({
   }
 
   return (
-    <div className="sm:w-[450px] lg:w-[700px] xl:w-[900px] py-6 2xl:w-[1000px] mb-16 border rounded-md max-w-screen-xl mx-auto">
+    <div className="sm:w-[450px] lg:w-[700px] xl:w-[900px] py-6 2xl:w-[1000px] mb-16 border rounded-lg shadow-sm max-w-screen-xl mx-auto">
       {/* Header */}
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -418,19 +430,45 @@ export default function AdminAnnouncementComponent({
               <CarouselContent>
                 {images.map((img: any, i: number) => (
                   <CarouselItem key={img.id || i}>
-                    <div className="relative lg:px-6">
-                      <Image
-                        src={`${img.image_file}`}
-                        alt={img.image_name || `image-${i + 1}`}
-                        width={600}
-                        height={400}
-                        className="w-full h-96 object-cover lg:rounded-md"
-                      />
-                      <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                        {i + 1} / {images.length}
-                      </div>
-                    </div>
-                  </CarouselItem>
+                  <div className="relative lg:px-6 gap-4">
+                    <MorphingDialog
+                        transition={{
+                          duration: 0.3,
+                          ease: 'easeInOut',
+                        }}
+                      >
+                        <MorphingDialogTrigger className="w-full">
+                          <Tilt rotationFactor={2} isRevese className="w-full">
+                            <MorphingDialogImage
+                              src={`${img.image_file}`}
+                              alt="btech alumni"
+                              className="w-full h-96 w-full object-cover rounded-md"
+                            />
+                          </Tilt>
+                        </MorphingDialogTrigger>
+                        <MorphingDialogContainer>
+                        {/* BACKDROP THING */}
+                        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-40" />
+
+                        <MorphingDialogContent className="relative z-50">
+                          <MorphingDialogImage
+                            src={`${img.image_file}`}
+                            alt="btech alumni"
+                            className="h-auto w-full max-w-[90vw] rounded-lg object-contain lg:h-[90vh] border border-white/20 shadow-xl"
+                          />
+                          
+                          {/* PUT INSIDE CLOSE */}
+                          <MorphingDialogClose className="absolute top-3 right-3 rounded-full bg-black/60 p-2 z-50">
+                            <XIcon className="h-5 w-5 text-white" />
+                          </MorphingDialogClose>
+                        </MorphingDialogContent>
+                      </MorphingDialogContainer>
+                      </MorphingDialog>
+                  <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                      {i + 1} / {images.length}
+                  </div>
+                </div>
+                </CarouselItem>
                 ))}
               </CarouselContent>
               <CarouselPrevious className="left-4" />

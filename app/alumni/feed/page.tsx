@@ -41,7 +41,7 @@ export default function Page() {
   return (
     <>
       <div>
-        <div className="space-y-2 p-6 max-w-6xl mx-auto">
+        <div className="space-y-2 pb-6 max-w-6xl mx-auto">
           <div className="">
             <h2 className="text-3xl font-bold tracking-tight">Community Feed</h2>
             <p className="text-muted-foreground">Interact with Alumni Community</p>

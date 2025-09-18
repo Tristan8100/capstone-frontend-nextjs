@@ -1,3 +1,5 @@
+'use client'
+
 import type * as React from "react"
 import {
   Home,
@@ -40,6 +42,9 @@ import { useAuth } from "@/contexts/AuthContext"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { useSidebar } from "@/components/ui/sidebar"
+import { useEffect } from "react"
 
 // New Navigation data
 const dashboardNavigation = [
@@ -108,6 +113,14 @@ const communityNavigation = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { logout } = useAuth()
   const pathname = usePathname();
+  const isMobile = useIsMobile();
+  const { toggleSidebar } = useSidebar()
+  
+  useEffect(() => {
+    if (isMobile) {
+      toggleSidebar()
+    }
+  }, [isMobile, pathname])
 
   return (
     <Sidebar collapsible="icon" {...props}>
