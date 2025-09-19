@@ -446,7 +446,7 @@ export default function AlumniAnnouncementComponent({ announcement }: any) {
             <Separator />
 
             {/* Comments list */}
-            <div className="w-full space-y-4">
+            <div className="w-full space-y-4 mb-6">
               {comments.length === 0 && commentsLoading ? (
                 <div className="flex justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
