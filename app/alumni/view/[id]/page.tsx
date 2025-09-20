@@ -25,6 +25,37 @@ export default function ViewAlumni() {
     const [hasMore, setHasMore] = useState(true)
     const params = useParams()
     const userId = params.id as string
+    const [careers, setCareers] = useState<any[]>([])
+    const [careerPage, setCareerPage] = useState(1)
+    const [careerHasMore, setCareerHasMore] = useState(true)
+    const [loadingCareers, setLoadingCareers] = useState(false)
+
+    const fetchCareers = useCallback(async (reset = false) => {
+        if ((!careerHasMore && !reset) || loadingCareers) return
+        
+        setLoadingCareers(true)
+        try {
+            const currentPage = reset ? 1 : careerPage
+            const response = await api2.get<any>(
+                `/api/career-paginated/${userId}?page=${currentPage}`
+            )
+
+            const newCareers = response.data.data || []
+            setCareers(prev => reset ? newCareers : [...prev, ...newCareers])
+            setCareerPage(reset ? 2 : careerPage + 1)
+            setCareerHasMore(response.data.pagination.has_more)
+        } catch (err) {
+            console.error("Error loading careers:", err)
+            setError("Failed to load careers")
+        } finally {
+            setLoadingCareers(false)
+        }
+    }, [userId, careerPage, careerHasMore, loadingCareers])
+
+    useEffect(() => {
+        fetchCareers()
+    }, [fetchCareers])
+
 
     const formatDate = (date: string | null) => {
         if (!date) return "Present"
@@ -50,7 +81,7 @@ export default function ViewAlumni() {
             setLoading(prev => ({...prev, profile: false}))
     }, [userId])
 
-    // Fetch posts with infinite scroll
+    // Fetch posts
     const fetchPosts = useCallback(async (reset = false) => {
         if ((!hasMore && !reset) || loading.posts) return
         
@@ -112,67 +143,85 @@ export default function ViewAlumni() {
                 <UserProfilePage userData={userData} />
 
                 {/* Careers in Dialog */}
-                {userData.careers?.length > 0 && (
-                    <div className="max-w-3xl mx-auto">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full rounded-xl font-medium shadow-sm hover:shadow-md transition"
+                {careers.length > 0 && (
+                <div className="max-w-3xl mx-auto">
+                    <Dialog onOpenChange={(open) => {
+                        if (open && careers.length === 0) {
+                        fetchCareers(true) // fetch only when dialog first opened
+                        }
+                    }}>
+                        <DialogTrigger asChild>
+                            <Button 
+                                variant="outline" 
+                                className="w-full rounded-xl font-medium shadow-sm hover:shadow-md transition"
+                            >
+                                View Career History ({careers.length})
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto rounded-2xl shadow-xl p-6">
+                            <DialogHeader className="border-b pb-4">
+                                <DialogTitle className="text-2xl font-bold text-gray-800">
+                                    Career History
+                                </DialogTitle>
+                            </DialogHeader>
+
+                            <div className="space-y-6 mt-4">
+                                <InfiniteScroll
+                                    hasMore={careerHasMore}
+                                    isLoading={loadingCareers}
+                                    next={fetchCareers}
+                                    threshold={0.8}
                                 >
-                                    View Career History ({userData.careers.length})
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto rounded-2xl shadow-xl p-6">
-                                <DialogHeader className="border-b pb-4">
-                                    <DialogTitle className="text-2xl font-bold text-gray-800">
-                                        Career History
-                                    </DialogTitle>
-                                </DialogHeader>
-
-                                <div className="space-y-6 mt-4">
-                                    {userData.careers.map((career: any) => (
-                                        <div 
-                                            key={career.id} 
-                                            className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition"
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <h3 className="font-semibold text-lg text-gray-900">
-                                                    {career.title}
-                                                </h3>
-                                                <span className="text-xs text-gray-500">
-                                                    {formatDate(career.start_date)} – {formatDate(career.end_date)}
-                                                </span>
-                                            </div>
-
-                                            <p className="text-sm text-muted-foreground">{career.company}</p>
-
-                                            {career.description && (
-                                                <p className="mt-2 text-sm text-gray-700 leading-relaxed">
-                                                    {career.description}
-                                                </p>
-                                            )}
-
-                                            {career.skills_used?.length > 0 && (
-                                                <div className="mt-3 flex flex-wrap gap-2">
-                                                    {career.skills_used.map((skill: string, i: number) => (
-                                                        <span 
-                                                            key={i} 
-                                                            className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium"
-                                                        >
-                                                            {skill}
-                                                        </span>
-                                                    ))}
+                                    <div className="space-y-6 mt-4">
+                                        {careers.map((career: any) => (
+                                            <div 
+                                                key={career.id} 
+                                                className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="font-semibold text-lg text-gray-900">
+                                                        {career.title}
+                                                    </h3>
+                                                    <span className="text-xs text-gray-500">
+                                                        {formatDate(career.start_date)} – {formatDate(career.end_date)}
+                                                    </span>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-                )}
 
+                                                <p className="text-sm text-muted-foreground">{career.company}</p>
+
+                                                {career.description && (
+                                                    <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+                                                        {career.description}
+                                                    </p>
+                                                )}
+
+                                                {career.skills_used?.length > 0 && (
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        {career.skills_used.map((skill: string, i: number) => (
+                                                            <span 
+                                                                key={i} 
+                                                                className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium"
+                                                            >
+                                                                {skill}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </InfiniteScroll>
+
+                                {loadingCareers && (
+                                    <div className="flex justify-center p-4">
+                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                    </div>
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            )}
                 {/* Posts Section with Title */}
                 <div className="space-y-4 p-4 max-w-3xl mx-auto">
                     <h2 className="text-2xl font-bold tracking-tight">

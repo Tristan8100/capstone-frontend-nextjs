@@ -11,6 +11,8 @@ import { Users, Clock, Target, Award, BookOpen, AlertTriangle, Calendar, Buildin
 
 type JobFitData = {
   total_careers: number
+  course_name: string
+  institute_name: string
   overall: {
     fit_distribution: { related: number; not_related: number }
     skills_gap: Record<string, number>
@@ -376,7 +378,7 @@ const lastYears = data.overall.avg_time_to_first_job_years[lastBatch] || 0
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold text-foreground">Job Fit Analysis</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive analysis of career outcomes and course effectiveness
+              Comprehensive analysis of career outcomes and course effectiveness {data.institute_name ? `at ${data.institute_name}` : ""} {data.course_name ? `for ${data.course_name}` : ""}
             </p>
             <Badge variant="outline" className="text-sm">
               <Users className="h-4 w-4 mr-2" />

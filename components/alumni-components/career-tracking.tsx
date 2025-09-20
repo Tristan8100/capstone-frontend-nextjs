@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, type KeyboardEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { CalendarDays, Building2, Briefcase, Clock } from "lucide-react"
 import { toast } from "sonner"
 import { api2 } from "@/lib/api"
+import InfiniteScroll from "@/components/infinite-scroll"
 
 type Career = {
   id: string
@@ -25,6 +26,18 @@ type Career = {
   fit_category?: string
   recommended_jobs?: string[] | string
   analysis_notes?: string
+}
+
+type PaginatedResponse = {
+  status: string
+  data: Career[]
+  pagination: {
+    current_page: number
+    last_page: number
+    per_page: number
+    total: number
+    has_more: boolean
+  }
 }
 
 const getCurrentYear = () => new Date().getFullYear()
@@ -46,6 +59,9 @@ const createDateFromYearMonth = (year: number, month: number) => {
 export default function CareerTracking() {
   const [careers, setCareers] = useState<Career[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [openDialog, setOpenDialog] = useState(false)
   const [editingCareer, setEditingCareer] = useState<Career | null>(null)
 
@@ -56,7 +72,6 @@ export default function CareerTracking() {
     skills_used: "",
     start_date: "",
     end_date: "",
-    // New fields
     isFreelancer: false,
     isCurrent: false,
     dateInputType: "full" as "full" | "yearMonth",
@@ -65,6 +80,10 @@ export default function CareerTracking() {
     endYear: getCurrentYear(),
     endMonth: getCurrentMonth(),
   })
+
+  const [skillTags, setSkillTags] = useState<string[]>([])
+  const [skillInput, setSkillInput] = useState("")
+
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -88,15 +107,36 @@ export default function CareerTracking() {
         : [],
   })
 
-  const fetchCareers = async () => {
-    setLoading(true)
+  const fetchCareers = async (page = 1, append = false) => {
+    if (page === 1) {
+      setLoading(true)
+    } else {
+      setLoadingMore(true)
+    }
+
     try {
-      const res = await api2.get<{ data: Career[] }>("/api/career")
-      setCareers(res.data.data.map(normalizeCareer))
+      const res = await api2.get<PaginatedResponse>(`/api/career-paginated?page=${page}`)
+      const normalizedCareers = res.data.data.map(normalizeCareer)
+
+      if (append) {
+        setCareers((prev) => [...prev, ...normalizedCareers])
+      } else {
+        setCareers(normalizedCareers)
+      }
+
+      setCurrentPage(res.data.pagination.current_page)
+      setHasMore(res.data.pagination.has_more)
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to fetch careers")
     } finally {
       setLoading(false)
+      setLoadingMore(false)
+    }
+  }
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchCareers(currentPage + 1, true)
     }
   }
 
@@ -117,6 +157,8 @@ export default function CareerTracking() {
       endYear: getCurrentYear(),
       endMonth: getCurrentMonth(),
     })
+    setSkillTags([])
+    setSkillInput("")
     setOpenDialog(true)
   }
 
@@ -140,7 +182,48 @@ export default function CareerTracking() {
       endYear: endDate ? endDate.getFullYear() : getCurrentYear(),
       endMonth: endDate ? endDate.getMonth() + 1 : getCurrentMonth(),
     })
+    setSkillTags(career.skills_used || [])
+    setSkillInput("")
     setOpenDialog(true)
+  }
+
+  const addSkillTag = (skill: string) => {
+    const trimmedSkill = skill.trim()
+    if (trimmedSkill && !skillTags.includes(trimmedSkill)) {
+      setSkillTags([...skillTags, trimmedSkill])
+    }
+  }
+
+  const removeSkillTag = (skillToRemove: string) => {
+    setSkillTags(skillTags.filter((skill) => skill !== skillToRemove))
+  }
+
+  const handleSkillInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault()
+      if (skillInput.trim()) {
+        addSkillTag(skillInput)
+        setSkillInput("")
+      }
+    } else if (e.key === "Backspace" && !skillInput && skillTags.length > 0) {
+      // Remove last
+      setSkillTags(skillTags.slice(0, -1))
+    }
+  }
+
+  const handleSkillInputChange = (value: string) => {
+    // Handle comma
+    if (value.includes(",")) {
+      const parts = value.split(",")
+      const newSkills = parts
+        .slice(0, -1)
+        .map((s) => s.trim())
+        .filter((s) => s)
+      newSkills.forEach((skill) => addSkillTag(skill))
+      setSkillInput(parts[parts.length - 1])
+    } else {
+      setSkillInput(value)
+    }
   }
 
   const handleSave = async () => {
@@ -160,7 +243,7 @@ export default function CareerTracking() {
       title: form.title,
       company: form.company,
       description: form.description,
-      skills_used: form.skills_used.split(",").map((s) => s.trim()),
+      skills_used: skillTags,
       start_date: startDate,
       end_date: form.isCurrent ? undefined : endDate,
     }
@@ -221,111 +304,129 @@ export default function CareerTracking() {
           <Button onClick={openAddDialog}>Add Your First Career</Button>
         </div>
       ) : (
+        <>
         <div className="grid gap-6">
-          {careers.map((career) => {
-            const recommendedJobs = Array.isArray(career.recommended_jobs)
-              ? career.recommended_jobs
-              : typeof career.recommended_jobs === "string"
-                ? career.recommended_jobs.split(",").map((s) => s.trim())
-                : []
+          <div className="grid gap-6">
+            {careers.map((career) => {
+              const recommendedJobs = Array.isArray(career.recommended_jobs)
+                ? career.recommended_jobs
+                : typeof career.recommended_jobs === "string"
+                  ? career.recommended_jobs.split(",").map((s) => s.trim())
+                  : []
 
-            const isCurrentJob = !career.end_date
+              const isCurrentJob = !career.end_date
 
-            return (
-              <Card key={career.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-xl">{career.title}</CardTitle>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Building2 className="h-4 w-4" />
-                        <span>{career.company}</span>
-                        {isCurrentJob && (
-                          <Badge variant="secondary" className="gap-1">
-                            <Clock className="h-3 w-3" />
-                            Current
-                          </Badge>
-                        )}
+              return (
+                <Card key={career.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-xl">{career.title}</CardTitle>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Building2 className="h-4 w-4" />
+                          <span>{career.company}</span>
+                          {isCurrentJob && (
+                            <Badge variant="secondary" className="gap-1">
+                              <Clock className="h-3 w-3" />
+                              Current
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {career.description && (
-                    <div>
-                      <h4 className="font-medium mb-1">Description</h4>
-                      <p className="text-sm text-muted-foreground">{career.description}</p>
-                    </div>
-                  )}
-
-                  {career.skills_used && career.skills_used.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-2">Skills Used</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {career.skills_used.map((skill, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {career.description && (
+                      <div>
+                        <h4 className="font-medium mb-1">Description</h4>
+                        <p className="text-sm text-muted-foreground">{career.description}</p>
                       </div>
+                    )}
+
+                    {career.skills_used && career.skills_used.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2">Skills Used</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {career.skills_used.map((skill, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <CalendarDays className="h-4 w-4" />
+                        <span>{formatDateForDisplay(career.start_date)}</span>
+                      </div>
+                      <span>→</span>
+                      <span>{career.end_date ? formatDateForDisplay(career.end_date) : "Present"}</span>
                     </div>
-                  )}
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <CalendarDays className="h-4 w-4" />
-                      <span>{formatDateForDisplay(career.start_date)}</span>
-                    </div>
-                    <span>→</span>
-                    <span>{career.end_date ? formatDateForDisplay(career.end_date) : "Present"}</span>
-                  </div>
-
-                  {(career.fit_category || recommendedJobs.length > 0 || career.analysis_notes) && (
-                    <>
-                      <Separator />
-                      <div className="space-y-3">
-                        {career.fit_category && (
-                          <div>
-                            <h4 className="font-medium mb-1">Fit Category</h4>
-                            <Badge variant="secondary">{career.fit_category}</Badge>
-                          </div>
-                        )}
-
-                        {recommendedJobs.length > 0 && (
-                          <div>
-                            <h4 className="font-medium mb-2">Recommended Jobs</h4>
-                            <div className="flex flex-wrap gap-1">
-                              {recommendedJobs.map((job, index) => (
-                                <Badge key={index} variant="outline" className="text-xs">
-                                  {job}
-                                </Badge>
-                              ))}
+                    {(career.fit_category || recommendedJobs.length > 0 || career.analysis_notes) && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          {career.fit_category && (
+                            <div>
+                              <h4 className="font-medium mb-1">Fit Category</h4>
+                              <Badge variant="secondary">{career.fit_category}</Badge>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {career.analysis_notes && (
-                          <div>
-                            <h4 className="font-medium mb-1">Analysis Notes</h4>
-                            <p className="text-sm text-muted-foreground">{career.analysis_notes}</p>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-                <CardFooter className="flex gap-2 pt-3">
-                  <Button variant="outline" size="sm" onClick={() => openEditDialog(career)}>
-                    Edit
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDelete(career.id)}>
-                    Delete
-                  </Button>
-                </CardFooter>
-              </Card>
-            )
-          })}
+                          {recommendedJobs.length > 0 && (
+                            <div>
+                              <h4 className="font-medium mb-2">Recommended Jobs</h4>
+                              <div className="flex flex-wrap gap-1">
+                                {recommendedJobs.map((job, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {job}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {career.analysis_notes && (
+                            <div>
+                              <h4 className="font-medium mb-1">Analysis Notes</h4>
+                              <p className="text-sm text-muted-foreground">{career.analysis_notes}</p>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                  <CardFooter className="flex gap-2 pt-3">
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(career)}>
+                      Edit
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(career.id)}>
+                      Delete
+                    </Button>
+                  </CardFooter>
+                </Card>
+              )
+            })}
+          </div>
         </div>
+
+        <InfiniteScroll
+          isLoading={loadingMore}
+          hasMore={hasMore}
+          next={loadMore}
+          threshold={0.8}
+        >
+          {hasMore && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <span className="ml-2 text-sm text-muted-foreground">Loading more careers...</span>
+            </div>
+          )}
+        </InfiniteScroll>
+          </>
       )}
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -392,12 +493,34 @@ export default function CareerTracking() {
               <Label htmlFor="skills_used" className="text-sm font-medium">
                 Skills Used
               </Label>
-              <Input
-                id="skills_used"
-                placeholder="React, TypeScript, Node.js, etc. (comma separated)"
-                value={form.skills_used}
-                onChange={(e) => setForm({ ...form, skills_used: e.target.value })}
-              />
+              <div className="space-y-2">
+                {/* Display existing skill tags */}
+                {skillTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 p-2 border rounded-md bg-muted/50">
+                    {skillTags.map((skill, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="text-xs cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                        onClick={() => removeSkillTag(skill)}
+                      >
+                        {skill} ×
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {/* Input for adding new skills */}
+                <Input
+                  id="skills_used"
+                  placeholder="Type skills and press Enter or comma to add (e.g. React, TypeScript, Node.js)"
+                  value={skillInput}
+                  onChange={(e) => handleSkillInputChange(e.target.value)}
+                  onKeyDown={handleSkillInputKeyDown}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Press Enter or comma to add skills. Click on tags to remove them.
+                </p>
+              </div>
             </div>
 
             {/* Date Input Type Selection */}
